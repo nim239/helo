@@ -30,3 +30,22 @@ Project được xây dựng dựa trên nền tảng Next.js và GSAP, với c�
 -   **Logic lặp:** Trong hàm `onUpdate` của `ScrollTrigger` này, thay vì dùng `progress` (tiến trình tổng 0-1), chúng ta sử dụng vị trí cuộn tuyệt đối (`self.scroll()`) và phép toán **modulo (`%`)**.
     -   `progressInLoop = (scrollDistance % loopDistance) / loopDistance`
 -   Công thức này tạo ra một giá trị `progress` lặp lại từ 0 đến 1 trong mỗi `loopDistance` (ví dụ: mỗi 3 lần chiều cao màn hình). Kết quả là animation của sprite sẽ lặp lại vô tận khi người dùng tiếp tục cuộn trang, thay vì chỉ chạy một lần duy nhất.
+
+### Cập nhật kiến trúc và cải tiến
+
+#### 1. Cải tiến Scroll Mượt & "Hít" (Snap)
+
+-   **Vấn đề ban đầu:** Cấu hình `snap` được đặt không chính xác trực tiếp trong `ScrollSmoother.create`, gây ra lỗi kiểu.
+-   **Giải pháp:** Chuyển cấu hình `snap` sang một thể hiện `ScrollTrigger` riêng biệt (`snapScrollTrigger`). `ScrollTrigger` này hoạt động cùng với `ScrollSmoother` để duy trì hành vi "hít" (snap) mong muốn. `snapScrollTrigger` được kích hoạt sau khi animation intro hoàn tất.
+
+#### 2. Cải tiến Animation Sprite (Chuyển động ngang)
+
+-   **Yêu cầu:** Sprite cần "bay qua bay lại" theo tốc độ cuộn chuột, dừng khi cuộn dừng, và không có hiệu ứng "bouncing" (nảy).
+-   **Giải pháp:** Thay vì sử dụng timeline animation riêng biệt hoặc điều khiển `timeScale` dựa trên vận tốc, chuyển động ngang của sprite giờ đây được điều khiển trực tiếp bởi tiến trình cuộn (`progressInLoop`), tương tự như cách hoạt ảnh khung hình sprite được điều khiển.
+    -   **Cơ chế:** Vị trí `spriteEl.x` được tính toán dựa trên `progressInLoop` và một hiệu ứng "ping-pong" để sprite di chuyển qua lại trong phạm vi chiều rộng màn hình.
+    -   **Ưu điểm:** Đảm bảo tốc độ di chuyển của sprite tỷ lệ trực tiếp với tốc độ cuộn, và sprite dừng ngay lập tức khi người dùng ngừng cuộn.
+
+#### 3. Cải tiến Component ContentBlock (Màu chữ tự động)
+
+-   **Mục tiêu:** Tự động điều chỉnh màu chữ (đen hoặc trắng) trong `ContentBlock` để đảm bảo khả năng đọc tốt trên các màu nền khác nhau.
+-   **Giải pháp:** Thêm một hàm trợ giúp `getContrastTextColor` vào `ContentBlock.tsx`. Hàm này tính toán độ chói của màu nền và trả về màu chữ tương phản phù hợp (đen cho nền sáng, trắng cho nền tối). Màu chữ được áp dụng trực tiếp thông qua thuộc tính `style` của phần tử `div` chứa nội dung.

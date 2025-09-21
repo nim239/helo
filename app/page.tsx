@@ -92,13 +92,15 @@ export default function Home() {
           updateFrame(`${xPos}px 0px`);
         };
 
+        // Define horizontal animation for the sprite
+
+
         const scrollTriggerInstance = ScrollTrigger.create({
             trigger: mainEl,
             start: 'top top',
             end: 'max',
             scrub: true,
             scroller: mainEl,
-
             onUpdate: (self) => {
                 const scrollDistance = self.scroll();
                 const loopDistance = windowHeight * 3; // Each loop is 3 screen heights
@@ -106,6 +108,17 @@ export default function Home() {
 
                 state.frame = progressInLoop * (FRAME_COUNT - 1);
                 renderSpriteFrame();
+
+                // New logic for horizontal movement based on scroll progress (like sprite frames)
+                const maxHorizontalMovement = window.innerWidth - spriteEl.offsetWidth;
+                // Use a ping-pong effect for x position based on progressInLoop
+                let xProgress = progressInLoop * 2; // Scale to 0-2 for ping-pong
+                if (xProgress > 1) {
+                    xProgress = 2 - xProgress; // Reverse direction for 1-2 range
+                }
+                const targetX = maxHorizontalMovement * xProgress;
+
+                gsap.set(spriteEl, { x: targetX }); // Directly set x position
             }
         });
 
