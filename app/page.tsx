@@ -1,12 +1,12 @@
- "use client";
+"use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { ScrollSmoother } from 'gsap/ScrollSmoother';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollSmoother } from 'gsap/ScrollSmoother';
 import ContentBlock from '@/app/components/ContentBlock';
 
-gsap.registerPlugin(ScrollSmoother, ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
 
 const contentData = [
   { id: 1, key: 'block-1', number: 1, text: 'This is the first block', backgroundColor: '#f0f0f0' },
@@ -17,228 +17,128 @@ const contentData = [
   { id: 6, key: 'block-6', number: 6, text: 'This is the sixth block', backgroundColor: '#a0a0a0' },
 ];
 
-// Constants for Sprite Sheet Animation
 const SPRITE_SHEET_PATH = '/png/spritesheet.png';
-const FRAME_COUNT = 120; // Total number of frames
-const COLS = 120; // Number of columns in the sprite sheet (horizontal)
-const ROWS = 1; // Number of rows in the sprite sheet (horizontal)
-const PADDING_SIZE = 0; // No padding around frames
-
-const maxNodes = 60; // Maximum number of nodes to keep in the DOM
+const FRAME_COUNT = 120;
+const COLS = 120;
+const ROWS = 1;
+const NUM_ITEMS = 600;
 
 export default function Home() {
-  const initialLoadCount = 12; // Initial number of blocks to load
-  const batchSize = 6; // Number of blocks to add in each batch
+  const mainRef = useRef<HTMLDivElement>(null);
+  const spriteRef = useRef<HTMLDivElement>(null);
+  const [windowHeight, setWindowHeight] = useState(0);
 
-  const [displayedItems, setDisplayedItems] = useState(() => {
-    const initialItems = [];
-    for (let i = 0; i < initialLoadCount; i++) {
-      initialItems.push({ ...contentData[i % contentData.length], dataIndex: i });
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowHeight(window.innerHeight);
+      ScrollTrigger.refresh();
     }
-    return initialItems;
-  });
-  const [nextIndex, setNextIndex] = useState(initialLoadCount);
-  const [isLoading, setIsLoading] = useState(false);
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  const main = useRef(null);
-  const virtualScroll = useRef(0);
-  const totalRecycledHeight = useRef(0);
-  const blockRefs = useRef<Array<HTMLElement | null>>([]);
+  useEffect(() => {
+    if (windowHeight === 0) return;
 
-  const loadMoreItems = useCallback(() => {
-    setIsLoading(true);
-    setDisplayedItems((prevItems) => {
-      const newItems = [];
-      for (let i = 0; i < batchSize; i++) {
-        const newBlockIndex = nextIndex + i;
-        newItems.push({ ...contentData[newBlockIndex % contentData.length], dataIndex: newBlockIndex });
-      }
-      setNextIndex((prevIndex) => prevIndex + batchSize);
+    const ctx = gsap.context(() => {
+      const mainEl = mainRef.current;
+      const spriteEl = spriteRef.current;
+      if (!mainEl || !spriteEl) return;
 
-      let updatedItems = [...prevItems, ...newItems];
-      console.log('loadMoreItems: nextIndex before update', nextIndex, 'updatedItems.length before recycling', updatedItems.length);
+      const snapPoints = Array.from({ length: NUM_ITEMS }, (_, i) => i * windowHeight);
 
-      if (updatedItems.length > maxNodes) {
-        const itemsToRemoveCount = updatedItems.length - maxNodes;
-        const itemsToRemove = updatedItems.slice(0, itemsToRemoveCount);
-        let removedItemsHeight = 0;
+      const smoother = ScrollSmoother.create({
+        wrapper: mainEl,
+        content: mainEl.querySelector('#smooth-content'),
+        smooth: 2.5,
+        effects: true,
+        smoothTouch: 0.1,
+        ease: "power2.inOut",
+        momentumRatio: 0.2,
+        snap: {
+          snapTo: snapPoints,
+          duration: { min: 0.2, max: 0.6 },
+          delay: 0.1,
+          ease: "power3.inOut",
+        }
+      });
 
-        itemsToRemove.forEach(item => {
-          const ref = blockRefs.current[item.dataIndex];
-          if (ref) {
-            removedItemsHeight += ref.offsetHeight || 0;
-            delete blockRefs.current[item.dataIndex];
-          }
+      smoother.paused(true);
+
+      const spriteImage = new Image();
+      spriteImage.src = SPRITE_SHEET_PATH;
+      spriteImage.onload = () => {
+        const frameContentWidth = spriteEl.offsetWidth;
+        const frameContentHeight = spriteEl.offsetHeight;
+        spriteEl.style.backgroundImage = `url(${SPRITE_SHEET_PATH})`;
+        spriteEl.style.backgroundSize = `${frameContentWidth * COLS}px ${frameContentHeight * ROWS}px`;
+
+        const updateFrame = gsap.quickSetter(spriteEl, "backgroundPosition");
+        const state = { frame: 0 };
+
+        const renderSpriteFrame = () => {
+          const frameIndex = Math.floor(state.frame);
+          const col = frameIndex % COLS;
+          const xPos = -col * frameContentWidth;
+          updateFrame(`${xPos}px 0px`);
+        };
+
+        const scrollTriggerInstance = ScrollTrigger.create({
+            trigger: mainEl,
+            start: 'top top',
+            end: 'max',
+            scrub: true,
+            scroller: mainEl,
+            enabled: false, // Start disabled
+            onUpdate: (self) => {
+                const scrollDistance = self.scroll();
+                const loopDistance = windowHeight * 3; // Each loop is 3 screen heights
+                const progressInLoop = (scrollDistance % loopDistance) / loopDistance;
+
+                state.frame = progressInLoop * (FRAME_COUNT - 1);
+                renderSpriteFrame();
+            }
         });
 
-        totalRecycledHeight.current += removedItemsHeight;
-        const smoother = ScrollSmoother.get();
-        if (smoother) {
-          smoother.scrollTo(smoother.scrollTrigger.scroll() - removedItemsHeight, false);
-        }
+        const introTl = gsap.timeline({
+          onUpdate: renderSpriteFrame,
+          onComplete: () => {
+            smoother.paused(false);
+            if (scrollTriggerInstance) {
+              scrollTriggerInstance.enable();
+              ScrollTrigger.refresh();
+            }
+          }
+        });
+        introTl.to(state, { frame: FRAME_COUNT - 1, duration: 4, ease: "none" });
+      };
+    }, mainRef);
 
-        updatedItems = updatedItems.slice(itemsToRemoveCount);
-        console.log('loadMoreItems: updatedItems.length after recycling', updatedItems.length, 'removedItemsHeight', removedItemsHeight);
-      }
+    return () => ctx.revert();
+  }, [windowHeight]);
 
-      return updatedItems;
-    });
-  }, [nextIndex, batchSize, setIsLoading]);
-
-  // Create stable refs for functions and state needed in the scroll handler
-  const isLoadingRef = useRef(isLoading);
-  isLoadingRef.current = isLoading;
-
-  const loadMoreItemsRef = useRef(loadMoreItems);
-  loadMoreItemsRef.current = loadMoreItems;
-
-  // Create a stable scroll handler that doesn't change on re-renders
-  const handleScroll = useCallback(() => {
-    if (isLoadingRef.current) return;
-    
-    const smoother = ScrollSmoother.get();
-    if (smoother) {
-      const currentScroll = smoother.scrollTrigger.scroll();
-      const maxScroll = ScrollTrigger.maxScroll(smoother.wrapper());
-      const preloadThreshold = 600;
-
-      if (maxScroll - currentScroll < preloadThreshold) {
-        loadMoreItemsRef.current();
-      }
-    }
-  }, []); // Empty dependency array ensures this function is stable
-
-  useEffect(() => {
-    const spriteAnimationElement = document.querySelector('.sprite-animation') as HTMLElement;
-    if (!spriteAnimationElement) return;
-
-    let smoother: ScrollSmoother | null = null;
-    let spriteScrollTrigger: ScrollTrigger | null = null;
-    let introTl: gsap.core.Timeline | null = null;
-
-    const setupAnimation = () => {
-      const frameContentWidth = spriteAnimationElement.offsetWidth;
-      const frameContentHeight = spriteAnimationElement.offsetHeight;
-      const spriteWidthEffective = frameContentWidth + 2 * PADDING_SIZE;
-      const spriteHeightEffective = frameContentHeight + 2 * PADDING_SIZE;
-
-      spriteAnimationElement.style.backgroundImage = `url(${SPRITE_SHEET_PATH})`;
-      spriteAnimationElement.style.backgroundSize = `${frameContentWidth * COLS}px ${frameContentHeight * ROWS}px`;
-
-      const updateFrame = gsap.quickSetter(spriteAnimationElement, "backgroundPosition");
-      const state = { frame: 0 };
-
-      smoother = ScrollSmoother.create({
-        wrapper: "#smooth-wrapper",
-        content: "#smooth-content",
-        smooth: 1.2,
-        effects: true,
-        smoothTouch: true,
-      });
-
-      ScrollTrigger.addEventListener('scrollEnd', handleScroll);
-
-      spriteScrollTrigger = ScrollTrigger.create({
-        trigger: "#smooth-content",
-        start: "top top",
-        end: "max",
-        scrub: true,
-        scroller: smoother.wrapper(),
-        onUpdate: (self) => {
-          virtualScroll.current = self.scroll() + totalRecycledHeight.current;
-
-          const loopDistance = window.innerHeight * 4;
-          const progress = (virtualScroll.current % loopDistance) / loopDistance;
-          const wrappedProgress = progress < 0 ? 1 + progress : progress;
-
-          state.frame = Math.floor(wrappedProgress * (FRAME_COUNT - 1));
-          const frameIndex = Math.floor(state.frame);
-          const col = frameIndex % COLS;
-          const row = Math.floor(frameIndex / COLS);
-          const xPos = -col * spriteWidthEffective;
-          const yPos = -row * spriteHeightEffective;
-          updateFrame(`${xPos}px ${yPos}px`);
-        },
-      });
-      if (spriteScrollTrigger) {
-        spriteScrollTrigger.disable();
-      }
-
-      introTl = gsap.timeline({
-        defaults: { ease: "none" },
-        onUpdate: () => {
-          const frameIndex = Math.floor(state.frame);
-          const col = frameIndex % COLS;
-          const row = Math.floor(frameIndex / COLS);
-          const xPos = -col * spriteWidthEffective;
-          const yPos = -row * spriteHeightEffective;
-          updateFrame(`${xPos}px ${yPos}px`);
-        },
-        onComplete: () => {
-          console.log('introTl onComplete: enabling spriteScrollTrigger');
-          spriteScrollTrigger?.enable();
-        },
-      });
-
-      introTl.to(state, {
-        frame: FRAME_COUNT - 1,
-        duration: 4,
-      });
-    };
-
-    const cleanup = () => {
-      ScrollTrigger.removeEventListener('scrollEnd', handleScroll);
-      smoother?.kill();
-      spriteScrollTrigger?.kill();
-      introTl?.kill();
-      gsap.globalTimeline.clear();
-    };
-
-    const handleResize = () => {
-      cleanup();
-      setupAnimation();
-    };
-
-    const spriteImage = new Image();
-    spriteImage.onload = () => {
-      console.log('spriteImage.onload callback executed');
-      setupAnimation();
-      window.addEventListener('resize', handleResize);
-    };
-    spriteImage.onerror = () => {
-      console.error('Failed to load sprite sheet:', SPRITE_SHEET_PATH);
-    };
-    spriteImage.src = SPRITE_SHEET_PATH;
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      cleanup();
-    };
-  }, []); // Empty dependency array ensures this runs only once.
-
-  useEffect(() => {
-    setIsLoading(false);
-  }, [displayedItems]);
+  const allItems = Array.from({ length: NUM_ITEMS }, (_, index) => {
+    const item = contentData[index % contentData.length];
+    return (
+      <ContentBlock
+        key={index}
+        number={item.number}
+        text={item.text}
+        backgroundColor={item.backgroundColor}
+        dataIndex={index}
+      />
+    );
+  });
 
   return (
     <>
-      <div id="smooth-wrapper" style={{ overflow: 'hidden' }}>
+      <div ref={mainRef} id="smooth-wrapper">
         <div id="smooth-content">
-          <main ref={main} className="min-h-screen">
-            {displayedItems.map((block) => (
-              <ContentBlock
-                key={block.dataIndex}
-                number={block.number}
-                text={block.text}
-                backgroundColor={block.backgroundColor}
-                dataIndex={block.dataIndex}
-                ref={(el) => { blockRefs.current[block.dataIndex] = el; }}
-              />
-            ))}
-          </main>
+          {allItems}
         </div>
       </div>
-      <div className="sprite-animation top-0 left-0 w-[30vw] h-[30vw] max-w-[300px] max-h-[300px] z-50 pointer-events-none" style={{ position: 'fixed', backgroundRepeat: 'no-repeat' }}></div>
+      <div ref={spriteRef} className="sprite-animation top-0 left-0 w-[30vw] h-[30vw] max-w-[300px] max-h-[300px] z-[100] pointer-events-none" style={{ position: 'fixed', backgroundRepeat: 'no-repeat' }}></div>
     </>
   );
 }
