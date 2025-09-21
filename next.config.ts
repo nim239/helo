@@ -1,11 +1,10 @@
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'export',      // build ra site tĩnh
+  output: "export", // 👈 bắt buộc để Next.js tạo file tĩnh trong /out
   images: {
-    unoptimized: true,   // bắt buộc nếu dùng <Image />
+    unoptimized: true, // tránh lỗi ảnh khi export
   },
-  trailingSlash: true,   // để URL có dấu / tránh lỗi 404
 };
 
 export default nextConfig;
