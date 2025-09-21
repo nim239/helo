@@ -6,6 +6,23 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Helper function to determine if a color is light or dark
+const getContrastTextColor = (hexColor: string): string => {
+  if (!hexColor || hexColor.length < 7) {
+    return '#000000'; // Default to black if color is invalid
+  }
+
+  const r = parseInt(hexColor.substring(1, 3), 16);
+  const g = parseInt(hexColor.substring(3, 5), 16);
+  const b = parseInt(hexColor.substring(5, 7), 16);
+
+  // Perceived luminance (ITU-R BT.709)
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+
+  // Use a threshold to decide between dark and light text
+  return luminance > 0.5 ? '#000000' : '#FFFFFF'; // Black for light backgrounds, white for dark backgrounds
+};
+
 interface ContentBlockProps {
   number: number;
   text: string;
@@ -51,10 +68,12 @@ const ContentBlock = React.forwardRef<HTMLDivElement, ContentBlockProps>(({ numb
     };
   }, []);
 
+  const textColor = getContrastTextColor(backgroundColor);
+
   return (
-    <div ref={blockRef} className="block h-screen flex flex-col items-center justify-center border-b border-gray-700 font-sans relative overflow-hidden" style={{ backgroundColor: backgroundColor }} data-index={dataIndex}>
-      <h1 className="text-[15rem] font-bold leading-none text-black">{number}</h1>
-      <p className="text-5xl mt-4 text-black">{text}</p>
+    <div ref={blockRef} className="block h-screen flex flex-col items-center justify-center border-b border-gray-700 font-sans relative overflow-hidden" style={{ backgroundColor: backgroundColor, color: textColor }} data-index={dataIndex}>
+      <h1 className="text-[15rem] font-bold leading-none">{number}</h1>
+      <p className="text-5xl mt-4">{text}</p>
       
       {/* Chỉ render component nặng khi block này đang hiển thị trên màn hình */}
       {isIntersecting && <HeavyContent number={number} />}
