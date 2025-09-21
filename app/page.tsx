@@ -55,7 +55,7 @@ export default function Home() {
         effects: true,
         smoothTouch: 0.1,
         ease: "power2.inOut",
-        momentumRatio: 0.2,
+        //momentumRatio: 0.2,
         snap: {
           snapTo: snapPoints,
           duration: { min: 0.2, max: 0.6 },
