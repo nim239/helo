@@ -56,12 +56,20 @@ export default function Home() {
         smoothTouch: 0.1,
         ease: "power2.inOut",
         //momentumRatio: 0.2,
+      });
+
+      // New ScrollTrigger for snapping
+      const snapScrollTrigger = ScrollTrigger.create({
+        trigger: mainEl, // Target the content that ScrollSmoother is smoothing
+        start: "top top",
+        end: "bottom bottom",
         snap: {
           snapTo: snapPoints,
           duration: { min: 0.2, max: 0.6 },
           delay: 0.1,
           ease: "power3.inOut",
-        }
+        },
+        scroller: smoother.wrapper(), // Important: tell ScrollTrigger to use ScrollSmoother's scroller
       });
 
       smoother.paused(true);
@@ -90,7 +98,7 @@ export default function Home() {
             end: 'max',
             scrub: true,
             scroller: mainEl,
-            enabled: false, // Start disabled
+
             onUpdate: (self) => {
                 const scrollDistance = self.scroll();
                 const loopDistance = windowHeight * 3; // Each loop is 3 screen heights
@@ -107,8 +115,11 @@ export default function Home() {
             smoother.paused(false);
             if (scrollTriggerInstance) {
               scrollTriggerInstance.enable();
-              ScrollTrigger.refresh();
             }
+            if (snapScrollTrigger) { // Enable the snap ScrollTrigger as well
+              snapScrollTrigger.enable();
+            }
+            ScrollTrigger.refresh();
           }
         });
         introTl.to(state, { frame: FRAME_COUNT - 1, duration: 4, ease: "none" });
