@@ -53,16 +53,14 @@ export default function Home() {
       const smoother = ScrollSmoother.create({
         wrapper: mainEl,
         content: mainEl.querySelector('#smooth-content'),
-        smooth: 4,
-        effects: true,
         smoothTouch: 2.5,
-        ease: "power2.inOut",
-        //momentumRatio: 0.2,
-        snap: {
-          snapTo: snapPoints,
-          duration: { min: 0.2, max: 0.6 },
-          delay: 0.1,
-          ease: "power3.inOut",
+        effects: {
+          snap: {
+            snapTo: snapPoints,
+            duration: { min: 0.2, max: 0.6 },
+            delay: 0.1,
+            ease: "power3.inOut",
+          },
         },
       });
 
