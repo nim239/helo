@@ -42,6 +42,8 @@ export default function Home() {
     if (windowHeight === 0) return;
 
     const ctx = gsap.context(() => {
+      window.scrollTo(0, 0); // Force scroll to top on refresh
+
       const mainEl = mainRef.current;
       const spriteEl = spriteRef.current;
       if (!mainEl || !spriteEl) return;
@@ -51,25 +53,17 @@ export default function Home() {
       const smoother = ScrollSmoother.create({
         wrapper: mainEl,
         content: mainEl.querySelector('#smooth-content'),
-        smooth: 2.5,
+        smooth: 4,
         effects: true,
-        smoothTouch: 0.1,
+        smoothTouch: 2.5,
         ease: "power2.inOut",
-        //momentumRatio: 0.2,
-      });
-
-      // New ScrollTrigger for snapping
-      const snapScrollTrigger = ScrollTrigger.create({
-        trigger: mainEl, // Target the content that ScrollSmoother is smoothing
-        start: "top top",
-        end: "bottom bottom",
+        // @ts-ignore
         snap: {
           snapTo: snapPoints,
           duration: { min: 0.2, max: 0.6 },
           delay: 0.1,
           ease: "power3.inOut",
         },
-        scroller: smoother.wrapper(), // Important: tell ScrollTrigger to use ScrollSmoother's scroller
       });
 
       smoother.paused(true);
@@ -103,20 +97,24 @@ export default function Home() {
             scroller: mainEl,
             onUpdate: (self) => {
                 const scrollDistance = self.scroll();
-                const loopDistance = windowHeight * 3; // Each loop is 3 screen heights
+                const loopDistance = windowHeight * 4; // Each loop is 4 screen heights
                 const progressInLoop = (scrollDistance % loopDistance) / loopDistance;
 
-                state.frame = progressInLoop * (FRAME_COUNT - 1);
+                // Decouple sprite animation speed from flying speed
+                const spriteProgress = (progressInLoop * 2) % 1; // Loops twice as fast
+                state.frame = spriteProgress * (FRAME_COUNT - 1);
                 renderSpriteFrame();
 
-                // New logic for horizontal movement based on scroll progress (like sprite frames)
+                // Horizontal movement speed remains unchanged, based on original progressInLoop
                 const maxHorizontalMovement = window.innerWidth - spriteEl.offsetWidth;
-                // Use a ping-pong effect for x position based on progressInLoop
+                const ease = gsap.parseEase("power2.inOut");
+                
                 let xProgress = progressInLoop * 2; // Scale to 0-2 for ping-pong
                 if (xProgress > 1) {
                     xProgress = 2 - xProgress; // Reverse direction for 1-2 range
                 }
-                const targetX = maxHorizontalMovement * xProgress;
+                const easedXProgress = ease(xProgress);
+                const targetX = maxHorizontalMovement * easedXProgress;
 
                 gsap.set(spriteEl, { x: targetX }); // Directly set x position
             }
@@ -129,9 +127,7 @@ export default function Home() {
             if (scrollTriggerInstance) {
               scrollTriggerInstance.enable();
             }
-            if (snapScrollTrigger) { // Enable the snap ScrollTrigger as well
-              snapScrollTrigger.enable();
-            }
+
             ScrollTrigger.refresh();
           }
         });
