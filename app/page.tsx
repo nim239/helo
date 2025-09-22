@@ -55,7 +55,7 @@ export default function Home() {
         content: mainEl.querySelector('#smooth-content'),
         smooth: 4,
         effects: true,
-        smoothTouch: 2.5,
+        smoothTouch: 2,
         ease: "power2.inOut"
       });
 
@@ -73,53 +73,43 @@ export default function Home() {
         const state = { frame: 0 };
 
         const renderSpriteFrame = () => {
-          const frameIndex = Math.floor(state.frame);
+          const frameIndex = Math.floor(state.frame) % FRAME_COUNT;
           const col = frameIndex % COLS;
           const xPos = -col * frameContentWidth;
           updateFrame(`${xPos}px 0px`);
         };
 
-        // Define horizontal animation for the sprite
-
-
-        const scrollTriggerInstance = ScrollTrigger.create({
-            trigger: mainEl,
-            start: 'top top',
-            end: 'max',
-            scrub: true,
-            scroller: mainEl,
-            onUpdate: (self) => {
-                const loopDistance = windowHeight * 4; // Each loop is 4 screen heights
-                const progressInLoop = (self.scroll() / loopDistance) % 1;
-
-                // Decouple sprite animation speed from flying speed
-                const spriteProgress = (progressInLoop * 2) % 1; // Loops twice as fast
-                state.frame = spriteProgress * (FRAME_COUNT - 1);
-                renderSpriteFrame();
-
-                // Horizontal movement speed remains unchanged, based on original progressInLoop
-                const maxHorizontalMovement = window.innerWidth - spriteEl.offsetWidth;
-                const ease = gsap.parseEase("power2.inOut");
-                
-                let xProgress = progressInLoop * 2; // Scale to 0-2 for ping-pong
-                if (xProgress > 1) {
-                    xProgress = 2 - xProgress; // Reverse direction for 1-2 range
-                }
-                const easedXProgress = ease(xProgress);
-                const targetX = maxHorizontalMovement * easedXProgress;
-
-                gsap.set(spriteEl, { x: targetX }); // Directly set x position
-            }
+        // Create a looping timeline for the animations
+        const loop = gsap.timeline({
+          paused: true,
+          repeat: -1,
+          onUpdate: renderSpriteFrame,
         });
 
+        const maxHorizontalMovement = window.innerWidth - spriteEl.offsetWidth;
+        // Add the yoyo (ping-pong) horizontal movement
+        loop.to(spriteEl, { x: maxHorizontalMovement, ease: "power2.inOut", duration: 2, yoyo: true, repeat: 1 });
+        // Add the sprite frame animation, running at 2x speed
+        loop.fromTo(state, { frame: 0 }, { frame: FRAME_COUNT * 2, ease: "none", duration: 4 }, 0);
+
+        // The intro animation
         const introTl = gsap.timeline({
           onUpdate: renderSpriteFrame,
           onComplete: () => {
             smoother.paused(false);
-            if (scrollTriggerInstance) {
-              scrollTriggerInstance.enable();
-            }
-
+            // After intro, use ScrollTrigger to drive the main loop
+            ScrollTrigger.create({
+              trigger: mainEl,
+              start: "top top",
+              end: "max",
+              scroller: mainEl,
+              scrub: 0.3, // Use true for direct 1-to-1 scrubbing
+              onUpdate: self => {
+                const loopDistance = windowHeight * 2.5;
+                // Use totalTime for a direct mapping of scroll distance to animation time
+                loop.totalTime((self.scroll() / loopDistance) * loop.duration());
+              }
+            });
             ScrollTrigger.refresh();
           }
         });
