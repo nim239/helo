@@ -56,14 +56,7 @@ export default function Home() {
         smooth: 4,
         effects: true,
         smoothTouch: 2.5,
-        ease: "power2.inOut",
-        // @ts-expect-error
-        snap: {
-          snapTo: snapPoints,
-          duration: { min: 0.2, max: 0.6 },
-          delay: 0.1,
-          ease: "power3.inOut",
-        },
+        ease: "power2.inOut"
       });
 
       smoother.paused(true);
