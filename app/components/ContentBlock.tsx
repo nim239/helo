@@ -47,7 +47,7 @@ const HeavyContent = ({ number }: { number: number }) => {
   );
 };
 
-const ContentBlock = React.forwardRef<HTMLDivElement, ContentBlockProps>(({ number, text, backgroundColor, dataIndex }, ref) => {
+const ContentBlock: React.FC<ContentBlockProps> = ({ number, text, backgroundColor, dataIndex }) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
 
@@ -79,8 +79,6 @@ const ContentBlock = React.forwardRef<HTMLDivElement, ContentBlockProps>(({ numb
       {isIntersecting && <HeavyContent number={number} />}
     </div>
   );
-});
-
-ContentBlock.displayName = 'ContentBlock';
+};
 
 export default ContentBlock;

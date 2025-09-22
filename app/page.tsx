@@ -48,7 +48,7 @@ export default function Home() {
       const spriteEl = spriteRef.current;
       if (!mainEl || !spriteEl) return;
 
-      const snapPoints = Array.from({ length: NUM_ITEMS }, (_, i) => i * windowHeight);
+
 
       const smoother = ScrollSmoother.create({
         wrapper: mainEl,
@@ -89,9 +89,8 @@ export default function Home() {
             scrub: true,
             scroller: mainEl,
             onUpdate: (self) => {
-                const scrollDistance = self.scroll();
                 const loopDistance = windowHeight * 4; // Each loop is 4 screen heights
-                const progressInLoop = (scrollDistance % loopDistance) / loopDistance;
+                const progressInLoop = (self.scroll() / loopDistance) % 1;
 
                 // Decouple sprite animation speed from flying speed
                 const spriteProgress = (progressInLoop * 2) % 1; // Loops twice as fast
