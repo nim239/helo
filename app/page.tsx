@@ -57,7 +57,7 @@ export default function Home() {
         effects: true,
         smoothTouch: 2.5,
         ease: "power2.inOut",
-        // @ts-ignore
+        // @ts-expect-error
         snap: {
           snapTo: snapPoints,
           duration: { min: 0.2, max: 0.6 },
