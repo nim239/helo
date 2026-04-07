@@ -7,7 +7,7 @@
 
 **Người làm:** Nam (Nhọ) — Motion Designer & CGI Artist tại Athena CM / VCCorp  
 **Repo:** https://github.com/nim239/helo  
-**Deploy:** Vercel (hiện tại URL preview có auth, chưa public)  
+**Deploy:** Vercel (hiện tại URL preview có auth, public tại namdeptrai.vercel.app )  
 **Stack:** Next.js 14+ (App Router) + TypeScript + GSAP (ScrollTrigger + ScrollSmoother)  
 **Mục tiêu:** Static portfolio cá nhân, triển lãm online
 
