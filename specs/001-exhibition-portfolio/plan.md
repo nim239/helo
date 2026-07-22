@@ -1,85 +1,43 @@
-# Implementation Plan: Exhibition Portfolio & Scroll Engine
+# Architecture Expansion: Scroll Snap & 2.5D Parallax System
 
-**Branch**: `001-exhibition-portfolio` | **Date**: 2026-07-22 | **Spec**: [spec.md](file:///d:/web_portfolio/specs/001-exhibition-portfolio/spec.md)
+This plan outlines the implementation of the missing requirements provided by the user: Scroll Snapping on rest, and a robust 4-layer 2.5D Parallax engine that accurately supports infinite-loop teleportation.
 
-**Input**: Feature specification from `/specs/001-exhibition-portfolio/spec.md`
+> [!WARNING]
+> The current `ParallaxSides.tsx` uses a simple CSS modulo loop. The new spec strictly requires **DOM cloning** mirroring the 12-section buffer logic, allowing distinct foreground/background layers to move continuously through the teleport portal.
 
-## Summary
+## Proposed Changes
 
-Implement a high-performance, strictly non-interactive "Look but don't touch" exhibition portfolio using Next.js, Lenis native scrolling, Zustand transient state (120fps sync), and horizontal auto-marquees. The engine features complex edge-case handling for VRAM flushing, float precision loss on Safari, and seamless infinite loop cloning.
+### 1. Scroll Snapping Engine
 
-## Technical Context
+We will implement a debounce-based scroll snapping engine directly inside the `useExhibitionScroll` hook to safely co-exist with the teleport loop.
 
-**Language/Version**: TypeScript / Next.js 14+ (App Router)
+#### [MODIFY] [useExhibitionScroll.ts](file:///d:/web_portfolio/lib/hooks/useExhibitionScroll.ts)
+- Bind to `lenis.on('scroll')`.
+- Maintain a `debounceTimeout`. If the user stops scrolling for 250ms (and `teleportCooldown` is inactive), trigger the snap logic.
+- **Math**: `Math.round(scrollY / sectionHeight) * sectionHeight`.
+- Execute `lenis.scrollTo(target, { duration: 1.2, lock: true })`.
 
-**Primary Dependencies**: `lenis` (Scroll), `gsap` (Animation/Snap), `zustand` (Transient state management), Tailwind CSS
+### 2. 2.5D Cloned Parallax System
 
-**Storage**: Local Static JSON (`data/sections.json`)
+We will replace the current CSS-background-based parallax sides with a true DOM-cloned 4-layer parallax engine.
 
-**Testing**: React Testing Library / Jest (Unit testing hooks/math)
+#### [MODIFY] [ParallaxSides.tsx](file:///d:/web_portfolio/components/ParallaxSides.tsx)
+- Render 4 distinct containers: `LeftForeground`, `LeftBackground`, `RightForeground`, `RightBackground`.
+- Inside each container, map over an array of 12 placeholders (representing the 12 sections: 3 clones + 6 real + 3 clones) to guarantee DOM continuity.
+- **GSAP ScrollTrigger**: 
+  - Foreground layers translate at `speed = 1.2`.
+  - Background layers translate at `speed = 0.8`.
+- **Teleport Protection**: When `useExhibitionScroll` executes a teleport of `6 * window.innerHeight` for the main wrapper, the parallax layers will simultaneously teleport by `6 * window.innerHeight * speed` to remain perfectly aligned.
 
-**Target Platform**: Web Browsers (Safari, Chrome, Firefox, Edge) - Mobile & Desktop
+### 3. Sprite Intro Math Hardening
 
-**Project Type**: Next.js Web Portfolio
+#### [MODIFY] [SpriteAnimation.tsx](file:///d:/web_portfolio/components/SpriteAnimation.tsx)
+- Extract the mathematical constants into a `START_POINT_SPRITE` variable to strictly align with the user's nomenclature.
+- Verify the 6-section modulo loop perfectly aligns with the new Snapping mechanics.
 
-**Performance Goals**: 60-120fps physics loop without React re-render storms. Max 3 video decoders active at any time.
+## User Review Required
 
-**Constraints**: Strict No-Interaction UX, Native `<video>` (.webm) served from Free CDN, Modulo math for layout.
+> [!IMPORTANT]
+> **Parallax Clones**: Should the Parallax sections correspond 1:1 with the main content sections (e.g. using `exhibitionBuffer` data to render specific art per section), or are they just generic scrolling patterns? The current plan builds the infrastructure for 12 cloned DOM nodes, which you can inject art into later.
 
-**Scale/Scope**: 12 rendered sections (6 main + 6 clones), 3-10 videos per marquee track.
-
-## Constitution Check
-
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
-
-- Constitution is currently a placeholder. No violations detected.
-
-## Project Structure
-
-### Documentation (this feature)
-
-```text
-specs/001-exhibition-portfolio/
-├── plan.md              # This file (/speckit-plan command output)
-├── research.md          # Phase 0 output (/speckit-plan command)
-├── data-model.md        # Phase 1 output (/speckit-plan command)
-├── quickstart.md        # Phase 1 output (/speckit-plan command)
-└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
-```
-
-### Source Code (repository root)
-
-```text
-# Next.js Application Structure
-app/
-├── globals.css
-├── layout.tsx
-└── page.tsx              # Main Exhibition Controller
-
-components/
-├── Section.tsx           # Base section container
-├── HorizontalMarquee.tsx # RAF auto-scrolling track
-├── MediaVideo.tsx        # Vertical-First IO + Rule of 3 video component
-└── SpriteAnimation.tsx   # Reusable Intro Sprite component
-
-lib/
-├── store/
-│   ├── useScrollStore.ts # Transient scroll phase/teleport state
-│   └── useMarqueeStore.ts# Shared baseTimestamp for marquees
-└── hooks/
-    ├── useViewportSync.ts     # ResizeObserver for --section-height
-    ├── useExhibitionScroll.ts # Lenis & GSAP ticker sync
-    └── useMarqueeSync.ts      # RAF modulo logic for Marquee
-
-data/
-└── sections.json         # Static SSG Data Source
-```
-
-**Structure Decision**: A standard Next.js App Router layout with a dedicated `lib/` folder for state and hooks to separate complex physics logic from UI components.
-
-## Complexity Tracking
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| Zustand Transient State | React `useState` causes main-thread re-render loops during 60fps scrolling | Native React Context/State would cause the Marquee to jitter and fail performance goals. |
-| Modulo DOM Duplication | Seamless infinite horizontal scroll | Single track `translateX` wrapping causes 1-frame visual flash/snap. |
+Please approve this implementation plan so I can begin coding the Snap Engine and the 4-Layer Parallax!
