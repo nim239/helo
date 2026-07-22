@@ -56,10 +56,19 @@ The interface behaves like a physical museum. **"Look but don't touch"**.
 - **Global Re-render Clash Protection**: If React is forced to re-render (e.g., window resize debounced `--section-height` update), the Virtual DOM will wipe out transient inline styles. 
   - **Solution**: The system MUST implement `useLayoutEffect` to read the latest Zustand values and re-inject them into the Real DOM immediately before browser paint, or strictly isolate transient components via `React.memo`. This rule applies to **ALL** ref-mutated elements (marquee tracks, sections, parallax layers).
 
-### 6. Horizontal Auto-Marquee Media Cluster
-For specific sections (e.g., Work B, Work C), a horizontal infinite auto-scrolling ticker (Marquee) displays 3-10 videos intersecting the primary vertical scroll.
+### 6. Horizontal Auto-Marquee Media Cluster (Work 2 & 3 Scenarios)
+
+**Description**: Specific sections (e.g., Work 2, Work 3) feature a horizontal infinite auto-scrolling ticker (Marquee) of 3-10 videos intersecting the primary vertical infinite scroll. 
+**Interaction Model (UPDATED POST-MVP PIVOT): Zero manual interaction. The track moves continuously at a constant speed, regardless of user scroll state.** No hover-to-play, no tap-to-toggle, no dragging. Videos play continuously when in viewport.
+*Reason for change*: The original "Dwell-to-Play" (stopping the marquee when the user stops scrolling) resulted in a poor, disjointed UX that felt unresponsive ("trải nghiệm dừng chuột dừng trôi như cứt").
+
+**Layout & Animation Strategy**:
 - **Mechanism**: The horizontal track moves continuously via a dedicated RAF loop using CSS `transform: translate3d(x, 0, 0)`.
-- **Global State Synchronization & Float Precision Safety**: Do NOT write `translateX` to Zustand every RAF frame. Store `baseTimestamp` and `totalPausedDuration`. Real and clone tracks compute `translateX` locally each RAF tick.
+- **Scroll Isolation**: No manual horizontal dragging exists at all. Lenis native vertical momentum remains 100% uninterrupted; the marquee never intercepts touch/wheel events.
+
+**Always-Playing Rule (Desktop + Mobile, single code path)**:
+- **Trigger condition**: Videos auto-play whenever they intersect with the viewport via `IntersectionObserver`.
+- **Marquee motion**: The marquee continuously calculates its position via `(performance.now() * speed) % trackWidth`. It never pauses.
   - **Float Precision Protection**: To prevent float precision loss, the system MUST use `performance.now()` for time delta calculations, wrapped in a modulo operator based on track width:
     `((performance.now() - baseTimestamp - totalPausedDuration) * speed) % originalTrackWidth`.
   - **Modulo DOM Duplication (Seam Snap Prevention)**: To ensure modulo seamless looping without visual snapping when `translateX` resets, the Marquee DOM MUST physically duplicate its inner node list (e.g., `[A,B,C] -> [A,B,C, A,B,C]`). 

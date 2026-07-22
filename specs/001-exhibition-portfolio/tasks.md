@@ -16,9 +16,9 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Install `zustand` dependency in `d:\web_portfolio\package.json`
-- [ ] T002 [P] Create mock exhibition data matching Data Model in `d:\web_portfolio\data\sections.json`
-- [ ] T003 [P] Add CSS variable `--section-height` base and scale prevention in `d:\web_portfolio\app\globals.css`
+- [x] T001 Install `zustand` dependency in `d:\web_portfolio\package.json`
+- [x] T002 [P] Create mock exhibition data matching Data Model in `d:\web_portfolio\data\sections.json`
+- [x] T003 [P] Add CSS variable `--section-height` base and scale prevention in `d:\web_portfolio\app\globals.css`
 
 ---
 
@@ -28,10 +28,10 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Create Scroll Phase & Teleport Store in `d:\web_portfolio\lib\store\useScrollStore.ts`
-- [ ] T005 [P] Create Marquee Base Timestamp Store in `d:\web_portfolio\lib\store\useMarqueeStore.ts`
-- [ ] T006 Create CSS Variable Viewport Sync Hook in `d:\web_portfolio\lib\hooks\useViewportSync.ts`
-- [ ] T007 Refactor base Section wrapper (CSS var height, Clone Aria-hidden) in `d:\web_portfolio\components\Section.tsx`
+- [x] T004 Create Scroll Phase & Teleport Store in `d:\web_portfolio\lib\store\useScrollStore.ts`
+- [x] T005 [P] Create Marquee Base Timestamp Store in `d:\web_portfolio\lib\store\useMarqueeStore.ts`
+- [x] T006 Create CSS Variable Viewport Sync Hook in `d:\web_portfolio\lib\hooks\useViewportSync.ts`
+- [x] T007 Refactor base Section wrapper (CSS var height, Clone Aria-hidden) in `d:\web_portfolio\components\Section.tsx`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin.
 
@@ -45,10 +45,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Create core Physics & State Machine Hook in `d:\web_portfolio\lib\hooks\useExhibitionScroll.ts`
-- [ ] T009 [US1] Extract GSAP Sprite Logic into isolated component `d:\web_portfolio\components\SpriteAnimation.tsx`
-- [ ] T010 [US1] Refactor Main Controller to mount 12 sections (3 clones + 6 main + 3 clones) in `d:\web_portfolio\app\page.tsx`
-- [ ] T011 [US1] Integrate `useExhibitionScroll` and `useViewportSync` into `d:\web_portfolio\app\page.tsx`
+- [x] T008 [US1] Create core Physics & State Machine Hook in `d:\web_portfolio\lib\hooks\useExhibitionScroll.ts`
+- [x] T009 [US1] Extract GSAP Sprite Logic into isolated component `d:\web_portfolio\components\SpriteAnimation.tsx`
+- [x] T010 [US1] Refactor Main Controller to mount 12 sections (3 clones + 6 main + 3 clones) in `d:\web_portfolio\app\page.tsx`
+- [x] T011 [US1] Integrate `useExhibitionScroll` and `useViewportSync` into `d:\web_portfolio\app\page.tsx`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional (infinite scrolling works).
 
@@ -62,9 +62,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T012 [P] [US2] Create Modulo-safe Marquee Track Component in `d:\web_portfolio\components\HorizontalMarquee.tsx`
-- [ ] T013 [US2] Update Physics Hook to trigger DWELLING state when velocity ~0 outside cooldown in `d:\web_portfolio\lib\hooks\useExhibitionScroll.ts`
-- [ ] T014 [US2] Integrate `HorizontalMarquee` rendering based on JSON layout into `d:\web_portfolio\app\page.tsx`
+- [x] T012 [P] [US2] Create Modulo-safe Marquee Track Component in `d:\web_portfolio\components\HorizontalMarquee.tsx`
+- [x] T013 [US2] Update Physics Hook to trigger DWELLING state when velocity ~0 outside cooldown in `d:\web_portfolio\lib\hooks\useExhibitionScroll.ts`
+- [x] T014 [US2] Integrate `HorizontalMarquee` rendering based on JSON layout into `d:\web_portfolio\app\page.tsx`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently.
 
@@ -78,10 +78,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Create Media Video component with IntersectionObserver Rule of 3 logic in `d:\web_portfolio\components\MediaVideo.tsx`
-- [ ] T016 [US3] Implement Deep VRAM flush (`removeAttribute('src')` + `.load()`) in unmount lifecycle of `d:\web_portfolio\components\MediaVideo.tsx`
-- [ ] T017 [US3] Wrap `.play()` in try/catch and sync with DWELLING state in `d:\web_portfolio\components\MediaVideo.tsx`
-- [ ] T018 [US3] Mount `MediaVideo` items inside the `HorizontalMarquee` component.
+- [x] T015 [US3] Create Media Video component with IntersectionObserver Rule of 3 logic in `d:\web_portfolio\components\MediaVideo.tsx`
+- [x] T016 [US3] Implement Deep VRAM flush (`removeAttribute('src')` + `.load()`) in unmount lifecycle of `d:\web_portfolio\components\MediaVideo.tsx`
+- [x] T017 [US3] Wrap `.play()` in try/catch and sync with DWELLING state in `d:\web_portfolio\components\MediaVideo.tsx`
+- [x] T018 [US3] Mount `MediaVideo` items inside the `HorizontalMarquee` component.
 
 **Checkpoint**: All user stories should now be independently functional.
 
