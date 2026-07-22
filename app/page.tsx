@@ -56,7 +56,7 @@ export default function Exhibition() {
               <h2 className="text-2xl md:text-5xl font-bold tracking-tighter absolute top-12 md:top-24 left-12 md:left-24 z-10 pointer-events-none mix-blend-difference">{section.title}</h2>
               <HorizontalMarquee 
                 items={section.items || []} 
-                direction={section.marquee?.direction || 'left'} 
+                direction={(section.marquee?.direction as 'left' | 'right') || 'left'} 
                 speed={(section.marquee?.speed || 1.0) * 0.05} // Scale JSON speed to reasonable pixel/ms value
               />
               {section.isClone && (
