@@ -11,6 +11,41 @@
 - Q: The specification lacks the exact JSON data structure for sections featuring a Horizontal Auto-Marquee. How should the media items for a marquee be structured in the data model? → A: Use a nested array structure with a unified `layout` property (e.g. `layout: "horizontal-marquee"`). Each marquee item represents an independent artwork entity inside an `items` array.
 - Q: Where will the JSON configuration data for the entire exhibition be stored and loaded from? → A: Local Static JSON (`data/sections.json`) bundled with Next.js (SSG).
 
+## Post-MVP Architecture Refinements (2026-07-23)
+
+### 1. Scroll Snap (Dừng tại section tiếp theo - Chill Glide)
+**Mục tiêu:** Khi người dùng ngừng cuộn, màn hình không bị giật ngược lại mà sẽ trôi mượt mà (glide) về phía section tiếp theo theo đà cuộn.
+- **Giải pháp:** Bắt sự kiện `lenis.on('scroll')` kết hợp với `debounceTimeout`. Kiểm tra `e.direction`.
+- **Logic tính toán:** Dựa vào hướng cuộn (lên hoặc xuống), dùng hàm `Math.ceil()` hoặc `Math.floor()` nhân với `sectionHeight` để xác định section mục tiêu.
+- **Thực thi:** Dùng `lenis.scrollTo(target, { duration: 2.5, easing: quartOut })` để trôi từ từ êm ái (chill) tới đích. Đảm bảo logic không chạy khi đang trong Teleport Cooldown.
+
+### 2. Kịch bản Intro & Sprite Behavior
+
+#### 2.1. Loading Checkpoint
+- **Mục tiêu:** Tránh lỗi giật lag, đảm bảo tài nguyên nặng (đặc biệt là spritesheet 120 frames và ảnh tĩnh) sẵn sàng 100% trước khi diễn.
+- **Giải pháp:** Xây dựng một màn hình Loading Overlay ngắn. Dùng `Promise.all` hoặc Image `onload`. Khi trạng thái báo `isLoaded = true`, overlay mờ dần (fade out) và kích hoạt Intro Timeline.
+
+#### 2.2. Sprite Intro Animation (First Play)
+- **Mục tiêu:** Ấn tượng thị giác mạnh từ lúc mở màn, dẫn dắt sprite vào vị trí hòa quyện với Art tĩnh của Section 1.
+- **Kịch bản GSAP Timeline:**
+  - **Start:** Scale to `2.5x`, đặt ở trung tâm màn hình.
+  - **Action:** Play chuỗi 120 frames kết hợp đồng thời với hiệu ứng thu nhỏ (`scale: 1`) và di chuyển (`x, y`) về điểm xuất phát.
+  - **End:** Dừng chính xác tại tọa độ thuộc quỹ đạo toán học (Start Point) chuẩn bị cho pha bay theo scroll.
+
+#### 2.3. Sprite Hành trình (Scroll Behavior)
+- **Mục tiêu:** Sprite bay lượn sinh động (lên/xuống/trái/phải) theo cuộn chuột, và loop hoàn hảo.
+- **Công thức Toán học & GSAP ScrollTrigger:**
+  - Sử dụng hàm lượng giác (Sine / Cosine) kết hợp với `scrollY` để tạo quỹ đạo uốn lượn tự nhiên.
+  - **Logic Loop:** Thiết lập công thức chia chẵn cho 6 section (chu kỳ teleport). Quỹ đạo và frame ở mốc `3*innerHeight` và `9*innerHeight` (2 điểm teleport) phải bằng nhau tuyệt đối từng pixel để lặp không vết xước.
+  - Liên kết frame của Sprite tỷ lệ thuận với cuộn để tạo cảm giác tương tác.
+
+### 3. Hệ thống Parallax 2.5D (4 Layer Art Placeholder)
+- **Cấu trúc:** 4 thẻ `div` đặt dọc theo 2 cạnh trái/phải, chiều rộng `15vw`.
+- **Phân tầng Chiều sâu (Z-index & Tốc độ):**
+  - **2 Layer Tiền cảnh (Foreground):** Nằm đè lên trên cùng (Z-index cao nhất). Tốc độ: `vận tốc cuộn × 1.2` (trôi nhanh hơn).
+  - **2 Layer Hậu cảnh (Background):** Nằm chìm phía sau các section chính (Z-index thấp). Tốc độ: `vận tốc cuộn × 0.8` (trôi chậm hơn).
+- **Xử lý Loop:** Các layer này cũng cần áp dụng logic nhân bản (clone) nối đuôi giống hệ thống section chính (Buffer 12 sections) để trôi liên tục không đứt đoạn qua cổng teleport.
+
 ## Architecture & Layout Overview *(mandatory)*
 
 ### 1. Section Hierarchy & Clone Layout (Buffer Expansion)

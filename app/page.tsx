@@ -5,11 +5,14 @@ import sectionsData from '../data/sections.json';
 import { Section } from '../components/Section';
 import { SpriteAnimation } from '../components/SpriteAnimation';
 import { HorizontalMarquee } from '../components/HorizontalMarquee';
+import { LoadingOverlay } from '../components/LoadingOverlay';
+import { ParallaxSides } from '../components/ParallaxSides';
 import { useExhibitionScroll } from '../lib/hooks/useExhibitionScroll';
 import { useViewportSync } from '../lib/hooks/useViewportSync';
 
 export default function Exhibition() {
   const [mounted, setMounted] = useState(false);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
   
   // Apply our custom hooks
   useViewportSync();
@@ -42,7 +45,9 @@ export default function Exhibition() {
 
   return (
     <main className="relative w-full bg-black text-white selection:bg-white/20">
-      <SpriteAnimation />
+      {!assetsLoaded && <LoadingOverlay onLoaded={() => setAssetsLoaded(true)} />}
+      <ParallaxSides />
+      <SpriteAnimation startIntro={assetsLoaded} />
       
       {exhibitionBuffer.map((section) => (
         <Section key={section.key} id={section.key} isClone={section.isClone}>

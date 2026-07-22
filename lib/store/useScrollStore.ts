@@ -11,6 +11,8 @@ interface ScrollState {
   setScrollProgress: (progress: number) => void;
   triggerTeleport: () => void;
   clearCooldown: () => void;
+  isIntroComplete: boolean;
+  completeIntro: () => void;
 }
 
 export const useScrollStore = create<ScrollState>((set, get) => ({
@@ -18,6 +20,9 @@ export const useScrollStore = create<ScrollState>((set, get) => ({
   teleportCooldownActive: false,
   lastTeleportTime: 0,
   scrollProgress: 0,
+  isIntroComplete: false,
+  
+  completeIntro: () => set({ isIntroComplete: true }),
   
   setPhase: (phase) => set({ currentPhase: phase }),
   
