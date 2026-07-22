@@ -1,141 +1,65 @@
-"use client";
-
-import React, { useEffect, useRef } from 'react';
-import Lenis from 'lenis';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Section from '@/components/Section';
-import { sections } from '@/data/sections';
-
-gsap.registerPlugin(ScrollTrigger);
-
-const SPRITE_SHEET_PATH = '/png/spritesheet.png';
-const FRAME_COUNT = 120;
-const COLS = 120;
-
-// Clone 2 sections đầu ở cuối và 2 sections cuối ở đầu để loop mượt 2 chiều
-const loopSections = [
-  ...sections.slice(-2).map(s => ({ ...s, id: s.id - 100 })), // Clone last 2 at start
-  ...sections,
-  ...sections.slice(0, 2).map(s => ({ ...s, id: s.id + 100 })), // Clone first 2 at end
-];
+import Image from "next/image";
 
 export default function Home() {
-  const spriteRef = useRef<HTMLDivElement>(null);
-  const lenisRef = useRef<Lenis | null>(null);
-
-  useEffect(() => {
-    const vh = window.innerHeight;
-    const offset = 2 * vh; // Chiều cao của 2 sections clone ở đầu
-    const loopEnd = (sections.length + 2) * vh;
-    const loopStart = 2 * vh;
-
-    const lenis = new Lenis({
-      duration: 2.2, // Tăng nhẹ thời gian để cảm nhận rõ ease
-      easing: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2, // Cubic Ease In Out
-      orientation: 'vertical',
-      gestureOrientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1.0, // Giữ tỷ lệ 1:1 cho cảm giác tự nhiên
-    });
-
-    lenisRef.current = lenis;
-
-    // Khởi tạo vị trí ở section 1 thật (bỏ qua 2 section clone đầu)
-    lenis.scrollTo(offset, { immediate: true });
-
-    lenis.on('scroll', ({ scroll }: { scroll: number }) => {
-      // Teleport khi cuộn xuống cuối (chạm vào bản clone của section 1)
-      if (scroll >= loopEnd) {
-        lenis.scrollTo(scroll - (sections.length * vh), { immediate: true });
-      }
-      // Teleport khi cuộn lên đầu (chạm vào bản clone của section cuối)
-      if (scroll <= 0) {
-        lenis.scrollTo(scroll + (sections.length * vh), { immediate: true });
-      }
-      ScrollTrigger.update();
-    });
-
-    gsap.ticker.add((time) => {
-      lenis.raf(time * 1000);
-    });
-    gsap.ticker.lagSmoothing(0);
-
-    return () => {
-      lenis.destroy();
-    };
-  }, []);
-
-  // Sprite Logic
-  useEffect(() => {
-    const spriteEl = spriteRef.current;
-    if (!spriteEl) return;
-
-    const spriteImage = new Image();
-    spriteImage.src = SPRITE_SHEET_PATH;
-    spriteImage.onload = () => {
-      const w = spriteEl.offsetWidth;
-      const h = spriteEl.offsetHeight;
-      spriteEl.style.backgroundImage = `url(${SPRITE_SHEET_PATH})`;
-      spriteEl.style.backgroundSize = `${w * COLS}px ${h}px`;
-
-      const state = { frame: 0 };
-      const updateFrame = gsap.quickSetter(spriteEl, 'backgroundPosition');
-
-      const render = () => {
-        const col = Math.floor(state.frame) % COLS;
-        updateFrame(`${-col * w}px 0px`);
-      };
-
-      ScrollTrigger.create({
-        start: 0,
-        end: 'max',
-        scrub: 0.5,
-        onUpdate: (self) => {
-          const p = self.progress;
-          // Sprite frames animation loop
-          const spriteP = (p * 12) % 1;
-          state.frame = spriteP * (FRAME_COUNT - 1);
-          render();
-
-          // Sprite horizontal movement (ping-pong)
-          const maxX = window.innerWidth - spriteEl.offsetWidth;
-          let xP = (p * 6) % 2;
-          if (xP > 1) xP = 2 - xP;
-          gsap.set(spriteEl, { x: maxX * gsap.parseEase('sine.inOut')(xP) });
-        },
-      });
-
-      // Intro animation
-      gsap.to(state, {
-        frame: FRAME_COUNT - 1,
-        duration: 2,
-        ease: 'power2.out',
-        onUpdate: render,
-      });
-    };
-  }, []);
-
   return (
-    <main className="relative select-none overflow-hidden">
-      {/* Background Overlay for Exhibition Vibe */}
-      <div className="fixed inset-0 pointer-events-none z-50 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
-      
-      <div className="flex flex-col">
-        {loopSections.map((section) => (
-          <Section key={section.id} section={section} />
-        ))}
-      </div>
-
-      <div
-        ref={spriteRef}
-        className="fixed top-1/2 -translate-y-1/2 left-0 w-[20vw] h-[20vw] max-w-[200px] max-h-[200px] z-[60] pointer-events-none bg-no-repeat"
-      />
-      
-      {/* UI Elements */}
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] mix-blend-difference pointer-events-none">
-        <div className="w-[1px] h-12 bg-white/20 animate-pulse" />
-      </div>
-    </main>
+    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+        <Image
+          className="dark:invert"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={100}
+          height={20}
+          priority
+        />
+        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+            To get started, edit the page.tsx file.
+          </h1>
+          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+            Looking for a starting point or more instructions? Head over to{" "}
+            <a
+              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Templates
+            </a>{" "}
+            or the{" "}
+            <a
+              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Learning
+            </a>{" "}
+            center.
+          </p>
+        </div>
+        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+          <a
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
+            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Image
+              className="dark:invert"
+              src="/vercel.svg"
+              alt="Vercel logomark"
+              width={16}
+              height={16}
+            />
+            Deploy Now
+          </a>
+          <a
+            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
+            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Documentation
+          </a>
+        </div>
+      </main>
+    </div>
   );
 }
