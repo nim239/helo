@@ -17,7 +17,7 @@
 **Mục tiêu:** Khi người dùng ngừng cuộn, màn hình không bị giật ngược lại mà sẽ trôi mượt mà (glide) về phía section tiếp theo theo đà cuộn.
 - **Giải pháp:** Bắt sự kiện `lenis.on('scroll')` kết hợp với `debounceTimeout`. Kiểm tra `e.direction`.
 - **Logic tính toán:** Dựa vào hướng cuộn (lên hoặc xuống), dùng hàm `Math.ceil()` hoặc `Math.floor()` nhân với `sectionHeight` để xác định section mục tiêu.
-- **Thực thi:** Dùng `lenis.scrollTo(target, { duration: 2.5, easing: quartOut })` để trôi từ từ êm ái (chill) tới đích. Đảm bảo logic không chạy khi đang trong Teleport Cooldown.
+- **Thực thi:** Dùng `lenis.scrollTo(target, { duration: 30.5, easing: Quint ease-in-out })` để trôi bồng bềnh siêu chậm tới đích. Đảm bảo logic không chạy khi đang trong Teleport Cooldown.
 
 ### 2. Kịch bản Intro & Sprite Behavior
 
@@ -30,7 +30,7 @@
 - **Kịch bản GSAP Timeline:**
   - **Start:** Scale to `2.5x`, đặt ở trung tâm màn hình.
   - **Action:** Play chuỗi 120 frames kết hợp đồng thời với hiệu ứng thu nhỏ (`scale: 1`) và di chuyển (`x, y`) về điểm xuất phát.
-  - **End:** Dừng chính xác tại tọa độ thuộc quỹ đạo toán học (Start Point) chuẩn bị cho pha bay theo scroll.
+  - **End:** Dừng chính xác tại tọa độ thuộc quỹ đạo toán học (Start Point) được config qua biến `START_POINT_SPRITE` chuẩn bị cho pha bay theo scroll.
 
 #### 2.3. Sprite Hành trình (Scroll Behavior)
 - **Mục tiêu:** Sprite bay lượn sinh động (lên/xuống/trái/phải) theo cuộn chuột, và loop hoàn hảo.
@@ -44,7 +44,7 @@
 - **Phân tầng Chiều sâu (Z-index & Tốc độ):**
   - **2 Layer Tiền cảnh (Foreground):** Nằm đè lên trên cùng (Z-index cao nhất). Tốc độ: `vận tốc cuộn × 1.2` (trôi nhanh hơn).
   - **2 Layer Hậu cảnh (Background):** Nằm chìm phía sau các section chính (Z-index thấp). Tốc độ: `vận tốc cuộn × 0.8` (trôi chậm hơn).
-- **Xử lý Loop:** Các layer này cũng cần áp dụng logic nhân bản (clone) nối đuôi giống hệ thống section chính (Buffer 12 sections) để trôi liên tục không đứt đoạn qua cổng teleport.
+- **Xử lý Loop:** Các layer này áp dụng logic nhân bản (clone) nối đuôi giống hệ thống section chính (Buffer 12 sections). Để trôi liên tục không đứt đoạn qua cổng teleport, tốc độ được ép thành phân số tuyệt đối (`7/6` thay vì 1.2, và `5/6` thay vì 0.8) và neo tọa độ dịch chuyển vào `baseline = window.innerHeight * 3`. Nhờ vậy, khi Teleport 6 section, Parallax sẽ nhảy một khoảng nguyên vẹn (vd: 7 section hoặc 5 section), đảm bảo liền mạch 100%.
 
 ## Architecture & Layout Overview *(mandatory)*
 
