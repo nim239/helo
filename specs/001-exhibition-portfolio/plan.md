@@ -1,48 +1,65 @@
-# Architecture Expansion: Phase 2 "WOW" Features
+# Architecture Plan: Roadmap Phase 2 "WOW" Features
 
-This plan outlines the implementation of the Phase 2 Roadmap features defined in `spec.md`, integrating them safely into the established non-interactive scrolling exhibition engine.
+This plan outlines the architecture and implementation details for the 5 Phase 2 Roadmap features defined in `spec.md`, fully incorporating the 5 clarifications resolved during `/speckit-clarify`.
 
 ## 1. Technical Context
 
-- **Audio Reactive Canvas**: Web Audio API requires a user gesture to start. We will link an `AnalyserNode` to `lenis.velocity` (via `useScrollStore`) to modulate pitch and volume.
-- **WebGL Cursor**: A dedicated `<canvas>` positioned fixed on top (`z-index: 9999`). We will use raw WebGL (or a lightweight wrapper like OGL) to track `mousemove` natively and bypass React overhead.
-- **Gyroscope Parallax**: `DeviceOrientationEvent` requires explicit permission on iOS 13+. We will capture X/Y rotation and feed it into a Zustand store or directly mutate CSS variables.
-- **Deep Linking**: `window.location.hash` will be read on mount. If present, the app initializes in a "Curtain" state.
-- **Enter Exhibition Overlay**: A necessary gateway component to acquire permissions. A single "Enter" button click will simultaneously:
-  1. Resume/Start AudioContext.
-  2. Request DeviceOrientation permission (if iOS).
-  3. Unlock the GSAP Sprite Intro.
+- **Feature 1: Dynamic Audio Reactive Canvas**
+  - Web Audio API `AudioContext` with synthesizers (0KB asset overhead).
+  - Oscillators & Gain/Filter nodes dynamically controlled by `lenis.velocity` in RAF loop.
+  - Initialized on user interaction via `EnterOverlay`.
+
+- **Feature 2: Custom Inertia WebGL Cursor**
+  - Powered by `ogl` (~15KB gzipped) for high-performance WebGL liquid distortion shader.
+  - RAF position tracking with magnet effect targeting `.media-video-container`.
+
+- **Feature 3: 2.5D Gyroscope Depth Motion**
+  - Listen to `DeviceOrientationEvent` (with iOS 13+ permission request in `EnterOverlay`).
+  - Silent fallback to Touch Scroll Parallax if permission is denied.
+
+- **Feature 4: DevTools "Hacker Mode" Easter Egg**
+  - Auto-prints ASCII Art logo and real-time Teleport Math, VRAM flush counts, and FPS metrics on F12 DevTools console open.
+
+- **Feature 5: Seamless Hash Deep Linking With Curtains Transition**
+  - Detect `window.location.hash` on mount.
+  - Play 120-frame Sprite Intro, followed by a 5.0s `power4.inOut` Curtains split-screen reveal animation.
 
 ## 2. Constitution Check
 
-- **Constraint**: No heavy DOM manipulation during scroll.
-  - *Mitigation*: WebGL Cursor and Gyroscope will use `requestAnimationFrame` and CSS `transform` / `translate3d()` exclusively.
-- **Constraint**: Forward-Only Snapping.
-  - *Mitigation*: Already implemented in Phase 1 hotfix.
+- **Constraint**: Transient State Architecture (Zustand) for scroll coordinates.
+  - *Compliance*: All velocity, gyro X/Y, and audio levels stream through RAF without React re-renders.
+- **Constraint**: Continuous Linear Layout & Easy In/Easy Out.
+  - *Compliance*: Curtains transition and audio fades follow smooth GSAP easings (`power4.inOut`).
+- **Constraint**: Forward-Only Snapping & Mobile Physics Stability.
+  - *Compliance*: `syncTouch: true` enabled in Lenis instance to prevent Android Chrome touch hijacking.
 
 ## 3. Proposed Changes
 
 ### [NEW] `components/EnterOverlay.tsx`
-- Renders a full-screen black overlay with an "Enter Exhibition" button.
-- Triggers Audio and Gyroscope permissions, then sets `isIntroComplete = false` to start the Sprite sequence.
+- Full-screen black gateway overlay with "Enter Exhibition" button.
+- Handles user gesture for Web Audio API `AudioContext.resume()` and iOS `DeviceOrientationEvent.requestPermission()`.
 
 ### [NEW] `components/AmbientAudio.tsx`
-- Headless component (returns `null`).
-- Manages `AudioContext`, `GainNode`, and `BiquadFilterNode` (for pitch shifting/muffling).
-- Subscribes to `useScrollStore.getState().scrollProgress` and `velocity` in a RAF loop.
+- Headless component managing Web Audio API oscillators and biquad filters.
+- Modulates pitch and gain based on `lenis.velocity`.
 
 ### [NEW] `components/WebGLCursor.tsx`
-- Renders `<canvas className="fixed inset-0 pointer-events-none z-[9999]" />`.
-- Initializes a shader program with liquid distortion.
-- Tracks `window.addEventListener('mousemove')`.
+- Full-screen canvas powered by `ogl`.
+- Renders liquid distortion cursor shader, magnet effect on video hover, and CD countdown indicator.
 
 ### [NEW] `components/CurtainsTransition.tsx`
-- Handles the WebGL/CSS "split screen" transition when deep linking is detected.
+- Renders dual-leaf curtain elements that split open over 5.0s (`power4.inOut`) when navigating via deep links.
 
-## 4. Open Questions / User Review Required
+### [NEW] `lib/utils/consoleHackerMode.ts`
+- Utility that auto-prints ASCII art and attaches getter traps on `console` to stream Teleport Math, VRAM counts, and FPS metrics.
 
-> [!IMPORTANT]
-> **WebGL Library**: Do you want me to write raw WebGL for the cursor (harder to maintain but 0 dependencies), or can I use a lightweight library like `ogl`?
+### [MODIFY] `app/page.tsx`
+- Inject `EnterOverlay`, `AmbientAudio`, `WebGLCursor`, `CurtainsTransition`, and initialize `consoleHackerMode()`.
 
-> [!WARNING]
-> **Audio Asset**: We need an ambient sound file (e.g., `ambient.mp3`). Should I use a placeholder URL for now?
+## 4. Verification & Testing
+
+- Validate Web Audio synth modulation on high scroll velocity.
+- Validate `ogl` WebGL cursor rendering at 60+ FPS on desktop.
+- Validate Gyroscope tilt on iOS/Android devices and fallback behavior.
+- Validate DevTools console output on F12.
+- Validate 5.0s Curtains transition on deep link URL access (`/#work-a`).

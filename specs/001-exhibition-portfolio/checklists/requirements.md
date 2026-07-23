@@ -1,35 +1,24 @@
-# Specification Quality Checklist: Exhibition Portfolio & Scroll Engine
+# Requirements Quality Checklist
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-07-22  
-**Feature**: [spec.md](file:///d:/web_portfolio/specs/001-exhibition-portfolio/spec.md)
-
-## Content Quality
-
-- [ ] No implementation details (languages, frameworks, APIs)
-- [x] Focused on user value and business needs
-- [x] Written for non-technical stakeholders
-- [x] All mandatory sections completed
+**Purpose:** Unit tests for requirements clarity, completeness, and testability.
 
 ## Requirement Completeness
+- [ ] CHK001 Are the conditions for triggering the "Enter Exhibition" overlay completely specified? [Completeness]
+- [ ] CHK002 Are fallback behaviors defined for all browsers that do not support Web Audio API? [Gap]
+- [ ] CHK003 Are the exact visual assets for the ASCII DevTools logo documented? [Completeness]
 
-- [x] No [NEEDS CLARIFICATION] markers remain
-- [x] Requirements are testable and unambiguous
-- [x] Success criteria are measurable
-- [x] Success criteria are technology-agnostic (no implementation details)
-- [x] All acceptance scenarios are defined
-- [x] Edge cases are identified
-- [x] Scope is clearly bounded
-- [x] Dependencies and assumptions identified
+## Requirement Clarity
+- [ ] CHK004 Is the `ogl` liquid distortion effect quantified with specific uniform parameters (e.g., viscosity, wave speed)? [Clarity]
+- [ ] CHK005 Is the exact mapping between `lenis.velocity` and Web Audio pitch/volume defined? [Ambiguity]
 
-## Feature Readiness
+## Requirement Consistency
+- [ ] CHK006 Does the 5.0s Curtains Transition align with the overall Easy In / Easy Out motion principle? [Consistency]
+- [ ] CHK007 Are the mobile fallback behaviors consistent with the strict "Non-Interactive" rule? [Consistency]
 
-- [x] All functional requirements have clear acceptance criteria
-- [x] User scenarios cover primary flows
-- [x] Feature meets measurable outcomes defined in Success Criteria
-- [ ] No implementation details leak into specification
+## Edge Case Coverage
+- [ ] CHK008 Are requirements defined for when the user rapidly switches URL hashes during the 5.0s Curtains transition? [Edge Case]
+- [ ] CHK009 Is the behavior defined for Gyroscope parallax when the device is held perfectly flat? [Edge Case]
 
-## Notes
-
-- All validation checks passed on first iteration.
-- Specification is ready for `/speckit-plan` phase.
+## Non-Functional Requirements
+- [ ] CHK010 Are memory management requirements (VRAM flushing) defined for the WebGL Canvas? [NFR]
+- [ ] CHK011 Are performance budget constraints documented for the `ogl` shader loop? [NFR]

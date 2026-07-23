@@ -20,8 +20,8 @@ export function useExhibitionScroll() {
     }
 
     const lenis = new Lenis({
-      duration: 2.2,
-      easing: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+      duration: 2.5,
+      easing: (t) => 1 - Math.pow(1 - t, 4), // Quart Out cho đuôi ease-out dài hơn
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
@@ -142,8 +142,8 @@ export function useExhibitionScroll() {
             const proxy = { y: lenis.scroll };
             snapTween = gsap.to(proxy, {
               y: targetSection,
-              duration: 1.2,
-              ease: 'power3.inOut',
+              duration: 3,
+              ease: 'power2.inOut',
               onUpdate: () => {
                 lenis.scrollTo(proxy.y, { immediate: true });
               },

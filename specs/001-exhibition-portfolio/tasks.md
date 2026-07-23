@@ -13,3 +13,7 @@
 - [ ] T005 Implement Seamless Hash Deep Linking with Curtains Effect transition per `spec.md Phase 2.5` (missing)
 - [ ] T006 Ensure Sprite Intro plays in front of the Curtains effect during deep linking per `spec.md Clarifications` (missing)
 - [ ] T007 Implement DevTools "Hacker Mode" Easter Egg (ASCII art, real-time stats) per `spec.md Phase 2.4` (missing)
+
+## Phase 3: Convergence
+- [ ] T008 Implement silent fallback to Touch Scroll Parallax when Gyroscope permission is denied on iOS per `spec.md Clarifications` (missing)
+- [ ] T009 Implement 5.0s power4.inOut easing for Curtains Transition deep-link reveal per `spec.md Clarifications` (missing)

@@ -14,6 +14,11 @@
 ### Session 2026-07-23
 - Q: iOS 13+ requires an explicit user tap to enable DeviceOrientationEvent (Gyroscope), and browsers block Web Audio API without interaction. Given our strict "Non-Interactive" rule, how should we trigger these permissions? → A: Add a one-time "Enter Exhibition" overlay (solves both Audio autoplay and Gyroscope permissions)
 - Q: When a user accesses a deep link (e.g., `/#work-a`), should the "Curtains Effect" completely bypass the standard 120-frame Sprite Intro? → A: Play the Sprite Intro first in front of the Curtains effect, then open the Curtains to reveal the deep-linked target.
+- Q: Đối với Dynamic Audio Reactive Canvas, nguồn âm thanh sẽ được tạo như thế nào? → A: Sử dụng Web Audio API Synthesizer (tạo âm thanh tổng hợp client-side, 0KB asset), biến thiên pitch/volume trực tiếp theo lenis.velocity.
+- Q: Đối với Custom Inertia WebGL Cursor, thư viện WebGL nào sẽ được sử dụng? → A: Sử dụng thư viện WebGL siêu nhẹ ogl (~15KB gzipped) để dựng liquid distortion shader và magnet effect.
+- Q: Nếu người dùng từ chối cấp quyền Gyroscope trên iOS, hệ thống sẽ xử lý thế nào? → A: Tự động fallback về Touch Scroll Parallax, giữ trải nghiệm triển lãm liền mạch không hiện popup báo lỗi.
+- Q: DevTools "Hacker Mode" Easter Egg sẽ được kích hoạt như thế nào? → A: Tự động in ASCII Logo + Bảng thông số đo đạc thời gian thực (Teleport Math, VRAM Flushed Count, FPS) ngay khi người dùng mở F12 Console.
+- Q: Hiệu ứng mở rèm (Curtains Transition) khi Deep Linking sẽ có thời lượng bao lâu? → A: 5.0s với easing power4.inOut để tạo hiệu ứng mở rèm siêu chậm, cực kỳ đắm chìm và cinematic.
 
 ## Post-MVP Architecture Refinements (2026-07-23)
 

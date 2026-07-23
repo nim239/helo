@@ -8,6 +8,8 @@ import { HorizontalMarquee } from '../components/HorizontalMarquee';
 import { LoadingOverlay } from '../components/LoadingOverlay';
 import { ParallaxSides } from '../components/ParallaxSides';
 import { MobileDebug } from '../components/MobileDebug';
+import { EnterOverlay } from '../components/EnterOverlay';
+import { HackerMode } from '../components/HackerMode';
 import { useExhibitionScroll } from '../lib/hooks/useExhibitionScroll';
 import { useViewportSync } from '../lib/hooks/useViewportSync';
 
@@ -45,7 +47,9 @@ export default function Exhibition() {
   ];
 
   return (
-    <main className="relative w-full bg-black text-white selection:bg-white/20">
+    <main className="relative w-full bg-black text-white selection:bg-white/20 overflow-hidden">
+      <HackerMode />
+      <EnterOverlay />
       {!assetsLoaded && <LoadingOverlay onLoaded={() => setAssetsLoaded(true)} />}
       <ParallaxSides />
       <SpriteAnimation startIntro={assetsLoaded} />
