@@ -1,8 +1,8 @@
 # 🎬 001-Exhibition-Portfolio: The 144Hz Cinematic Engine
 
-Chào mừng đến với hệ thống lõi vật lý "mượt cứt" của Pháp Sư C4D. 
+Chào mừng đến với hệ thống lõi vật lý "mượt cứt" của Pháp Sư tập sự hệ vibecoding. 
 
-Dự án này không dành cho những bộ óc phàm phu tục tử. Không có WebGL nặng nề, không có CSS transition rẻ rách. Đây là cảnh giới tối cao của nghệ thuật thao túng không gian 3D, Sprite Sheet 120-frame bóp méo khúc xạ cầu vồng và kiến trúc Scroll-Scrubbing đồng bộ 1:1. Mọi thứ được thiết kế để ép xung GPU trình duyệt, tát thẳng vào thị giác người xem ở 144fps.
+Dự án này dành cho những bộ óc phàm phu tục tử. Không có WebGL nặng nề, không có CSS transition rẻ rách. Đây là cảnh giới tối cao của nghệ thuật thao túng không gian 3D, Sprite Sheet 120-frame bóp méo khúc xạ cầu vồng và kiến trúc Scroll-Scrubbing đồng bộ 1:1. Mọi thứ được thiết kế để ép xung GPU trình duyệt, tát thẳng vào thị giác người xem ở 144fps.
 
 ---
 
