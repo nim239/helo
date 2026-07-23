@@ -59,8 +59,8 @@ export function ParallaxSides() {
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
       if (e.gamma === null || e.beta === null) return;
-      const targetX = (e.gamma / 90) * 50; 
-      const targetY = (e.beta / 90) * 50;
+      const targetX = (e.gamma / 90) * 150; 
+      const targetY = (e.beta / 90) * 150;
       
       gyroX += (targetX - gyroX) * 0.1;
       gyroY += (targetY - gyroY) * 0.1;

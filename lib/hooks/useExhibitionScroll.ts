@@ -26,7 +26,7 @@ export function useExhibitionScroll() {
       gestureOrientation: 'vertical',
       smoothWheel: true,
       syncTouch: true,         // ← QUAN TRỌNG: Lenis quản lý touch thay vì để native
-      touchMultiplier: 1.5,    // ← Tăng độ nhạy touch
+      touchMultiplier: 1.0,    // ← Giảm từ 1.5 xuống 1.0 để vuốt mobile đầm hơn
       wheelMultiplier: 1.0,
     });
 
@@ -107,11 +107,20 @@ export function useExhibitionScroll() {
       // Teleport boundaries
       if (scroll >= currentH * 9 && !state.teleportCooldownActive) {
         triggerTeleport();
-        lenis.scrollTo(scroll - (currentH * 6), { immediate: true });
+        const offset = currentH * 6;
+        // Bơm thẳng vào lõi Lenis để không làm mất velocity (quán tính)
+        (lenis as any).targetScroll -= offset;
+        (lenis as any).animatedScroll -= offset;
+        (lenis as any).actualScroll -= offset;
+        window.scrollTo(0, scroll - offset);
       }
       if (scroll <= currentH * 2 && !state.teleportCooldownActive) {
         triggerTeleport();
-        lenis.scrollTo(scroll + (currentH * 6), { immediate: true });
+        const offset = currentH * 6;
+        (lenis as any).targetScroll += offset;
+        (lenis as any).animatedScroll += offset;
+        (lenis as any).actualScroll += offset;
+        window.scrollTo(0, scroll + offset);
       }
 
       // ============================================================
