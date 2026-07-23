@@ -1,56 +1,38 @@
-# Quickstart & Validation Guide: Exhibition Portfolio
+# Quickstart: Phase 2 "WOW" Features Validation
 
-This guide provides steps to validate that the Exhibition Portfolio engine is working correctly according to the `spec.md`.
+## Prerequisites
+- Node.js 18+
+- Audio output enabled on your machine/device.
+- For Gyroscope testing: A physical mobile device (iOS/Android) with motion sensors.
 
-## Setup & Running
-
-1. **Install Dependencies**
-   ```bash
-   npm install
-   # Ensure zustand, lenis, gsap are installed
-   ```
-
-2. **Start the Development Server**
-   ```bash
-   npm run dev
-   ```
-
-3. **Open the Application**
-   Navigate to `http://localhost:3000`
+## Run Commands
+```bash
+npm install
+npm run dev
+```
 
 ## Validation Scenarios
 
-### 1. Velocity Preservation & Teleport Math
-**Test**: Scroll aggressively down until you cross the clone boundaries.
-**Expected**: 
-- The visual loop is perfectly seamless.
-- Momentum is preserved during the jump (the page continues scrolling naturally).
-- No visual snapping or blank spots occur.
+### 1. Enter Overlay & Audio Permission
+- Navigate to `http://localhost:3000`.
+- Verify a black overlay appears with an "Enter" button.
+- Click "Enter".
+- Verify ambient sound starts playing.
+- Scroll down rapidly. Verify the pitch and volume of the sound increase dynamically with your scroll velocity.
 
-### 2. State Machine Deadlock Bypass
-**Test**: Trigger a fast scroll that causes a teleport. Immediately place your finger on the trackpad/screen to stop the scroll (bringing velocity to 0) while within the 500ms teleport cooldown window. Wait 1 second, then scroll again.
-**Expected**: 
-- The application does not freeze. 
-- The state correctly bypasses the snap lerp, returns to IDLE, and resumes scrolling when you interact again.
+### 2. WebGL Cursor Magnet
+- On Desktop, move your mouse over the screen.
+- Verify a WebGL distortion effect follows your cursor.
+- Hover over an artwork/section. Verify the cursor "snaps" or magnets to the target and a CD (Cooldown) ring appears.
 
-### 3. Unified Dwell-to-Play Marquee Rule
-**Test**: Scroll down to the "Work B" (Horizontal Marquee) section and stop scrolling. Wait exactly 400ms without touching the mouse/screen.
-**Expected**: 
-- The horizontal marquee movement pauses.
-- The video closest to the horizontal center automatically begins playing.
-**Test 2**: Resume vertical scrolling.
-**Expected**:
-- The video pauses and reverts to its poster.
-- The horizontal marquee resumes its momentum.
+### 3. Deep Linking Curtains
+- Navigate directly to `http://localhost:3000/#work-b`.
+- Verify the "Enter" overlay appears (if it's the first visit).
+- Click "Enter".
+- Verify the Sprite Intro plays briefly, followed by a "Curtains opening" split-screen transition revealing `#work-b`.
 
-### 4. Rule of 3 (VRAM Flush on Safari)
-**Test**: Open the application on an iOS Simulator or Mac Safari. Open Web Inspector -> Network/Media tabs. Scroll through the marquee.
-**Expected**: 
-- A maximum of 3 video streams are actively downloading or decoding at any time.
-- Videos scrolling out of view trigger a `.load()` command, freeing the memory buffer (visible as dropped connections or freed memory in devtools).
-
-### 5. Safari Resize Re-render Clash Protection
-**Test**: On a mobile browser (or Simulator), scroll up and down slowly to trigger the browser's address bar to expand and collapse.
-**Expected**: 
-- The horizontal marquee track does NOT jump, reset, or flash.
-- The `--section-height` CSS variable updates smoothly in the background, keeping layout shifts perfectly synchronized with JS math via `useLayoutEffect`.
+### 4. Mobile Gyroscope Parallax
+- Open `http://localhost:3000` on a mobile device (using your local IP address).
+- Click "Enter". (On iOS, approve the Motion Sensor prompt).
+- Tilt your phone left/right and up/down.
+- Verify the background/foreground parallax layers shift in 2.5D space responding to your tilt.

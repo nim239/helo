@@ -65,11 +65,27 @@ export function useExhibitionScroll() {
     gsap.ticker.lagSmoothing(0);
 
     let snapTimeout: ReturnType<typeof setTimeout>;
+    let startScrollY = initialOffset;
+    let isDocumentVisible = true;
+
+    const handleVisibility = () => {
+      isDocumentVisible = !document.hidden;
+      if (!isDocumentVisible) {
+        clearTimeout(snapTimeout); // Fix Lỗi 3.1: Đóng băng snap khi ẩn app
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
     // Teleport and State Logic
     lenis.on('scroll', ({ scroll, velocity, direction }: { scroll: number, velocity: number, direction: number }) => {
       const state = useScrollStore.getState();
       const currentH = window.innerHeight;
+
+      // Fix Lỗi 1: Trình duyệt ép scrollY = 0 lúc mới load (hoặc bị kéo văng lên đỉnh khi chưa xong intro)
+      if (scroll < 10 && !state.isIntroComplete) {
+        lenis.scrollTo(initialOffset, { immediate: true });
+        return;
+      }
 
       // Update normalized progress
       const maxScroll = currentH * 11; // 12 sections total
@@ -79,6 +95,7 @@ export function useExhibitionScroll() {
       if (Math.abs(velocity) > 0.1) {
         if (state.currentPhase !== 'SCROLLING' && state.currentPhase !== 'TELEPORTING') {
           setPhase('SCROLLING');
+          startScrollY = scroll; // Fix Lỗi 3.2: Lưu tọa độ bắt đầu vuốt
         }
         clearTimeout(snapTimeout);
       } else if (Math.abs(velocity) <= 0.1 && state.currentPhase === 'SCROLLING') {
@@ -106,11 +123,16 @@ export function useExhibitionScroll() {
       if (Math.abs(velocity) < 0.5) {
         clearTimeout(snapTimeout);
         snapTimeout = setTimeout(() => {
+          if (!isDocumentVisible) return; // Fix Lỗi 3.1: Không snap nếu app đang bị ẩn
+          
           const currentState = useScrollStore.getState();
           if (currentState.teleportCooldownActive || !currentState.isIntroComplete) return;
           
           // BẢO VỆ ANDROID CHROME: Hủy snap nếu momentum cuộn tự nhiên vẫn đang chạy
           if (Math.abs(lenis.velocity) > 0.1) return;
+
+          // Fix Lỗi 3.2: Chỉ snap nếu vuốt một đoạn đủ dài (vài ba pixel rác thì bỏ qua)
+          if (Math.abs(lenis.scroll - startScrollY) < 5) return;
 
           // Forward-Only Snapping (Constitution Rule 6)
           // Chỉ snap xuống dưới (forward), không bao giờ snap ngược lên trên.
@@ -129,14 +151,20 @@ export function useExhibitionScroll() {
       }
     });
 
-    // BẢO VỆ ANDROID CHROME: Cho phép người dùng chạm để ngắt ngang animation
+    // Fix LỖI 2: Liệt Touch. Hễ chạm tay vào là ép cứng về SCROLLING và reset luồng Lenis
     const handleTouch = () => {
       clearTimeout(snapTimeout);
+      setPhase('SCROLLING');
+      lenis.stop();
+      lenis.start();
     };
     window.addEventListener('touchstart', handleTouch, { passive: true });
+    window.addEventListener('pointerdown', handleTouch, { passive: true });
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('touchstart', handleTouch);
+      window.removeEventListener('pointerdown', handleTouch);
       unsubscribe();
       lenis.destroy();
       gsap.ticker.remove((time) => lenis.raf(time * 1000));

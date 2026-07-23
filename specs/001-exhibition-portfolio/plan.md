@@ -1,43 +1,48 @@
-# Architecture Expansion: Scroll Snap & 2.5D Parallax System
+# Architecture Expansion: Phase 2 "WOW" Features
 
-This plan outlines the implementation of the missing requirements provided by the user: Scroll Snapping on rest, and a robust 4-layer 2.5D Parallax engine that accurately supports infinite-loop teleportation.
+This plan outlines the implementation of the Phase 2 Roadmap features defined in `spec.md`, integrating them safely into the established non-interactive scrolling exhibition engine.
 
-> [!WARNING]
-> The current `ParallaxSides.tsx` uses a simple CSS modulo loop. The new spec strictly requires **DOM cloning** mirroring the 12-section buffer logic, allowing distinct foreground/background layers to move continuously through the teleport portal.
+## 1. Technical Context
 
-## Proposed Changes
+- **Audio Reactive Canvas**: Web Audio API requires a user gesture to start. We will link an `AnalyserNode` to `lenis.velocity` (via `useScrollStore`) to modulate pitch and volume.
+- **WebGL Cursor**: A dedicated `<canvas>` positioned fixed on top (`z-index: 9999`). We will use raw WebGL (or a lightweight wrapper like OGL) to track `mousemove` natively and bypass React overhead.
+- **Gyroscope Parallax**: `DeviceOrientationEvent` requires explicit permission on iOS 13+. We will capture X/Y rotation and feed it into a Zustand store or directly mutate CSS variables.
+- **Deep Linking**: `window.location.hash` will be read on mount. If present, the app initializes in a "Curtain" state.
+- **Enter Exhibition Overlay**: A necessary gateway component to acquire permissions. A single "Enter" button click will simultaneously:
+  1. Resume/Start AudioContext.
+  2. Request DeviceOrientation permission (if iOS).
+  3. Unlock the GSAP Sprite Intro.
 
-### 1. Scroll Snapping Engine
+## 2. Constitution Check
 
-We will implement a debounce-based scroll snapping engine directly inside the `useExhibitionScroll` hook to safely co-exist with the teleport loop.
+- **Constraint**: No heavy DOM manipulation during scroll.
+  - *Mitigation*: WebGL Cursor and Gyroscope will use `requestAnimationFrame` and CSS `transform` / `translate3d()` exclusively.
+- **Constraint**: Forward-Only Snapping.
+  - *Mitigation*: Already implemented in Phase 1 hotfix.
 
-#### [MODIFY] [useExhibitionScroll.ts](file:///d:/web_portfolio/lib/hooks/useExhibitionScroll.ts)
-- Bind to `lenis.on('scroll')`.
-- Maintain a `debounceTimeout`. If the user stops scrolling for 250ms (and `teleportCooldown` is inactive), trigger the snap logic.
-- **Math**: `Math.round(scrollY / sectionHeight) * sectionHeight`.
-- Execute `lenis.scrollTo(target, { duration: 1.2, lock: true })`.
+## 3. Proposed Changes
 
-### 2. 2.5D Cloned Parallax System
+### [NEW] `components/EnterOverlay.tsx`
+- Renders a full-screen black overlay with an "Enter Exhibition" button.
+- Triggers Audio and Gyroscope permissions, then sets `isIntroComplete = false` to start the Sprite sequence.
 
-We will replace the current CSS-background-based parallax sides with a true DOM-cloned 4-layer parallax engine.
+### [NEW] `components/AmbientAudio.tsx`
+- Headless component (returns `null`).
+- Manages `AudioContext`, `GainNode`, and `BiquadFilterNode` (for pitch shifting/muffling).
+- Subscribes to `useScrollStore.getState().scrollProgress` and `velocity` in a RAF loop.
 
-#### [MODIFY] [ParallaxSides.tsx](file:///d:/web_portfolio/components/ParallaxSides.tsx)
-- Render 4 distinct containers: `LeftForeground`, `LeftBackground`, `RightForeground`, `RightBackground`.
-- Inside each container, map over an array of 12 placeholders (representing the 12 sections: 3 clones + 6 real + 3 clones) to guarantee DOM continuity.
-- **GSAP ScrollTrigger**: 
-  - Foreground layers translate at `speed = 1.2`.
-  - Background layers translate at `speed = 0.8`.
-- **Teleport Protection**: When `useExhibitionScroll` executes a teleport of `6 * window.innerHeight` for the main wrapper, the parallax layers will simultaneously teleport by `6 * window.innerHeight * speed` to remain perfectly aligned.
+### [NEW] `components/WebGLCursor.tsx`
+- Renders `<canvas className="fixed inset-0 pointer-events-none z-[9999]" />`.
+- Initializes a shader program with liquid distortion.
+- Tracks `window.addEventListener('mousemove')`.
 
-### 3. Sprite Intro Math Hardening
+### [NEW] `components/CurtainsTransition.tsx`
+- Handles the WebGL/CSS "split screen" transition when deep linking is detected.
 
-#### [MODIFY] [SpriteAnimation.tsx](file:///d:/web_portfolio/components/SpriteAnimation.tsx)
-- Extract the mathematical constants into a `START_POINT_SPRITE` variable to strictly align with the user's nomenclature.
-- Verify the 6-section modulo loop perfectly aligns with the new Snapping mechanics.
-
-## User Review Required
+## 4. Open Questions / User Review Required
 
 > [!IMPORTANT]
-> **Parallax Clones**: Should the Parallax sections correspond 1:1 with the main content sections (e.g. using `exhibitionBuffer` data to render specific art per section), or are they just generic scrolling patterns? The current plan builds the infrastructure for 12 cloned DOM nodes, which you can inject art into later.
+> **WebGL Library**: Do you want me to write raw WebGL for the cursor (harder to maintain but 0 dependencies), or can I use a lightweight library like `ogl`?
 
-Please approve this implementation plan so I can begin coding the Snap Engine and the 4-Layer Parallax!
+> [!WARNING]
+> **Audio Asset**: We need an ambient sound file (e.g., `ambient.mp3`). Should I use a placeholder URL for now?
