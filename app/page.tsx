@@ -7,6 +7,7 @@ import { SpriteAnimation } from '../components/SpriteAnimation';
 import { HorizontalMarquee } from '../components/HorizontalMarquee';
 import { LoadingOverlay } from '../components/LoadingOverlay';
 import { ParallaxSides } from '../components/ParallaxSides';
+import { MobileDebug } from '../components/MobileDebug';
 import { useExhibitionScroll } from '../lib/hooks/useExhibitionScroll';
 import { useViewportSync } from '../lib/hooks/useViewportSync';
 
@@ -46,6 +47,7 @@ export default function Exhibition() {
   return (
     <main className="relative w-full bg-black text-white selection:bg-white/20">
       {!assetsLoaded && <LoadingOverlay onLoaded={() => setAssetsLoaded(true)} />}
+      <MobileDebug />
       <ParallaxSides />
       <SpriteAnimation startIntro={assetsLoaded} />
       

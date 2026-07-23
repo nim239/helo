@@ -69,7 +69,12 @@ export function useExhibitionScroll() {
     let isDocumentVisible = true;
     let isSnapping = false;
     let isReady = false;
-    let snapTween: gsap.core.Tween | null = null; // GSAP tween thay thế lenis.scrollTo(animated)
+    let snapTween: gsap.core.Tween | null = null;
+
+    const dbg = (msg: string) => {
+      try { window.dispatchEvent(new CustomEvent('lenis-debug', { detail: msg })); } catch(e) {}
+    };
+    dbg(`INIT offset=${initialOffset} isStopped=${lenis.isStopped}`);
 
     const handleVisibility = () => {
       isDocumentVisible = !document.hidden;
@@ -146,11 +151,9 @@ export function useExhibitionScroll() {
 
           if (Math.abs(lenis.scroll - targetSection) > 5) {
             isSnapping = true;
-            // Kill bất kỳ snap cũ nào đang chạy
             if (snapTween) { snapTween.kill(); }
+            dbg(`SNAP ${Math.round(lenis.scroll)} → ${Math.round(targetSection)}`);
 
-            // GSAP tween proxy object, mỗi frame gọi lenis.scrollTo(immediate)
-            // → Lenis chỉ thấy "ai đó nhảy scroll", KHÔNG vào trạng thái animated
             const proxy = { y: lenis.scroll };
             snapTween = gsap.to(proxy, {
               y: targetSection,
@@ -160,6 +163,7 @@ export function useExhibitionScroll() {
                 lenis.scrollTo(proxy.y, { immediate: true });
               },
               onComplete: () => {
+                dbg(`SNAP DONE at ${Math.round(targetSection)}`);
                 isSnapping = false;
                 startScrollY = targetSection;
                 snapTween = null;
@@ -175,10 +179,12 @@ export function useExhibitionScroll() {
     // Không chọc vào Lenis internal state, không hack window.scrollTo
     // ============================================================
     const handleTouch = () => {
+      dbg(`TOUCH! snapping=${isSnapping} tween=${!!snapTween} stopped=${lenis.isStopped}`);
       clearTimeout(snapTimeout);
       if (snapTween) {
         snapTween.kill();
         snapTween = null;
+        dbg('SNAP KILLED by touch');
       }
       isSnapping = false;
       setPhase('SCROLLING');
