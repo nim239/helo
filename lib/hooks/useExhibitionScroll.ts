@@ -115,9 +115,9 @@ export function useExhibitionScroll() {
       }
 
       // ============================================================
-      // SNAP: Chỉ dùng lenis.scrollTo(immediate) MỘT LẦN DUY NHẤT
-      // KHÔNG dùng animated tween → KHÔNG có frame-by-frame scrollTo
-      // → KHÔNG giết touch chain trên Android Chrome
+      // SNAP: GSAP tween proxy → lenis.scrollTo(immediate) mỗi frame
+      // An toàn vì syncTouch=true → lenis.scrollTo(immediate) đi qua
+      // virtual scroll, KHÔNG gọi window.scrollTo trực tiếp
       // ============================================================
       if (Math.abs(velocity) < 0.3 && !lenis.isStopped) {
         clearTimeout(snapTimeout);
@@ -137,11 +137,24 @@ export function useExhibitionScroll() {
 
           if (Math.abs(lenis.scroll - targetSection) > 5) {
             dbg(`SNAP ${Math.round(lenis.scroll)} → ${Math.round(targetSection)}`);
-            // MỘT lệnh scrollTo duy nhất, KHÔNG loop
-            lenis.scrollTo(targetSection, { immediate: true });
-            startScrollY = targetSection;
+            
+            if (snapTween) { snapTween.kill(); }
+            const proxy = { y: lenis.scroll };
+            snapTween = gsap.to(proxy, {
+              y: targetSection,
+              duration: 1.2,
+              ease: 'power3.inOut',
+              onUpdate: () => {
+                lenis.scrollTo(proxy.y, { immediate: true });
+              },
+              onComplete: () => {
+                dbg(`SNAP DONE ${Math.round(targetSection)}`);
+                startScrollY = targetSection;
+                snapTween = null;
+              },
+            });
           }
-        }, 400); // Đợi 400ms chắc chắn user dừng hẳn
+        }, 350);
       }
     });
 
