@@ -8,9 +8,11 @@ import sectionsData from '../data/sections.json';
 gsap.registerPlugin(ScrollTrigger);
 
 const exhibitionBuffer = [
-  ...sectionsData.slice(3, 6).map((s) => ({ ...s, key: `clone-top-${s.id}` })),
-  ...sectionsData.map((s) => ({ ...s, key: `real-${s.id}` })),
-  ...sectionsData.slice(0, 3).map((s) => ({ ...s, key: `clone-bottom-${s.id}` })),
+  ...sectionsData.map((s) => ({ ...s, key: `parallax-0-${s.id}` })),
+  ...sectionsData.map((s) => ({ ...s, key: `parallax-1-${s.id}` })),
+  ...sectionsData.map((s) => ({ ...s, key: `parallax-2-${s.id}` })),
+  ...sectionsData.map((s) => ({ ...s, key: `parallax-3-${s.id}` })),
+  ...sectionsData.map((s) => ({ ...s, key: `parallax-4-${s.id}` })),
 ];
 
 export function ParallaxSides() {
@@ -40,10 +42,14 @@ export function ParallaxSides() {
       scrub: 0,
       onUpdate: (self) => {
         const scrollY = self.scroll();
-        const baseline = window.innerHeight * 3;
+        const maxH = window.innerHeight * 6; // Height of 1 full cycle of real sections
         
-        const fgY = -(scrollY - baseline) * fgSpeed - baseline;
-        const bgY = -(scrollY - baseline) * bgSpeed - baseline;
+        // Compute wrapped Y positions to create a seamless infinite marquee
+        const rawFgY = -scrollY * fgSpeed;
+        const rawBgY = -scrollY * bgSpeed;
+        
+        const fgY = gsap.utils.wrap(-maxH, 0, rawFgY);
+        const bgY = gsap.utils.wrap(-maxH, 0, rawBgY);
         
         gsap.set(fgLeftRef.current, { y: fgY });
         gsap.set(fgRightRef.current, { y: fgY });
@@ -107,24 +113,24 @@ export function ParallaxSides() {
   return (
     <>
       {/* Background Layers (Z-index 0) */}
-      <div ref={bgLeftWrapRef} className="fixed top-0 left-0 w-[15vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
+      <div ref={bgLeftWrapRef} className="fixed top-0 left-0 w-[25vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
         <div ref={bgLeftRef} className="w-full will-change-transform">
           {renderLayers(false, 'left')}
         </div>
       </div>
-      <div ref={bgRightWrapRef} className="fixed top-0 right-0 w-[15vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
+      <div ref={bgRightWrapRef} className="fixed top-0 right-0 w-[25vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
         <div ref={bgRightRef} className="w-full will-change-transform">
           {renderLayers(false, 'right')}
         </div>
       </div>
 
       {/* Foreground Layers (Z-index 50, below Sprite which is 60) */}
-      <div ref={fgLeftWrapRef} className="fixed top-0 left-0 w-[15vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
+      <div ref={fgLeftWrapRef} className="fixed top-0 left-0 w-[25vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
         <div ref={fgLeftRef} className="w-full will-change-transform">
           {renderLayers(true, 'left')}
         </div>
       </div>
-      <div ref={fgRightWrapRef} className="fixed top-0 right-0 w-[15vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
+      <div ref={fgRightWrapRef} className="fixed top-0 right-0 w-[25vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
         <div ref={fgRightRef} className="w-full will-change-transform">
           {renderLayers(true, 'right')}
         </div>

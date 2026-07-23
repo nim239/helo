@@ -9,7 +9,7 @@ export function useExhibitionScroll() {
   const lenisRef = useRef<Lenis | null>(null);
   const setPhase = useScrollStore((state) => state.setPhase);
   const setScrollProgress = useScrollStore((state) => state.setScrollProgress);
-  const triggerTeleport = useScrollStore((state) => state.triggerTeleport);
+  const setVelocity = useScrollStore((state) => state.setVelocity);
 
   useEffect(() => {
     const sectionHeight = window.innerHeight;
@@ -21,24 +21,21 @@ export function useExhibitionScroll() {
 
     const lenis = new Lenis({
       duration: 2.5,
-      easing: (t) => 1 - Math.pow(1 - t, 4), // Quart Out cho đuôi ease-out dài hơn
+      easing: (t) => 1 - Math.pow(1 - t, 4),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
-      syncTouch: true,         // ← QUAN TRỌNG: Lenis quản lý touch thay vì để native
-      touchMultiplier: 1.0,    // ← Giảm từ 1.5 xuống 1.0 để vuốt mobile đầm hơn
+      syncTouch: true,
+      touchMultiplier: 1.0,
       wheelMultiplier: 1.0,
+      infinite: true, // NATIVE INFINITE SCROLL
     });
 
     lenisRef.current = lenis;
 
-    // Force initial position
-    window.scrollTo(0, initialOffset);
-
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         lenis.resize();
-        lenis.scrollTo(initialOffset, { immediate: true });
 
         if (!useScrollStore.getState().isIntroComplete) {
           lenis.stop();
@@ -64,10 +61,9 @@ export function useExhibitionScroll() {
     const dbg = (msg: string) => {
       try { window.dispatchEvent(new CustomEvent('lenis-debug', { detail: msg })); } catch(e) {}
     };
-    dbg(`INIT syncTouch=true offset=${initialOffset}`);
 
     let snapTimeout: ReturnType<typeof setTimeout>;
-    let startScrollY = initialOffset;
+    let startScrollY = 0;
     let isDocumentVisible = true;
     let snapTween: gsap.core.Tween | null = null;
 
@@ -84,43 +80,25 @@ export function useExhibitionScroll() {
     document.addEventListener('visibilitychange', handleVisibility);
 
     // ============================================================
-    // SCROLL EVENT: Teleport + Progress + Snap
+    // SCROLL EVENT: Progress + Snap
     // ============================================================
     lenis.on('scroll', ({ scroll, velocity, direction }: { scroll: number, velocity: number, direction: number }) => {
       const state = useScrollStore.getState();
       const currentH = window.innerHeight;
 
-      // Progress
-      setScrollProgress(scroll / (currentH * 11));
+      // Progress (0 to 1 based on 6 real sections)
+      setScrollProgress(scroll / (currentH * 6));
+      setVelocity(velocity);
 
       // Phase transitions
       if (Math.abs(velocity) > 0.1) {
-        if (state.currentPhase !== 'SCROLLING' && state.currentPhase !== 'TELEPORTING') {
+        if (state.currentPhase !== 'SCROLLING') {
           setPhase('SCROLLING');
           startScrollY = scroll;
         }
         killSnap(); // Nếu user đang cuộn thì hủy mọi snap
       } else if (Math.abs(velocity) <= 0.1 && state.currentPhase === 'SCROLLING') {
         setPhase('IDLE');
-      }
-
-      // Teleport boundaries
-      if (scroll >= currentH * 9 && !state.teleportCooldownActive) {
-        triggerTeleport();
-        const offset = currentH * 6;
-        // Bơm thẳng vào lõi Lenis để không làm mất velocity (quán tính)
-        (lenis as any).targetScroll -= offset;
-        (lenis as any).animatedScroll -= offset;
-        (lenis as any).actualScroll -= offset;
-        window.scrollTo(0, scroll - offset);
-      }
-      if (scroll <= currentH * 2 && !state.teleportCooldownActive) {
-        triggerTeleport();
-        const offset = currentH * 6;
-        (lenis as any).targetScroll += offset;
-        (lenis as any).animatedScroll += offset;
-        (lenis as any).actualScroll += offset;
-        window.scrollTo(0, scroll + offset);
       }
 
       // ============================================================
@@ -175,8 +153,8 @@ export function useExhibitionScroll() {
       killSnap();
       setPhase('SCROLLING');
       startScrollY = lenis.scroll;
-      // Đảm bảo Lenis luôn chạy khi user chạm
-      if (lenis.isStopped) {
+      // Đảm bảo Lenis luôn chạy khi user chạm (chỉ khi đã qua intro)
+      if (lenis.isStopped && useScrollStore.getState().isIntroComplete) {
         lenis.start();
         dbg('FORCE lenis.start()');
       }
@@ -193,7 +171,7 @@ export function useExhibitionScroll() {
       lenis.destroy();
       gsap.ticker.remove(rafCallback);
     };
-  }, [setPhase, setScrollProgress, triggerTeleport]);
+  }, [setPhase, setScrollProgress, setVelocity]);
 
   return lenisRef;
 }

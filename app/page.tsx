@@ -5,17 +5,18 @@ import sectionsData from '../data/sections.json';
 import { Section } from '../components/Section';
 import { SpriteAnimation } from '../components/SpriteAnimation';
 import { HorizontalMarquee } from '../components/HorizontalMarquee';
-import { LoadingOverlay } from '../components/LoadingOverlay';
 import { ParallaxSides } from '../components/ParallaxSides';
-import { MobileDebug } from '../components/MobileDebug';
 import { EnterOverlay } from '../components/EnterOverlay';
 import { HackerMode } from '../components/HackerMode';
+import { AudioController } from '../components/AudioController';
+import { CustomCursor } from '../components/CustomCursor';
 import { useExhibitionScroll } from '../lib/hooks/useExhibitionScroll';
 import { useViewportSync } from '../lib/hooks/useViewportSync';
+import { useAppStore } from '../lib/store/useAppStore';
 
 export default function Exhibition() {
   const [mounted, setMounted] = useState(false);
-  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const isLogoSettled = useAppStore(state => state.isLogoSettled);
   
   // Apply our custom hooks
   useViewportSync();
@@ -33,26 +34,21 @@ export default function Exhibition() {
   // The 6 Real Sections
   const realSections = sectionsData;
   
-  // Clone 3 from the end to put at the top (Index 0, 1, 2)
-  const topClones = realSections.slice(-3).map(s => ({ ...s, isClone: true, key: `clone-top-${s.id}` }));
-  
-  // Clone 3 from the start to put at the bottom (Index 9, 10, 11)
-  const bottomClones = realSections.slice(0, 3).map(s => ({ ...s, isClone: true, key: `clone-bot-${s.id}` }));
-
-  // Combined array: 12 sections total
+  // For Lenis infinite: true to work seamlessly, we only need to clone the FIRST section 
+  // and append it to the very end.
   const exhibitionBuffer = [
-    ...topClones, 
     ...realSections.map(s => ({ ...s, isClone: false, key: `real-${s.id}` })), 
-    ...bottomClones
+    { ...realSections[0], isClone: true, key: `clone-bot-loop` }
   ];
 
   return (
     <main className="relative w-full bg-black text-white selection:bg-white/20 overflow-hidden">
+      <CustomCursor />
+      <AudioController />
       <HackerMode />
       <EnterOverlay />
-      {!assetsLoaded && <LoadingOverlay onLoaded={() => setAssetsLoaded(true)} />}
       <ParallaxSides />
-      <SpriteAnimation startIntro={assetsLoaded} />
+      <SpriteAnimation startIntro={isLogoSettled} />
       
       {exhibitionBuffer.map((section) => (
         <Section key={section.key} id={section.key} isClone={section.isClone}>

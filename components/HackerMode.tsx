@@ -13,10 +13,14 @@ const asciiArt = `
 
 export function HackerMode() {
   const [active, setActive] = useState(false);
+  const [fps, setFps] = useState(60);
   const scrollProgress = useScrollStore(state => state.scrollProgress);
   const currentPhase = useScrollStore(state => state.currentPhase);
 
   useEffect(() => {
+    // In ra DevTools Console
+    console.log(`%c${asciiArt}\n%c>>> SYSTEM ONLINE\n>>> PRESS SHIFT + H FOR HACKER MODE HUD`, 'color: #22c55e; font-family: monospace; font-size: 14px; font-weight: bold;', 'color: #22c55e; font-family: monospace; font-size: 12px;');
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Toggle on Shift + H
       if (e.shiftKey && e.key.toLowerCase() === 'h') {
@@ -24,7 +28,30 @@ export function HackerMode() {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    // FPS Meter
+    let frameCount = 0;
+    let lastTime = performance.now();
+    let rafId: number;
+
+    const measureFPS = () => {
+      const now = performance.now();
+      frameCount++;
+      
+      if (now - lastTime >= 1000) {
+        setFps(Math.round((frameCount * 1000) / (now - lastTime)));
+        frameCount = 0;
+        lastTime = now;
+      }
+      
+      rafId = requestAnimationFrame(measureFPS);
+    };
+    rafId = requestAnimationFrame(measureFPS);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      cancelAnimationFrame(rafId);
+    };
   }, []);
 
   if (!active) return null;
@@ -38,7 +65,7 @@ export function HackerMode() {
         <div><span className="opacity-50">SYSTEM:</span> ONLINE</div>
         <div><span className="opacity-50">SCROLL ENGINE:</span> {currentPhase}</div>
         <div><span className="opacity-50">VIRTUAL PROGRESS:</span> {(scrollProgress * 100).toFixed(2)}%</div>
-        <div><span className="opacity-50">RAF FPS:</span> ~60 (LOCKED)</div>
+        <div><span className="opacity-50">RAF FPS:</span> {fps}</div>
       </div>
     </div>
   );

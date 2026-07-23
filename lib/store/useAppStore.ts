@@ -1,19 +1,27 @@
 import { create } from 'zustand';
 
 interface AppState {
+  isAssetsLoaded: boolean;
   hasEntered: boolean;
+  isLogoSettled: boolean;
   gyroEnabled: boolean;
   audioEnabled: boolean;
-  setEntered: (entered: boolean) => void;
-  setGyroEnabled: (enabled: boolean) => void;
-  setAudioEnabled: (enabled: boolean) => void;
+  setAssetsLoaded: (val: boolean) => void;
+  setEntered: (val: boolean) => void;
+  setLogoSettled: (val: boolean) => void;
+  setGyroEnabled: (val: boolean) => void;
+  setAudioEnabled: (val: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
+  isAssetsLoaded: false,
   hasEntered: false,
+  isLogoSettled: false,
   gyroEnabled: false,
   audioEnabled: false,
-  setEntered: (entered) => set({ hasEntered: entered }),
-  setGyroEnabled: (enabled) => set({ gyroEnabled: enabled }),
-  setAudioEnabled: (enabled) => set({ audioEnabled: enabled }),
+  setAssetsLoaded: (val) => set({ isAssetsLoaded: val }),
+  setEntered: (val) => set({ hasEntered: val }),
+  setLogoSettled: (val) => set({ isLogoSettled: val }),
+  setGyroEnabled: (val) => set({ gyroEnabled: val }),
+  setAudioEnabled: (val) => set({ audioEnabled: val }),
 }));

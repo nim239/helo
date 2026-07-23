@@ -1,49 +1,26 @@
 import { create } from 'zustand';
 
-export type Phase = 'IDLE' | 'SCROLLING' | 'TELEPORTING' | 'SNAPPING' | 'DWELLING';
+type ScrollPhase = 'IDLE' | 'SCROLLING' | 'SNAPPING';
 
 interface ScrollState {
-  currentPhase: Phase;
-  teleportCooldownActive: boolean;
-  lastTeleportTime: number;
-  scrollProgress: number; // 0.0 to 1.0
-  setPhase: (phase: Phase) => void;
-  setScrollProgress: (progress: number) => void;
-  triggerTeleport: () => void;
-  clearCooldown: () => void;
+  currentPhase: ScrollPhase;
+  scrollProgress: number; // 0 to 1
+  velocity: number;
   isIntroComplete: boolean;
   completeIntro: () => void;
+  setPhase: (phase: ScrollPhase) => void;
+  setScrollProgress: (progress: number) => void;
+  setVelocity: (velocity: number) => void;
 }
 
-export const useScrollStore = create<ScrollState>((set, get) => ({
+export const useScrollStore = create<ScrollState>((set) => ({
   currentPhase: 'IDLE',
-  teleportCooldownActive: false,
-  lastTeleportTime: 0,
   scrollProgress: 0,
+  velocity: 0,
   isIntroComplete: false,
   
   completeIntro: () => set({ isIntroComplete: true }),
-  
   setPhase: (phase) => set({ currentPhase: phase }),
-  
   setScrollProgress: (progress) => set({ scrollProgress: progress }),
-  
-  triggerTeleport: () => {
-    set({ 
-      currentPhase: 'TELEPORTING', 
-      teleportCooldownActive: true,
-      lastTeleportTime: performance.now()
-    });
-    
-    // Automatically clear cooldown after 500ms to prevent deadlocks
-    setTimeout(() => {
-      get().clearCooldown();
-    }, 500);
-  },
-  
-  clearCooldown: () => {
-    if (get().teleportCooldownActive) {
-      set({ teleportCooldownActive: false });
-    }
-  }
+  setVelocity: (v) => set({ velocity: v }),
 }));
