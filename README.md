@@ -1,32 +1,32 @@
-# 🎬 001-Exhibition-Portfolio: The 144Hz Cinematic Engine
+# 🎬 001-Exhibition: Kinetic Scroll Engine & Spatial Portfolio
 
-Chào mừng đến với hệ thống lõi vật lý "mượt cứt" của Pháp Sư tập sự hệ vibecoding. 
+A study in continuous spatial manipulation and hardware-accelerated motion design. 
 
-Dự án này dành cho những bộ óc phàm phu tục tử. Không có WebGL nặng nề, không có CSS transition rẻ rách. Đây là cảnh giới tối cao của nghệ thuật thao túng không gian 3D, Sprite Sheet 120-frame bóp méo khúc xạ cầu vồng và kiến trúc Scroll-Scrubbing đồng bộ 1:1. Mọi thứ được thiết kế để ép xung GPU trình duyệt, tát thẳng vào thị giác người xem ở 144fps.
-
----
-
-## 🗂️ Bảng Điều Khiển Trung Tâm (Master Control Hub)
-
-Chỉ mục các tài liệu thiết kế và quy hoạch thi công. Bấm vào để đọc (Look, but don't touch):
-
-* 📜 **[Hiến Pháp Lõi (CONSTITUTION)](./CONSTITUTION.md)**
-  *Luật chơi tối thượng: Cấm xài opacity fade, cấm transition CSS phèn chúa. Mọi thứ phải là vật lý động lực học.*
-
-* ⚙️ **[Đặc Tả Kỹ Thuật (SPECIFICATIONS)](./spec.md)**
-  *Bản vẽ động cơ Lenis 144Hz, State Machine, và các bí thuật vá lỗi liệt Touch trên Vercel Mobile.*
-
-* 🗺️ **[Bản Đồ Chiến Dịch (ROADMAP)](./roadmap.md)**
-  *Quy hoạch các Phase thi công từ móng lên mái, chuẩn bị chỗ chứa cho đống WebM và Sprite Sheet sặc mùi tiền.*
-
-* 🎯 **[Nhiệm Vụ (TASKS)](./tasks.md)**
-  *Danh sách việc cần làm (Bao gồm cả việc render cái khối Cubi chứa chữ N lộn ngược tàn bạo nhất).*
-
-* 📓 **[Nhật Ký Thi Công (DEV JOURNAL)](./DEV_JOURNAL.md)**
-  *Ghi chép lại những pha bắt mạch, fix bug đẫm máu và những quyết định kiến trúc out-trình.*
-
-* ℹ️ **[Mô Tả Dự Án (PROJECT DESCRIPTION)](./PROJECT_DESCRIPTION.md)**
-  *Tóm tắt cái Vibe Điện Ảnh Tối Giản (Cinematic Minimalist) - thứ sẽ làm bọn HR rớt liêm sỉ.*
+This repository houses the core physics engine and architectural blueprints for a 144Hz continuous scroll experience. Built to bridge the gap between high-fidelity 3D rendering (Cinema4D) and native DOM environments, bypassing traditional WebGL limitations through inertial scroll-scrubbing and geometric compositing.
 
 ---
-*Status: Engine is primed. Awaiting high-fidelity render assets.*
+
+## 🗂️ Architectural Blueprints
+
+Navigate the core documentation below to understand the mechanics driving the experience:
+
+* 📜 **[Core Directives (CONSTITUTION)](./CONSTITUTION.md)**
+  *The underlying philosophy: Zero-opacity transitions, physics-based momentum, and continuous linear layout.*
+
+* ⚙️ **[Technical Specifications (SPEC)](./spec.md)**
+  *Deep dive into the 144Hz Lenis engine integration, State Machine transitions, and mobile-touch normalization.*
+
+* 🗺️ **[Development Roadmap (ROADMAP)](./roadmap.md)**
+  *Phased execution plan, from core physics scaffolding to high-fidelity asset integration (Alpha WebM & Sprite Sheets).*
+
+* 🎯 **[Active Tasks (TASKS)](./tasks.md)**
+  *Current operational queue, including the Chromatic Dispersion Cubi render logic.*
+
+* 📓 **[Developer Journal (DEV JOURNAL)](./DEV_JOURNAL.md)**
+  *Logs of algorithmic problem-solving, Vercel minification bypasses, and floating-point math optimizations.*
+
+* ℹ️ **[Project Overview (PROJECT DESCRIPTION)](./PROJECT_DESCRIPTION.md)**
+  *The vision: A cinematic, minimalist approach to portfolio presentation.*
+
+---
+*Status: Core physics engine engaged. Awaiting final spatial assets.*
