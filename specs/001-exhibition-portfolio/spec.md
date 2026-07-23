@@ -11,6 +11,10 @@
 - Q: The specification lacks the exact JSON data structure for sections featuring a Horizontal Auto-Marquee. How should the media items for a marquee be structured in the data model? → A: Use a nested array structure with a unified `layout` property (e.g. `layout: "horizontal-marquee"`). Each marquee item represents an independent artwork entity inside an `items` array.
 - Q: Where will the JSON configuration data for the entire exhibition be stored and loaded from? → A: Local Static JSON (`data/sections.json`) bundled with Next.js (SSG).
 
+### Session 2026-07-23
+- Q: iOS 13+ requires an explicit user tap to enable DeviceOrientationEvent (Gyroscope), and browsers block Web Audio API without interaction. Given our strict "Non-Interactive" rule, how should we trigger these permissions? → A: Add a one-time "Enter Exhibition" overlay (solves both Audio autoplay and Gyroscope permissions)
+- Q: When a user accesses a deep link (e.g., `/#work-a`), should the "Curtains Effect" completely bypass the standard 120-frame Sprite Intro? → A: Play the Sprite Intro first in front of the Curtains effect, then open the Curtains to reveal the deep-linked target.
+
 ## Post-MVP Architecture Refinements (2026-07-23)
 
 ### 1. Scroll Snap (Dừng tại section tiếp theo - Chill Glide)
@@ -78,7 +82,8 @@ DOM Structure (3-Section Buffer for over-scroll protection):
 The interface behaves like a physical museum. **"Look but don't touch"**.
 - **Rule**: Entire exhibition contents (video, sprite, 3D canvas) render and animate purely based on scroll progress or auto-timelines.
 - **Forbidden**: Play/pause buttons, click-to-expand, hover-to-reveal, drag-to-rotate, or any pointer interaction on artwork.
-- **Exception (Section 6 - CONTACT)**: The contact section is the ONLY place where click interaction is permitted.
+- **Exception 1 (Global Intro)**: A one-time "Enter Exhibition" overlay is required on initial load to grant Mobile Gyroscope and Web Audio API permissions.
+- **Exception 2 (Section 6 - CONTACT)**: The contact section is the ONLY place within the exhibition flow where click interaction is permitted.
 - **Video Elements**: MUST force `muted` and explicitly omit `controls`. Fallback for playback failure is strict static poster.
   - **Strict Mute Policy**: Audio playback is STRICTLY PROHIBITED globally on all video elements to prevent twin-audio bugs when real and clone sections overlap. If global background music is required in the future, it MUST be implemented as a single, centralized top-level `<audio>` element. Individual videos must never be unmuted.
 - **3D Elements (R3F)**: `OrbitControls` or manual drag/rotate MUST be completely disabled.
@@ -225,3 +230,33 @@ The JSON structure enforces a unified `layout` system with nested array items fo
 | `IDLE` | `Duration >= 400ms` AND `Cooldown == FALSE` | `DWELLING` | Marquee pauses. Center video auto-plays. |
 | `DWELLING` | User resumes scroll (`vel > threshold`) | `SCROLLING` | Marquee video pauses, track resumes momentum. |
 | `DWELLING` | Edge case: Teleport bounds crossed | `TELEPORTING` | Force-kill DWELLING, force-pause video, start teleport. |
+
+## 🚀 Roadmap Phase 2: "WOW VÃI LỒN WOW" (Dành Cho Phase Tiếp Theo)
+
+Dưới đây là 5 ý tưởng tính năng đẳng cấp studio quốc tế (như Active Theory, Dogstudio, Hello Monday) được thiết kế dựa đúng trên nền tảng Transient Architecture của anh yêu:
+
+### 1. Dynamic Audio Reactive Canvas (Âm Thanh Trực Quan Theo Vận Tốc Scroll)
+- **Ý tưởng**: Mặc dù video bị cấm phát tiếng (Strict Mute Policy), nhưng khi anh yêu cuộn trang, toàn bộ không gian web sẽ phát ra âm thanh môi trường (Ambient Sound) rủ rê, thì thầm.
+- **Cơ chế WOW**: Tần số (Pitch) và Âm lượng (Volume) của tiếng Ambient này sẽ biến thiên 100% theo vận tốc cuộn Lenis (`lenis.velocity`). Cuộn càng nhanh, tiếng vèo vèo càng dồn dập; dừng lại thì âm thanh dịu đi như tiếng gió đêm.
+- **Độ khét**: Xài Web Audio API (chạy hoàn toàn ở client, 0KB asset) tạo âm thanh tổng hợp (Synthesizer), không tốn băng thông CDN!
+
+### 2. Custom Inertia WebGL Cursor (Con Trỏ Chuột Tùy Chỉnh Có Độ Trễ Vật Lý)
+- **Ý tưởng**: Bỏ con trỏ chuột mặc định của hệ điều hành. Thay vào đó là một chấm sáng hoặc vòng tròn mờ có hiệu ứng chất lỏng (Liquid Distortion).
+- **Cơ chế WOW**: 
+  - Khi lướt qua các đoạn video art, con trỏ chuột sẽ tự "hút" (Magnet effect) nhẹ vào tâm video.
+  - Khi đứng yên ở trạng thái `DWELLING`, con trỏ chuột biến đổi thành một đĩa CD đếm ngược 400ms xoay tròn báo hiệu video sắp phát.
+- **Độ khét**: Tính toán tọa độ chuột trực tiếp bằng RAF canvas, đéo re-render React.
+
+### 3. 2.5D Gyroscope Depth Motion (Hiệu Ứng Bẻ Nghiêng Màn Hình Trên Mobile)
+- **Ý tưởng**: Trên máy tính có chuột để tạo Parallax, nhưng trên Mobile Safari/Android thì sao?
+- **Cơ chế WOW**: Sử dụng API `DeviceOrientationEvent` (Cảm biến gia tốc/con quay hồi chuyển của điện thoại). Khi người dùng nghiêng nhẹ chiếc điện thoại sang trái/phải, các layer ảnh Parallax 2.5D sẽ tự đung đưa theo góc nghiêng của tay.
+- **Độ khét**: Tạo cảm giác như tác phẩm nghệ thuật đang nổi 3D thực sự bên trong màn hình điện thoại.
+
+### 4. DevTools "Hacker Mode" Easter Egg (Tờ Giấy Bạc Cho HR)
+- **Ý tưởng**: Dành riêng cho mấy thằng Tech Lead hoặc Senior HR tò mò nhấn F12 để soi code.
+- **Cơ chế WOW**: Khi họ mở Console tab, thay vì báo lỗi red-line như các web thông thường, màn hình console sẽ hiện một đoạn ASCII Art logo của anh yêu, đi kèm bảng đo số liệu thời gian thực (Real-time Teleport Math, VRAM flushed count, Current FPS 144Hz).
+- **Độ khét**: Khẳng định sự chỉn chu tới từng cọng lông của anh yêu, biến việc kiểm tra code thành một màn trình diễn.
+
+### 5. Seamless Hash Deep Linking With Canvas Preview Transitions
+- **Ý tưởng**: Khi chia sẻ link trực tiếp (ví dụ: `namdeptrai.vercel.app/#work-a`), web không load giật đùng đùng mà sẽ xuất hiện một hiệu ứng rèm màn che (Curtains Effect) tan biến dần.
+- **Cơ chế WOW**: Vừa giữ đúng luật "không đứt gãy momentum vật lý", vừa cho phép nhảy thẳng đến dự án mong muốn với một màn intro cinematic sang xịn mịn. Hệ thống sẽ phát Sprite Intro 120 frames ngay phía trước lớp rèm che, sau đó mở rèm để reveal section mục tiêu.

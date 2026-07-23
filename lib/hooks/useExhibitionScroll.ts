@@ -108,31 +108,35 @@ export function useExhibitionScroll() {
         snapTimeout = setTimeout(() => {
           const currentState = useScrollStore.getState();
           if (currentState.teleportCooldownActive || !currentState.isIntroComplete) return;
+          
+          // BẢO VỆ ANDROID CHROME: Hủy snap nếu momentum cuộn tự nhiên vẫn đang chạy
+          if (Math.abs(lenis.velocity) > 0.1) return;
 
-          // Determine snap target based on scroll direction to prevent snapping backward
-          // e.direction is 1 (down) or -1 (up)
+          // Forward-Only Snapping (Constitution Rule 6)
+          // Chỉ snap xuống dưới (forward), không bao giờ snap ngược lên trên.
+          if (direction === -1) return; // Nếu đang cuộn ngược lên, hủy snap.
+          
           const scrollRatio = lenis.scroll / currentH;
-          let targetSection;
-
-          if (direction === 1) {
-            targetSection = Math.ceil(scrollRatio) * currentH;
-          } else if (direction === -1) {
-            targetSection = Math.floor(scrollRatio) * currentH;
-          } else {
-            targetSection = Math.round(scrollRatio) * currentH;
-          }
+          const targetSection = Math.ceil(scrollRatio) * currentH;
 
           if (Math.abs(lenis.scroll - targetSection) > 5) {
             lenis.scrollTo(targetSection, {
-              duration: 7.5, // Chậm đúng ý đại ca (7.5s), trôi như phim tua chậm
-              easing: (t: number) => t < 0.5 ? 16 * t * t * t * t * t : 1 - Math.pow(-2 * t + 2, 5) / 2 // Quint ease-in-out: khởi đầu chậm, kết thúc chậm
+              duration: 1.8, // Giảm từ 7.5s xuống 1.8s để tránh treo luồng cuộn trên Android
+              easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
             });
           }
-        }, 150);
+        }, 250); // Tăng delay lên 250ms để đợi momentum kết thúc hẳn
       }
     });
 
+    // BẢO VỆ ANDROID CHROME: Cho phép người dùng chạm để ngắt ngang animation
+    const handleTouch = () => {
+      clearTimeout(snapTimeout);
+    };
+    window.addEventListener('touchstart', handleTouch, { passive: true });
+
     return () => {
+      window.removeEventListener('touchstart', handleTouch);
       unsubscribe();
       lenis.destroy();
       gsap.ticker.remove((time) => lenis.raf(time * 1000));

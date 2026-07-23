@@ -40,6 +40,7 @@ The system MUST prioritize:
 3. Stable velocity preservation (Native API teleportation)
 4. Section-based viewing experience
 5. Deadlock protection (Ensuring state machines always have a fallback escape route)
+6. Forward-Only Snapping: Auto-snap MUST only target the next section downwards. Never force snap upwards.
 
 Forbidden:
 - Traditional page navigation dependency
