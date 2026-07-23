@@ -10,21 +10,43 @@ import { EnterOverlay } from '../components/EnterOverlay';
 import { HackerMode } from '../components/HackerMode';
 import { AudioController } from '../components/AudioController';
 import { CustomCursor } from '../components/CustomCursor';
+import { CurtainsTransition } from '../components/CurtainsTransition';
 import { useExhibitionScroll } from '../lib/hooks/useExhibitionScroll';
 import { useViewportSync } from '../lib/hooks/useViewportSync';
 import { useAppStore } from '../lib/store/useAppStore';
+import { useScrollStore } from '../lib/store/useScrollStore';
 
 export default function Exhibition() {
   const [mounted, setMounted] = useState(false);
   const isLogoSettled = useAppStore(state => state.isLogoSettled);
+  const setDeepLinkTarget = useAppStore(state => state.setDeepLinkTarget);
+  const hasEntered = useAppStore(state => state.hasEntered);
+  const isIntroComplete = useScrollStore(state => state.isIntroComplete);
   
   // Apply our custom hooks
   useViewportSync();
-  useExhibitionScroll();
+  const lenisRef = useExhibitionScroll();
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    // Detect hash on mount
+    if (typeof window !== 'undefined' && window.location.hash) {
+      setDeepLinkTarget(window.location.hash);
+    }
+  }, [setDeepLinkTarget]);
+
+  // Handle deep link scrolling once intro is complete and Lenis is unlocked
+  useEffect(() => {
+    const lenis = lenisRef.current;
+    if (typeof window !== 'undefined' && window.location.hash && lenis && isIntroComplete && hasEntered) {
+      const hashId = window.location.hash.substring(1); // remove '#'
+      const targetElement = document.getElementById(`real-${hashId}`);
+      if (targetElement) {
+        // Immediate snap to target section without animation
+        lenis.scrollTo(targetElement, { immediate: true });
+      }
+    }
+  }, [isIntroComplete, lenisRef, hasEntered]);
 
   if (!mounted) {
     // Avoid hydration mismatch by rendering a black screen until client-side layout is ready
@@ -44,6 +66,7 @@ export default function Exhibition() {
   return (
     <main className="relative w-full bg-black text-white selection:bg-white/20 overflow-hidden">
       <CustomCursor />
+      <CurtainsTransition />
       <AudioController />
       <HackerMode />
       <EnterOverlay />

@@ -9,9 +9,10 @@ This plan outlines the architecture and implementation details for the 5 Phase 2
   - Oscillators & Gain/Filter nodes dynamically controlled by `lenis.velocity` in RAF loop.
   - Initialized on user interaction via `EnterOverlay`.
 
-- **Feature 2: Custom Inertia WebGL Cursor**
-  - Powered by `ogl` (~15KB gzipped) for high-performance WebGL liquid distortion shader.
-  - RAF position tracking with magnet effect targeting `.media-video-container`.
+- **Feature 2: Custom Inertia DOM Cursor (Idle Magnet System)**
+  - Powered by HTML DOM and GSAP `quickSetter` for extreme performance, dropping `ogl` dependency.
+  - Implements Mobile Extermination to save VRAM/battery on touch devices.
+  - Provocation Idle System drifts toward center after 2.5s of inactivity.
 
 - **Feature 3: 2.5D Gyroscope Depth Motion**
   - Listen to `DeviceOrientationEvent` (with iOS 13+ permission request in `EnterOverlay`).
@@ -43,9 +44,11 @@ This plan outlines the architecture and implementation details for the 5 Phase 2
 - Headless component managing Web Audio API oscillators and biquad filters.
 - Modulates pitch and gain based on `lenis.velocity`.
 
-### [NEW] `components/WebGLCursor.tsx`
-- Full-screen canvas powered by `ogl`.
-- Renders liquid distortion cursor shader, magnet effect on video hover, and CD countdown indicator.
+### [NEW] `components/WebGLCursor.tsx` (Renamed to `components/CustomCursor.tsx`)
+- Full-screen pointer-events-none layer powered by DOM `div` elements and GSAP `quickSetter`.
+- Renders outer inertia ring and inner instant dot.
+- Implements Mobile Extermination (aborts execution on touch devices).
+- Implements Idle Magnet System: drifts toward screen center (3D Cubi) when inactive for 2.5s.
 
 ### [NEW] `components/CurtainsTransition.tsx`
 - Renders dual-leaf curtain elements that split open over 5.0s (`power4.inOut`) when navigating via deep links.

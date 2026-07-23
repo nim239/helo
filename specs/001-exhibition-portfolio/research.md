@@ -5,10 +5,10 @@
 - **Rationale**: 0KB asset overhead, zero CDN bandwidth cost. Allows real-time continuous pitch bending and volume scaling bound to `lenis.velocity` without audio clipping or file buffer underruns.
 - **Alternatives Considered**: Audio file playback (`.mp3` / `.ogg`), rejected due to network latency and fixed playback rate limitations.
 
-## 2. WebGL Library Selection for Liquid Cursor
-- **Decision**: `ogl` library (~15KB gzipped).
-- **Rationale**: Provides minimal WebGL abstraction (Renderer, Camera, Geometry, Program) with 0 external dependencies and negligible bundle overhead.
-- **Alternatives Considered**: Raw WebGL (too verbose), Three.js (>150KB, rejected due to bundle size constraint).
+## 2. Cursor Rendering Strategy
+- **Decision**: HTML DOM elements (divs) heavily optimized with GSAP `quickSetter`.
+- **Rationale**: Achieves 144Hz smoothness via direct DOM transform manipulation while bypassing React re-renders. Avoids the 15KB bundle overhead of `ogl` WebGL library and simplifies implementation for the Idle Magnet Provocation System.
+- **Alternatives Considered**: `ogl` WebGL liquid distortion shader (rejected due to unnecessary complexity and mobile battery drain).
 
 ## 3. iOS Motion Sensor Permission & Fallback
 - **Decision**: Request permission inside `EnterOverlay` click handler. If denied or unsupported, silently fallback to Touch Scroll Parallax.

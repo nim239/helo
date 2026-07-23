@@ -111,7 +111,7 @@ export function useExhibitionScroll() {
         snapTimeout = setTimeout(() => {
           if (!isDocumentVisible) return;
           const s = useScrollStore.getState();
-          if (s.teleportCooldownActive || !s.isIntroComplete) return;
+          if (!s.isIntroComplete) return;
           if (Math.abs(lenis.velocity) > 0.05) return;
           if (Math.abs(lenis.scroll - startScrollY) < 5) return;
           if (direction === -1) return; // Forward-Only

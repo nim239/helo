@@ -8,7 +8,6 @@
 
 ## Setup
 ```bash
-npm install ogl
 npm run dev
 ```
 
@@ -19,10 +18,10 @@ npm run dev
 2. Click "ENTER EXHIBITION" on the gateway overlay.
 3. Rapidly scroll down. Verify ambient audio pitch and volume scale continuously with scroll velocity.
 
-### 2. WebGL Liquid Cursor & Magnet Effect
-1. Move cursor across video artwork tiles.
-2. Verify the WebGL liquid cursor distorts smoothly and magnets toward the center of active videos.
-3. Pause mouse movement; verify CD countdown ring appears.
+### 2. Custom Cursor Idle Magnet System & Mobile Extermination
+1. Move cursor across video artwork tiles; verify the cursor distorts smoothly and magnets toward the active videos.
+2. Pause mouse movement for 2.5 seconds. Verify the cursor floats/breathes and slowly drifts 70% towards the center of the screen (Provocation effect).
+3. Open on a mobile touch device; verify the custom cursor and its event listeners are completely disabled.
 
 ### 3. Mobile Gyroscope Parallax & Fallback
 1. Access `http://<local-ip>:3000` on mobile.
