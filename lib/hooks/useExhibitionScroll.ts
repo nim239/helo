@@ -12,13 +12,9 @@ export function useExhibitionScroll() {
   const triggerTeleport = useScrollStore((state) => state.triggerTeleport);
 
   useEffect(() => {
-    // Determine section height dynamically
     const sectionHeight = window.innerHeight;
-
-    // Initial start at Section 1 (Index 3, bypassing the 3 clones at the top)
     const initialOffset = sectionHeight * 3;
 
-    // Ensure browser doesn't try to restore scroll position and mess up our Buffer math
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
@@ -29,178 +25,151 @@ export function useExhibitionScroll() {
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
+      syncTouch: true,         // ← QUAN TRỌNG: Lenis quản lý touch thay vì để native
+      touchMultiplier: 1.5,    // ← Tăng độ nhạy touch
       wheelMultiplier: 1.0,
     });
 
     lenisRef.current = lenis;
 
-    // Force immediate scroll to Section 1 (Real) before anything renders
+    // Force initial position
     window.scrollTo(0, initialOffset);
 
-    // Wait for the DOM to be fully populated so Lenis doesn't clamp to 0
     requestAnimationFrame(() => {
-      // One more RAF to ensure layout is calculated
       requestAnimationFrame(() => {
-        lenis.resize(); // Force Lenis to measure new DOM height
+        lenis.resize();
         lenis.scrollTo(initialOffset, { immediate: true });
 
-        // Initially lock scroll until Intro finishes
         if (!useScrollStore.getState().isIntroComplete) {
           lenis.stop();
         }
       });
     });
 
-    // Subscribe to store to unlock scroll when Intro is done
+    // Unlock scroll when Intro is done
     const unsubscribe = useScrollStore.subscribe((state) => {
-      if (state.isIntroComplete) {
+      if (state.isIntroComplete && lenis.isStopped) {
         lenis.start();
       }
     });
 
     // GSAP Ticker Sync
-    gsap.ticker.add((time) => {
+    const rafCallback = (time: number) => {
       lenis.raf(time * 1000);
-    });
+    };
+    gsap.ticker.add(rafCallback);
     gsap.ticker.lagSmoothing(0);
+
+    // Debug helper
+    const dbg = (msg: string) => {
+      try { window.dispatchEvent(new CustomEvent('lenis-debug', { detail: msg })); } catch(e) {}
+    };
+    dbg(`INIT syncTouch=true offset=${initialOffset}`);
 
     let snapTimeout: ReturnType<typeof setTimeout>;
     let startScrollY = initialOffset;
     let isDocumentVisible = true;
-    let isSnapping = false;
-    let isReady = false;
     let snapTween: gsap.core.Tween | null = null;
 
-    const dbg = (msg: string) => {
-      try { window.dispatchEvent(new CustomEvent('lenis-debug', { detail: msg })); } catch(e) {}
+    const killSnap = () => {
+      clearTimeout(snapTimeout);
+      if (snapTween) { snapTween.kill(); snapTween = null; }
     };
-    dbg(`INIT offset=${initialOffset} isStopped=${lenis.isStopped}`);
 
+    // Visibility handler (Fix Lỗi 3: switch app)
     const handleVisibility = () => {
       isDocumentVisible = !document.hidden;
-      if (!isDocumentVisible) {
-        clearTimeout(snapTimeout);
-        if (snapTween) { snapTween.kill(); snapTween = null; isSnapping = false; }
-      }
+      if (!isDocumentVisible) { killSnap(); }
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
-    // Teleport and State Logic
+    // ============================================================
+    // SCROLL EVENT: Teleport + Progress + Snap
+    // ============================================================
     lenis.on('scroll', ({ scroll, velocity, direction }: { scroll: number, velocity: number, direction: number }) => {
       const state = useScrollStore.getState();
       const currentH = window.innerHeight;
 
-      // Chặn scroll ở vị trí sai lúc load
-      if (!isReady) {
-        if (Math.abs(scroll - initialOffset) < 5) {
-          isReady = true;
-        } else {
-          lenis.scrollTo(initialOffset, { immediate: true });
-          return;
-        }
-      }
+      // Progress
+      setScrollProgress(scroll / (currentH * 11));
 
-      // Update normalized progress
-      const maxScroll = currentH * 11;
-      setScrollProgress(scroll / maxScroll);
-
-      // Handle Phase transitions based on velocity
+      // Phase transitions
       if (Math.abs(velocity) > 0.1) {
-        if (!isSnapping && state.currentPhase !== 'SCROLLING' && state.currentPhase !== 'TELEPORTING') {
+        if (state.currentPhase !== 'SCROLLING' && state.currentPhase !== 'TELEPORTING') {
           setPhase('SCROLLING');
           startScrollY = scroll;
         }
-        clearTimeout(snapTimeout);
+        killSnap(); // Nếu user đang cuộn thì hủy mọi snap
       } else if (Math.abs(velocity) <= 0.1 && state.currentPhase === 'SCROLLING') {
         setPhase('IDLE');
       }
 
-      // Teleport boundaries (immediate only — no animation state involved)
-      if (scroll >= currentH * 9) {
-        if (!state.teleportCooldownActive) {
-          triggerTeleport();
-          lenis.scrollTo(scroll - (currentH * 6), { immediate: true });
-        }
+      // Teleport boundaries
+      if (scroll >= currentH * 9 && !state.teleportCooldownActive) {
+        triggerTeleport();
+        lenis.scrollTo(scroll - (currentH * 6), { immediate: true });
       }
-      if (scroll <= currentH * 2) {
-        if (!state.teleportCooldownActive) {
-          triggerTeleport();
-          lenis.scrollTo(scroll + (currentH * 6), { immediate: true });
-        }
+      if (scroll <= currentH * 2 && !state.teleportCooldownActive) {
+        triggerTeleport();
+        lenis.scrollTo(scroll + (currentH * 6), { immediate: true });
       }
 
       // ============================================================
-      // SNAP LOGIC: Dùng GSAP tween thay vì lenis.scrollTo(animated)
-      // Lenis KHÔNG BAO GIỜ vào trạng thái animated → KHÔNG BAO GIỜ khóa Touch
+      // SNAP: Chỉ dùng lenis.scrollTo(immediate) MỘT LẦN DUY NHẤT
+      // KHÔNG dùng animated tween → KHÔNG có frame-by-frame scrollTo
+      // → KHÔNG giết touch chain trên Android Chrome
       // ============================================================
-      if (Math.abs(velocity) < 0.5) {
+      if (Math.abs(velocity) < 0.3 && !lenis.isStopped) {
         clearTimeout(snapTimeout);
         snapTimeout = setTimeout(() => {
           if (!isDocumentVisible) return;
-          const currentState = useScrollStore.getState();
-          if (currentState.teleportCooldownActive || !currentState.isIntroComplete) return;
-          if (Math.abs(lenis.velocity) > 0.1) return;
+          const s = useScrollStore.getState();
+          if (s.teleportCooldownActive || !s.isIntroComplete) return;
+          if (Math.abs(lenis.velocity) > 0.05) return;
           if (Math.abs(lenis.scroll - startScrollY) < 5) return;
-          if (direction === -1) return; // Forward-Only Snapping
+          if (direction === -1) return; // Forward-Only
 
           const scrollRatio = lenis.scroll / currentH;
-          const safeRatio = Math.abs(scrollRatio - Math.round(scrollRatio)) < 0.01
+          const safeRatio = Math.abs(scrollRatio - Math.round(scrollRatio)) < 0.02
             ? Math.round(scrollRatio)
             : scrollRatio;
           const targetSection = Math.ceil(safeRatio) * currentH;
 
           if (Math.abs(lenis.scroll - targetSection) > 5) {
-            isSnapping = true;
-            if (snapTween) { snapTween.kill(); }
             dbg(`SNAP ${Math.round(lenis.scroll)} → ${Math.round(targetSection)}`);
-
-            const proxy = { y: lenis.scroll };
-            snapTween = gsap.to(proxy, {
-              y: targetSection,
-              duration: 1.8,
-              ease: 'power3.inOut',
-              onUpdate: () => {
-                lenis.scrollTo(proxy.y, { immediate: true });
-              },
-              onComplete: () => {
-                dbg(`SNAP DONE at ${Math.round(targetSection)}`);
-                isSnapping = false;
-                startScrollY = targetSection;
-                snapTween = null;
-              },
-            });
+            // MỘT lệnh scrollTo duy nhất, KHÔNG loop
+            lenis.scrollTo(targetSection, { immediate: true });
+            startScrollY = targetSection;
           }
-        }, 250);
+        }, 400); // Đợi 400ms chắc chắn user dừng hẳn
       }
     });
 
     // ============================================================
-    // TOUCH HANDLER: Chỉ cần gsap.kill() — 100% đáng tin cậy
-    // Không chọc vào Lenis internal state, không hack window.scrollTo
+    // TOUCH: Kill snap + đảm bảo Lenis đang chạy
     // ============================================================
     const handleTouch = () => {
-      dbg(`TOUCH! snapping=${isSnapping} tween=${!!snapTween} stopped=${lenis.isStopped}`);
-      clearTimeout(snapTimeout);
-      if (snapTween) {
-        snapTween.kill();
-        snapTween = null;
-        dbg('SNAP KILLED by touch');
-      }
-      isSnapping = false;
+      dbg(`TOUCH! stopped=${lenis.isStopped}`);
+      killSnap();
       setPhase('SCROLLING');
       startScrollY = lenis.scroll;
+      // Đảm bảo Lenis luôn chạy khi user chạm
+      if (lenis.isStopped) {
+        lenis.start();
+        dbg('FORCE lenis.start()');
+      }
     };
     window.addEventListener('touchstart', handleTouch, { passive: true });
     window.addEventListener('pointerdown', handleTouch, { passive: true });
 
     return () => {
-      if (snapTween) { snapTween.kill(); }
+      killSnap();
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('touchstart', handleTouch);
       window.removeEventListener('pointerdown', handleTouch);
       unsubscribe();
       lenis.destroy();
-      gsap.ticker.remove((time) => lenis.raf(time * 1000));
+      gsap.ticker.remove(rafCallback);
     };
   }, [setPhase, setScrollProgress, triggerTeleport]);
 
