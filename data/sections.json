@@ -8,7 +8,7 @@
       "background": 0.8
     },
     "mediaType": "video",
-    "src": "/videos/intro.webm",
+    "src": "https://cdn.namdeptrai.com/videos/intro.webm",
     "poster": "/videos/intro-poster.webp"
   },
   {
@@ -16,7 +16,7 @@
     "title": "Director's Reel",
     "layout": "fullscreen-video",
     "mediaType": "video",
-    "src": "/videos/reel.webm",
+    "src": "https://cdn.namdeptrai.com/videos/reel.webm",
     "poster": "/videos/reel-poster.webp"
   },
   {
@@ -24,7 +24,7 @@
     "title": "CGI Showcase",
     "layout": "fullscreen-video",
     "mediaType": "video",
-    "src": "/videos/work-a.webm",
+    "src": "https://cdn.namdeptrai.com/videos/work-a.webm",
     "poster": "/videos/work-a-poster.webp"
   },
   {
@@ -41,19 +41,19 @@
       {
         "id": "b-shot01",
         "mediaType": "video",
-        "src": "/videos/work-b/01.webm",
+        "src": "https://cdn.namdeptrai.com/videos/work-b/01.webm",
         "poster": "/videos/work-b/01.webp"
       },
       {
         "id": "b-shot02",
         "mediaType": "video",
-        "src": "/videos/work-b/02.webm",
+        "src": "https://cdn.namdeptrai.com/videos/work-b/02.webm",
         "poster": "/videos/work-b/02.webp"
       },
       {
         "id": "b-shot03",
         "mediaType": "video",
-        "src": "/videos/work-b/03.webm",
+        "src": "https://cdn.namdeptrai.com/videos/work-b/03.webm",
         "poster": "/videos/work-b/03.webp"
       }
     ]
@@ -72,19 +72,19 @@
       {
         "id": "c-shot01",
         "mediaType": "video",
-        "src": "/videos/work-c/01.webm",
+        "src": "https://cdn.namdeptrai.com/videos/work-c/01.webm",
         "poster": "/videos/work-c/01.webp"
       },
       {
         "id": "c-shot02",
         "mediaType": "video",
-        "src": "/videos/work-c/02.webm",
+        "src": "https://cdn.namdeptrai.com/videos/work-c/02.webm",
         "poster": "/videos/work-c/02.webp"
       },
       {
         "id": "c-shot03",
         "mediaType": "video",
-        "src": "/videos/work-c/03.webm",
+        "src": "https://cdn.namdeptrai.com/videos/work-c/03.webm",
         "poster": "/videos/work-c/03.webp"
       }
     ]

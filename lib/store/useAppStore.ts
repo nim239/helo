@@ -6,11 +6,13 @@ interface AppState {
   isLogoSettled: boolean;
   gyroEnabled: boolean;
   audioEnabled: boolean;
+  deepLinkTarget: string | null;
   setAssetsLoaded: (val: boolean) => void;
   setEntered: (val: boolean) => void;
   setLogoSettled: (val: boolean) => void;
   setGyroEnabled: (val: boolean) => void;
   setAudioEnabled: (val: boolean) => void;
+  setDeepLinkTarget: (target: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -19,9 +21,11 @@ export const useAppStore = create<AppState>((set) => ({
   isLogoSettled: false,
   gyroEnabled: false,
   audioEnabled: false,
+  deepLinkTarget: null,
   setAssetsLoaded: (val) => set({ isAssetsLoaded: val }),
   setEntered: (val) => set({ hasEntered: val }),
   setLogoSettled: (val) => set({ isLogoSettled: val }),
   setGyroEnabled: (val) => set({ gyroEnabled: val }),
   setAudioEnabled: (val) => set({ audioEnabled: val }),
+  setDeepLinkTarget: (target) => set({ deepLinkTarget: target }),
 }));

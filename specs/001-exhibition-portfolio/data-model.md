@@ -53,22 +53,16 @@ These states are maintained purely in memory during runtime and do not persist.
 
 ```typescript
 // useScrollStore.ts
-type Phase = 'IDLE' | 'SCROLLING' | 'TELEPORTING' | 'SNAPPING' | 'DWELLING';
+type ScrollPhase = 'IDLE' | 'SCROLLING' | 'SNAPPING';
 
 interface ScrollState {
-  currentPhase: Phase;
-  teleportCooldownActive: boolean; // Evaluated dynamically based on timestamp
-  lastTeleportTime: number;
-  scrollProgress: number; // 0.0 to 1.0
-  setPhase: (phase: Phase) => void;
-  triggerTeleport: () => void;
-}
-
-// useMarqueeStore.ts
-interface MarqueeState {
-  baseTimestamp: number;      // performance.now() captured on mount
-  totalPausedDuration: number; // Accumulated ms spent in DWELLING state
-  isDwelling: boolean;
-  addPauseDuration: (ms: number) => void;
+  currentPhase: ScrollPhase;
+  scrollProgress: number; // 0 to 1
+  velocity: number;
+  isIntroComplete: boolean;
+  completeIntro: () => void;
+  setPhase: (phase: ScrollPhase) => void;
+  setScrollProgress: (progress: number) => void;
+  setVelocity: (velocity: number) => void;
 }
 ```
