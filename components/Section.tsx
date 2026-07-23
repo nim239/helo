@@ -1,44 +1,29 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { SectionData } from '@/data/sections';
+import React from 'react';
 
 interface SectionProps {
-  section: SectionData;
+  id: string;
+  isClone?: boolean;
+  children: React.ReactNode;
 }
 
-const Section = ({ section }: SectionProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const trigger = ScrollTrigger.create({
-      trigger: ref.current,
-      start: 'top bottom',
-      end: 'bottom top',
-      onEnter: () => setVisible(true),
-      onLeave: () => setVisible(false),
-      onEnterBack: () => setVisible(true),
-      onLeaveBack: () => setVisible(false),
-    });
-    return () => trigger.kill();
-  }, []);
-
+export function Section({ id, isClone = false, children }: SectionProps) {
   return (
-    <div
-      ref={ref}
-      style={{ backgroundColor: section.bg }}
-      className="w-full h-screen flex items-center justify-center relative overflow-hidden transition-colors duration-1000"
+    <section
+      id={id}
+      aria-hidden={isClone ? "true" : "false"}
+      className="relative w-full overflow-hidden flex items-center justify-center border-b border-white/10"
+      style={{ 
+        // Read from the dynamically updated CSS variable or fallback to 100vh
+        height: 'var(--section-height, 100vh)' 
+      }}
     >
-      {visible && (
-        <div className="animate-in fade-in duration-1000">
-          {section.content}
-        </div>
-      )}
-    </div>
+      {/* 
+        This is a 'dumb' component. 
+        It does not use GSAP or ScrollTrigger directly, avoiding re-renders. 
+      */}
+      {children}
+    </section>
   );
-};
-
-export default Section;
+}

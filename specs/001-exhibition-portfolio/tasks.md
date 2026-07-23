@@ -1,0 +1,6 @@
+- `[x]` Execute Implementation Plan
+  - `[x]` Modify `useExhibitionScroll.ts` to implement debounced Scroll Snap engine using `lenis.on('scroll')`.
+  - `[x]` Update `ParallaxSides.tsx` to render a 4-layer DOM-cloned Parallax 2.5D system (Foreground 1.2x, Background 0.8x) synced with `ScrollTrigger`.
+  - `[x]` Update `SpriteAnimation.tsx` to export and use `START_POINT_SPRITE` and ensure the 6-section modulo loop remains pristine.
+- `[ ]` Verify scroll teleportation and visual continuity.
+- `[ ]` Update Walkthrough artifact.
