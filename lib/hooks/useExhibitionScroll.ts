@@ -67,13 +67,15 @@ export function useExhibitionScroll() {
     let snapTimeout: ReturnType<typeof setTimeout>;
     let startScrollY = initialOffset;
     let isDocumentVisible = true;
-    let isSnapping = false; // Cờ theo dõi trạng thái programatic snap
+    let isSnapping = false;
     let isReady = false;
+    let snapTween: gsap.core.Tween | null = null; // GSAP tween thay thế lenis.scrollTo(animated)
 
     const handleVisibility = () => {
       isDocumentVisible = !document.hidden;
       if (!isDocumentVisible) {
-        clearTimeout(snapTimeout); // Fix Lỗi 3.1: Đóng băng snap khi ẩn app
+        clearTimeout(snapTimeout);
+        if (snapTween) { snapTween.kill(); snapTween = null; isSnapping = false; }
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
@@ -83,7 +85,7 @@ export function useExhibitionScroll() {
       const state = useScrollStore.getState();
       const currentH = window.innerHeight;
 
-      // Fix Lỗi 1: Trình duyệt ép scrollY = 0 lúc mới load hoặc bị kéo văng lên đỉnh khi chưa xong intro
+      // Chặn scroll ở vị trí sai lúc load
       if (!isReady) {
         if (Math.abs(scroll - initialOffset) < 5) {
           isReady = true;
@@ -94,101 +96,99 @@ export function useExhibitionScroll() {
       }
 
       // Update normalized progress
-      const maxScroll = currentH * 11; // 12 sections total
+      const maxScroll = currentH * 11;
       setScrollProgress(scroll / maxScroll);
 
       // Handle Phase transitions based on velocity
       if (Math.abs(velocity) > 0.1) {
         if (!isSnapping && state.currentPhase !== 'SCROLLING' && state.currentPhase !== 'TELEPORTING') {
           setPhase('SCROLLING');
-          startScrollY = scroll; // Fix Lỗi 3.2: Chỉ lưu tọa độ khi NGƯỜI DÙNG thực sự vuốt
+          startScrollY = scroll;
         }
         clearTimeout(snapTimeout);
       } else if (Math.abs(velocity) <= 0.1 && state.currentPhase === 'SCROLLING') {
         setPhase('IDLE');
       }
 
-      // Teleport boundaries based on Spec
+      // Teleport boundaries (immediate only — no animation state involved)
       if (scroll >= currentH * 9) {
         if (!state.teleportCooldownActive) {
           triggerTeleport();
-          const target = scroll - (currentH * 6);
-          lenis.scrollTo(target, { immediate: true });
+          lenis.scrollTo(scroll - (currentH * 6), { immediate: true });
         }
       }
-
       if (scroll <= currentH * 2) {
         if (!state.teleportCooldownActive) {
           triggerTeleport();
-          const target = scroll + (currentH * 6);
-          lenis.scrollTo(target, { immediate: true });
+          lenis.scrollTo(scroll + (currentH * 6), { immediate: true });
         }
       }
 
-      // Scroll Snap Logic
+      // ============================================================
+      // SNAP LOGIC: Dùng GSAP tween thay vì lenis.scrollTo(animated)
+      // Lenis KHÔNG BAO GIỜ vào trạng thái animated → KHÔNG BAO GIỜ khóa Touch
+      // ============================================================
       if (Math.abs(velocity) < 0.5) {
         clearTimeout(snapTimeout);
         snapTimeout = setTimeout(() => {
-          if (!isDocumentVisible) return; // Fix Lỗi 3.1: Không snap nếu app đang bị ẩn
-          
+          if (!isDocumentVisible) return;
           const currentState = useScrollStore.getState();
           if (currentState.teleportCooldownActive || !currentState.isIntroComplete) return;
-          
-          // BẢO VỆ ANDROID CHROME: Hủy snap nếu momentum cuộn tự nhiên vẫn đang chạy
           if (Math.abs(lenis.velocity) > 0.1) return;
-
-          // Fix Lỗi 3.2: Chỉ snap nếu vuốt một đoạn đủ dài (vài ba pixel rác thì bỏ qua)
           if (Math.abs(lenis.scroll - startScrollY) < 5) return;
+          if (direction === -1) return; // Forward-Only Snapping
 
-          // Forward-Only Snapping (Constitution Rule 6)
-          if (direction === -1) return;
-          
           const scrollRatio = lenis.scroll / currentH;
-          // Fix Lỗi 1: BẪY INFINITE SNAP. Tránh việc sai số dấu phẩy động 0.0001 làm Math.ceil đẩy target lên mãi mãi
-          const safeRatio = Math.abs(scrollRatio - Math.round(scrollRatio)) < 0.01 
-            ? Math.round(scrollRatio) 
+          const safeRatio = Math.abs(scrollRatio - Math.round(scrollRatio)) < 0.01
+            ? Math.round(scrollRatio)
             : scrollRatio;
-            
           const targetSection = Math.ceil(safeRatio) * currentH;
 
           if (Math.abs(lenis.scroll - targetSection) > 5) {
             isSnapping = true;
-            lenis.scrollTo(targetSection, {
+            // Kill bất kỳ snap cũ nào đang chạy
+            if (snapTween) { snapTween.kill(); }
+
+            // GSAP tween proxy object, mỗi frame gọi lenis.scrollTo(immediate)
+            // → Lenis chỉ thấy "ai đó nhảy scroll", KHÔNG vào trạng thái animated
+            const proxy = { y: lenis.scroll };
+            snapTween = gsap.to(proxy, {
+              y: targetSection,
               duration: 1.8,
-              easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
-              onComplete: () => { 
-                isSnapping = false; 
-                startScrollY = targetSection; // Fix Lỗi 3.2: Đặt lại mốc bảo vệ sau khi snap thành công
-              }
+              ease: 'power3.inOut',
+              onUpdate: () => {
+                lenis.scrollTo(proxy.y, { immediate: true });
+              },
+              onComplete: () => {
+                isSnapping = false;
+                startScrollY = targetSection;
+                snapTween = null;
+              },
             });
           }
-        }, 250); // Tăng delay lên 250ms để đợi momentum kết thúc hẳn
+        }, 250);
       }
     });
 
-    // Fix LỖI 2: Liệt Touch trên Vercel. Kỹ thuật "Khóa mõm window.scrollTo":
-    // Dùng Public API của Lenis để ép nó hủy animation, nhưng chặn đứng lệnh window.scrollTo nội bộ của nó
-    // để trình duyệt Android không bị cướp cò dẫn đến liệt Touch.
+    // ============================================================
+    // TOUCH HANDLER: Chỉ cần gsap.kill() — 100% đáng tin cậy
+    // Không chọc vào Lenis internal state, không hack window.scrollTo
+    // ============================================================
     const handleTouch = () => {
       clearTimeout(snapTimeout);
+      if (snapTween) {
+        snapTween.kill();
+        snapTween = null;
+      }
       isSnapping = false;
       setPhase('SCROLLING');
-      startScrollY = window.scrollY; // Cập nhật mốc vuốt ngay lập tức
-      
-      if (lenisRef.current) {
-        const originalScrollTo = window.scrollTo;
-        window.scrollTo = () => {}; // Tạm thời khóa mõm
-        
-        // Gọi lệnh scrollTo(immediate) để Lenis tự xóa mọi trạng thái animation nội suy
-        lenisRef.current.scrollTo(window.scrollY, { immediate: true });
-        
-        window.scrollTo = originalScrollTo; // Trả lại bình thường ngay tắp lự
-      }
+      startScrollY = lenis.scroll;
     };
     window.addEventListener('touchstart', handleTouch, { passive: true });
     window.addEventListener('pointerdown', handleTouch, { passive: true });
 
     return () => {
+      if (snapTween) { snapTween.kill(); }
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('touchstart', handleTouch);
       window.removeEventListener('pointerdown', handleTouch);
