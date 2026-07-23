@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎬 001-Exhibition-Portfolio: The 144Hz Cinematic Engine
 
-## Getting Started
+Chào mừng đến với hệ thống lõi vật lý "mượt cứt" của Pháp Sư C4D. 
 
-First, run the development server:
+Dự án này không dành cho những bộ óc phàm phu tục tử. Không có WebGL nặng nề, không có CSS transition rẻ rách. Đây là cảnh giới tối cao của nghệ thuật thao túng không gian 3D, Sprite Sheet 120-frame bóp méo khúc xạ cầu vồng và kiến trúc Scroll-Scrubbing đồng bộ 1:1. Mọi thứ được thiết kế để ép xung GPU trình duyệt, tát thẳng vào thị giác người xem ở 144fps.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🗂️ Bảng Điều Khiển Trung Tâm (Master Control Hub)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Chỉ mục các tài liệu thiết kế và quy hoạch thi công. Bấm vào để đọc (Look, but don't touch):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* 📜 **[Hiến Pháp Lõi (CONSTITUTION)](./CONSTITUTION.md)**
+  *Luật chơi tối thượng: Cấm xài opacity fade, cấm transition CSS phèn chúa. Mọi thứ phải là vật lý động lực học.*
 
-## Learn More
+* ⚙️ **[Đặc Tả Kỹ Thuật (SPECIFICATIONS)](./spec.md)**
+  *Bản vẽ động cơ Lenis 144Hz, State Machine, và các bí thuật vá lỗi liệt Touch trên Vercel Mobile.*
 
-To learn more about Next.js, take a look at the following resources:
+* 🗺️ **[Bản Đồ Chiến Dịch (ROADMAP)](./roadmap.md)**
+  *Quy hoạch các Phase thi công từ móng lên mái, chuẩn bị chỗ chứa cho đống WebM và Sprite Sheet sặc mùi tiền.*
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* 🎯 **[Nhiệm Vụ (TASKS)](./tasks.md)**
+  *Danh sách việc cần làm (Bao gồm cả việc render cái khối Cubi chứa chữ N lộn ngược tàn bạo nhất).*
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* 📓 **[Nhật Ký Thi Công (DEV JOURNAL)](./DEV_JOURNAL.md)**
+  *Ghi chép lại những pha bắt mạch, fix bug đẫm máu và những quyết định kiến trúc out-trình.*
 
-## Deploy on Vercel
+* ℹ️ **[Mô Tả Dự Án (PROJECT DESCRIPTION)](./PROJECT_DESCRIPTION.md)**
+  *Tóm tắt cái Vibe Điện Ảnh Tối Giản (Cinematic Minimalist) - thứ sẽ làm bọn HR rớt liêm sỉ.*
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Status: Engine is primed. Awaiting high-fidelity render assets.*
