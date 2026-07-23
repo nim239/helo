@@ -151,12 +151,18 @@ export function useExhibitionScroll() {
       }
     });
 
-    // Fix LỖI 2: Liệt Touch. Hễ chạm tay vào là ép cứng về SCROLLING và reset luồng Lenis
+    // Fix LỖI 2: Liệt Touch. Xóa trạng thái Snap ngầm trong Lenis để không kích hoạt window.scrollTo làm hỏng Touch/Momentum của trình duyệt
     const handleTouch = () => {
       clearTimeout(snapTimeout);
       setPhase('SCROLLING');
-      lenis.stop();
-      lenis.start();
+      if (lenisRef.current) {
+        const l = lenisRef.current as any;
+        l.isSmoothScrolling = false;
+        l.isAnimatedScroll = false;
+        l.isScrolling = false;
+        l.targetScroll = l.scroll;
+        l.velocity = 0;
+      }
     };
     window.addEventListener('touchstart', handleTouch, { passive: true });
     window.addEventListener('pointerdown', handleTouch, { passive: true });
