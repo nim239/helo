@@ -67,6 +67,8 @@ export function useExhibitionScroll() {
     let snapTimeout: ReturnType<typeof setTimeout>;
     let startScrollY = initialOffset;
     let isDocumentVisible = true;
+    let isSnapping = false; // Cờ theo dõi trạng thái programatic snap
+    let isReady = false;
 
     const handleVisibility = () => {
       isDocumentVisible = !document.hidden;
@@ -81,10 +83,14 @@ export function useExhibitionScroll() {
       const state = useScrollStore.getState();
       const currentH = window.innerHeight;
 
-      // Fix Lỗi 1: Trình duyệt ép scrollY = 0 lúc mới load (hoặc bị kéo văng lên đỉnh khi chưa xong intro)
-      if (scroll < 10 && !state.isIntroComplete) {
-        lenis.scrollTo(initialOffset, { immediate: true });
-        return;
+      // Fix Lỗi 1: Trình duyệt ép scrollY = 0 lúc mới load hoặc bị kéo văng lên đỉnh khi chưa xong intro
+      if (!isReady) {
+        if (Math.abs(scroll - initialOffset) < 5) {
+          isReady = true;
+        } else {
+          lenis.scrollTo(initialOffset, { immediate: true });
+          return;
+        }
       }
 
       // Update normalized progress
@@ -93,9 +99,9 @@ export function useExhibitionScroll() {
 
       // Handle Phase transitions based on velocity
       if (Math.abs(velocity) > 0.1) {
-        if (state.currentPhase !== 'SCROLLING' && state.currentPhase !== 'TELEPORTING') {
+        if (!isSnapping && state.currentPhase !== 'SCROLLING' && state.currentPhase !== 'TELEPORTING') {
           setPhase('SCROLLING');
-          startScrollY = scroll; // Fix Lỗi 3.2: Lưu tọa độ bắt đầu vuốt
+          startScrollY = scroll; // Fix Lỗi 3.2: Chỉ lưu tọa độ khi NGƯỜI DÙNG thực sự vuốt
         }
         clearTimeout(snapTimeout);
       } else if (Math.abs(velocity) <= 0.1 && state.currentPhase === 'SCROLLING') {
@@ -135,33 +141,42 @@ export function useExhibitionScroll() {
           if (Math.abs(lenis.scroll - startScrollY) < 5) return;
 
           // Forward-Only Snapping (Constitution Rule 6)
-          // Chỉ snap xuống dưới (forward), không bao giờ snap ngược lên trên.
-          if (direction === -1) return; // Nếu đang cuộn ngược lên, hủy snap.
+          if (direction === -1) return;
           
           const scrollRatio = lenis.scroll / currentH;
-          const targetSection = Math.ceil(scrollRatio) * currentH;
+          // Fix Lỗi 1: BẪY INFINITE SNAP. Tránh việc sai số dấu phẩy động 0.0001 làm Math.ceil đẩy target lên mãi mãi
+          const safeRatio = Math.abs(scrollRatio - Math.round(scrollRatio)) < 0.01 
+            ? Math.round(scrollRatio) 
+            : scrollRatio;
+            
+          const targetSection = Math.ceil(safeRatio) * currentH;
 
           if (Math.abs(lenis.scroll - targetSection) > 5) {
+            isSnapping = true;
             lenis.scrollTo(targetSection, {
-              duration: 1.8, // Giảm từ 7.5s xuống 1.8s để tránh treo luồng cuộn trên Android
-              easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+              duration: 1.8,
+              easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+              onComplete: () => { isSnapping = false; }
             });
           }
         }, 250); // Tăng delay lên 250ms để đợi momentum kết thúc hẳn
       }
     });
 
-    // Fix LỖI 2: Liệt Touch. Xóa trạng thái Snap ngầm trong Lenis để không kích hoạt window.scrollTo làm hỏng Touch/Momentum của trình duyệt
+    // Fix LỖI 2: Liệt Touch trên Vercel. Phải dùng Public API của trình duyệt (WheelEvent) để lừa Lenis hủy scrollTo, tuyệt đối không dùng private props vì bị minify làm hỏng.
     const handleTouch = () => {
       clearTimeout(snapTimeout);
+      isSnapping = false;
       setPhase('SCROLLING');
-      if (lenisRef.current) {
-        const l = lenisRef.current as any;
-        l.isSmoothScrolling = false;
-        l.isAnimatedScroll = false;
-        l.isScrolling = false;
-        l.targetScroll = l.scroll;
-        l.velocity = 0;
+      
+      try {
+        window.dispatchEvent(new WheelEvent('wheel', { deltaY: 1, bubbles: true }));
+      } catch (e) {
+        // Fallback
+        const event = document.createEvent('Event');
+        event.initEvent('wheel', true, true);
+        (event as any).deltaY = 1;
+        window.dispatchEvent(event);
       }
     };
     window.addEventListener('touchstart', handleTouch, { passive: true });
