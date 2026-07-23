@@ -11,6 +11,23 @@ The implementation MUST prioritize:
 - Immersive scrolling experience
 - Artwork presentation over conventional UI patterns
 
+## Core Design Directives (Hiến Pháp UX & Motion)
+
+### 1. Continuous Linear Layout (Cấm Scene Transitions & Opacity Fades)
+- **Luật:** Toàn bộ Section và Clone Section nằm cố định trên một trục cuộn dọc liên tục. Người dùng vuốt đến đâu, nội dung trôi lên đến đó.
+- **Nghiêm cấm:**
+  - Tuyệt đối CẤM các dạng chuyển cảnh kiểu Slide/Wipe/Zoom Out, biến đổi Opacity, hoặc giấu/hiện Section bằng code CSS khi chuyển Section.
+  - CẤM áp dụng hiệu ứng nhấp nháy, làm mờ (`filter: blur`), hay ép đen trắng (`grayscale`) bằng CSS trên nội dung khi cuộn.
+- **Triết lý:** Điểm nhấn thị giác (Visual Focus) phải sinh ra từ chính bản thân Motion/Lighting bên trong file render 3D (C4D/VFX), không dùng CSS overlay rẻ rách để làm giả chiều sâu.
+
+### 2. Physical Momentum & Easy In / Easy Out
+- **Tốc độ & Trớn:** Chuyển động phải mượt, có quán tính hãm phanh (Decay/Friction), không cần nhanh nhưng phải tự nhiên ("mượt cứt").
+- **Dwell-to-Play Hãm Phanh:** Khi cụm Marquee dừng để phát video (Dwell), tốc độ trôi ngang phải giảm dần qua hàm nội suy (Lerp multiplier `1.0 -> 0.0` trong 500ms), tuyệt đối không phanh gấp ngắt quãng.
+
+### 3. Scroll-Scrubbing & Geometric Parallax
+- **Đồng bộ 1:1:** Tất cả Micro-animation (Chữ trượt, hiệu ứng 3D lơ lửng) BẮT BUỘC map trực tiếp 1-1 với `scrollProgress` từ Zustand qua `transform: translate3d`.
+- **Cấm CSS Transitions trên Scroll:** Tuyệt đối không dùng `transition: all 0.3s` cho các thuộc tính biến đổi theo cuộn chuột, tránh gây ra độ trễ (desync) giữa tay vuốt và mắt nhìn.
+
 ---
 
 ## 2. Architecture Principles

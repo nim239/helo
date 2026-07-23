@@ -231,6 +231,26 @@ The JSON structure enforces a unified `layout` system with nested array items fo
 | `DWELLING` | User resumes scroll (`vel > threshold`) | `SCROLLING` | Marquee video pauses, track resumes momentum. |
 | `DWELLING` | Edge case: Teleport bounds crossed | `TELEPORTING` | Force-kill DWELLING, force-pause video, start teleport. |
 
+## Technical Addendum: Mobile Physics & Production Stability
+
+### 1. Vercel Minification & Lenis Touch Protection
+- **Vấn đề:** Trình đóng gói (Turbopack/Webpack) trên Vercel Minify biến nội bộ của Lenis (`isSmoothScrolling` -> `t`), gây liệt Touch trên mobile khi can thiệp biến private hoặc khi `window.scrollTo` bị gọi đè lên gesture của Android Chrome.
+- **Quy tắc:** Thiết lập `syncTouch: true` trong Lenis instance để Lenis trực tiếp quản lý Virtual Touch Scroll thay cho native scroll. Khi đó, lệnh `lenis.scrollTo(target, { immediate: true })` đi qua luồng virtual scroll mà không gọi `window.scrollTo` trực tiếp, đảm bảo không bị ngắt vỡ chuỗi touch event của Android Chrome.
+
+### 2. Epsilon Tolerances for Lerp Snap Loops
+- **Vấn đề:** Lỗi làm tròn số thực (Floating Point) làm `scrollY` dừng ở `3.000001px`, hàm `Math.ceil()` đẩy vị trí lên Index `4`, gây ra chuỗi Snap liên hoàn vô tận.
+- **Quy tắc:** Bắt buộc kẹp dung sai Epsilon (`0.02`) và sử dụng `Math.round()` khi khoảng cách ở mốc cận kề:
+  `const safeRatio = Math.abs(scrollRatio - Math.round(scrollRatio)) < 0.02 ? Math.round(scrollRatio) : scrollRatio;`
+
+### 3. App-Switch & Mount Gate Guards
+- **Mount Protection (`isReady`):** Khóa cổng Teleport cho đến khi UI yên vị hoàn toàn tại `initialOffset` của Section INTRO (Index 3). Cấm chạy Teleport Math ở `scrollY = 0` lúc vừa mount.
+- **State Lock (`isSnapping`):** Không cập nhật tọa độ gốc `startScrollY` khi hệ thống đang tự động cuộn (`isSnapping = true`). Reset `startScrollY = targetSection` khi snap hoàn tất.
+- **Viewport Shift Rejection:** Lọc rác các sự kiện `scroll` sinh ra do trình duyệt recalculate Address Bar khi chuyển tab/switch app bằng cách yêu cầu delta quãng đường cuộn tối thiểu (`deltaY > 5px`).
+
+### 4. WebM Alpha & C4D Media Layering
+- **Cấu trúc Layer:** Bức tượng/Vật thể 3D render dạng WebM Alpha (trong suốt) được đặt tràn khung (Overflow) trên lớp Z-Index cao hơn, tự động đè lướt qua (Overlap) các lớp Typography phía dưới khi cuộn.
+- **Lazy-Play & Zero-Flash:** Khởi chạy `video.play()` ngầm khi media đi sâu vào Viewport `>= 20%`. Thẻ `<video>` BẮT BUỘC giữ nguyên thuộc tính `poster` tĩnh trên HTML để chống chớp đen Safari khi xả VRAM bằng `.load()`.
+
 ## 🚀 Roadmap Phase 2: "WOW VÃI LỒN WOW" (Dành Cho Phase Tiếp Theo)
 
 Dưới đây là 5 ý tưởng tính năng đẳng cấp studio quốc tế (như Active Theory, Dogstudio, Hello Monday) được thiết kế dựa đúng trên nền tảng Transient Architecture của anh yêu:
