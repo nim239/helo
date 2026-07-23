@@ -47,7 +47,6 @@ export default function Exhibition() {
   return (
     <main className="relative w-full bg-black text-white selection:bg-white/20">
       {!assetsLoaded && <LoadingOverlay onLoaded={() => setAssetsLoaded(true)} />}
-      <MobileDebug />
       <ParallaxSides />
       <SpriteAnimation startIntro={assetsLoaded} />
       
