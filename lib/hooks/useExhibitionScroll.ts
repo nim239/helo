@@ -156,27 +156,33 @@ export function useExhibitionScroll() {
             lenis.scrollTo(targetSection, {
               duration: 1.8,
               easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
-              onComplete: () => { isSnapping = false; }
+              onComplete: () => { 
+                isSnapping = false; 
+                startScrollY = targetSection; // Fix Lỗi 3.2: Đặt lại mốc bảo vệ sau khi snap thành công
+              }
             });
           }
         }, 250); // Tăng delay lên 250ms để đợi momentum kết thúc hẳn
       }
     });
 
-    // Fix LỖI 2: Liệt Touch trên Vercel. Phải dùng Public API của trình duyệt (WheelEvent) để lừa Lenis hủy scrollTo, tuyệt đối không dùng private props vì bị minify làm hỏng.
+    // Fix LỖI 2: Liệt Touch trên Vercel. Kỹ thuật "Khóa mõm window.scrollTo":
+    // Dùng Public API của Lenis để ép nó hủy animation, nhưng chặn đứng lệnh window.scrollTo nội bộ của nó
+    // để trình duyệt Android không bị cướp cò dẫn đến liệt Touch.
     const handleTouch = () => {
       clearTimeout(snapTimeout);
       isSnapping = false;
       setPhase('SCROLLING');
+      startScrollY = window.scrollY; // Cập nhật mốc vuốt ngay lập tức
       
-      try {
-        window.dispatchEvent(new WheelEvent('wheel', { deltaY: 1, bubbles: true }));
-      } catch (e) {
-        // Fallback
-        const event = document.createEvent('Event');
-        event.initEvent('wheel', true, true);
-        (event as any).deltaY = 1;
-        window.dispatchEvent(event);
+      if (lenisRef.current) {
+        const originalScrollTo = window.scrollTo;
+        window.scrollTo = () => {}; // Tạm thời khóa mõm
+        
+        // Gọi lệnh scrollTo(immediate) để Lenis tự xóa mọi trạng thái animation nội suy
+        lenisRef.current.scrollTo(window.scrollY, { immediate: true });
+        
+        window.scrollTo = originalScrollTo; // Trả lại bình thường ngay tắp lự
       }
     };
     window.addEventListener('touchstart', handleTouch, { passive: true });
