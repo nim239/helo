@@ -9,7 +9,7 @@ export function EnterOverlay() {
   const circleRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
+  const pathRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
     // Start Preloading
