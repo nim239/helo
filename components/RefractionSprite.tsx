@@ -182,7 +182,7 @@ function Scene({ startIntro }: { startIntro: boolean }) {
         ease: 'power3.inOut',
         onUpdate: () => {
           const domEl = document.getElementById('cube-sprite');
-          if (domEl) {
+          if (domEl && mesh) {
             const screenX = (mesh.position.x / viewport.width) * window.innerWidth + window.innerWidth / 2;
             const screenY = -(mesh.position.y / viewport.height) * window.innerHeight + window.innerHeight / 2;
             domEl.style.transform = `translate(${screenX}px, ${screenY}px)`;
@@ -190,8 +190,8 @@ function Scene({ startIntro }: { startIntro: boolean }) {
         }
       }, 0);
     } else {
-      mesh.scale.set(1, 1, 1);
-      mesh.position.set(START_POINT.x, START_POINT.y, 0);
+      mesh?.scale.set(1, 1, 1);
+      mesh?.position.set(START_POINT.x, START_POINT.y, 0);
       
       const domEl = document.getElementById('cube-sprite');
       if (domEl) {
@@ -213,7 +213,7 @@ function Scene({ startIntro }: { startIntro: boolean }) {
           const stateData = getTrajectory(scrollY);
           
           materialRef.current.uniforms.uFrame.value = stateData.frame;
-          mesh.position.set(stateData.x, stateData.y, 0);
+          mesh?.position.set(stateData.x, stateData.y, 0);
           
           const domEl = document.getElementById('cube-sprite');
           if (domEl) {
