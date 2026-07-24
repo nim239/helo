@@ -98,6 +98,10 @@ graph TD
   * **Vòng 8 (Tách biệt Responsive Breakpoints: Vạch vàng trên Mobile & Vạch xanh trên Desktop)**:
     - Điện thoại (`< md`): Giữ nguyên vị trí chuẩn tại **Vạch Vàng** (`left-[-10vw] w-[50vw]`), đảm bảo art ôm sát khung hình đứng.
     - Máy tính Desktop (`md:`): Đẩy mép ngoài (Khu vực gạch đỏ) giấu hẳn sang 2 bên lề ngoài màn hình (`md:left-[-22vw]`), thu gọn tỉ lệ (`md:w-[28vw]`). Mép trong của hình được neo chính xác tại vị trí **Vạch Xanh** theo đúng sơ đồ vẽ của bản thiết kế.
+  * **Vòng 9 (Audit hình ảnh thực tế qua Browser Subagent & Screenshot Verification)**:
+    - Sử dụng Subagent chụp ảnh màn hình thời gian thực ở cả 2 độ phân giải Desktop (1920x1080) và Mobile (390x844).
+    - **Kết quả Desktop**: Xử lý triệt để hiện tượng lơ lửng giữa màn hình. Khối Art 2D 2 bên dạt hẳn về 2 biên (khoảng cách 40-60px), các góc ngoài xé lề tràn viền đúng chuẩn **Vạch Xanh**.
+    - **Kết quả Mobile**: Giữ trọn vẹn điểm neo **Vạch Vàng**, đảm bảo không bị đè lên tiêu đề và khung media trung tâm. Tác phẩm 2D 100% không bị crop chém hình.
 
 * **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
   * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.
