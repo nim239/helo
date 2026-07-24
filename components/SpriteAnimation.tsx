@@ -45,15 +45,14 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       updateFrame(`${xPercent}% 0%`);
     };
 
-    // Calculate layout coordinates
-    const w = spriteEl.offsetWidth;
-    const h = spriteEl.offsetHeight;
-    const centerX = window.innerWidth / 2 - w / 2;
-    const centerY = window.innerHeight / 2 - h / 2;
-    
     // Function to calculate exact Lissajous coordinate for any given scroll offset
     // To ensure perfect teleportation, the math MUST loop exactly over 6 sections (the real exhibition length).
     const getTrajectory = (scrollY: number) => {
+      const currentW = spriteEl.offsetWidth || 100;
+      const currentH = spriteEl.offsetHeight || 100;
+      const cX = window.innerWidth / 2 - currentW / 2;
+      const cY = window.innerHeight / 2 - currentH / 2;
+
       const cycleLength = window.innerHeight * 6;
       const progressCycle = scrollY / cycleLength; // 1.0 = exactly 6 sections
       
@@ -64,7 +63,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       const spriteP = (progressCycle * 12) % 1;
       const frame = spriteP * (FRAME_COUNT - 1);
       
-      return { x: centerX + moveX, y: centerY + moveY, frame };
+      return { x: cX + moveX, y: cY + moveY, frame };
     };
 
     // The start point is determined by the trajectory math at initial scroll position

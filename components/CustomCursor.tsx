@@ -113,10 +113,9 @@ export function CustomCursor() {
     // -------------------------------------------------------------
     // 4. INERTIA & OPTICAL RENDER LOOP (144Hz Smoothness)
     // -------------------------------------------------------------
-    let raf: number;
     let idleAngle = 0;
 
-    const renderLoop = (time: number) => {
+    const renderLoop = () => {
       let targetX = mouse.current.x;
       let targetY = mouse.current.y;
 
@@ -167,10 +166,10 @@ export function CustomCursor() {
         yDotSet(pos.current.y);
       }
 
-      raf = requestAnimationFrame(renderLoop);
+      // Render via GSAP ticker
     };
 
-    raf = requestAnimationFrame(renderLoop);
+    gsap.ticker.add(renderLoop);
 
     // Cleanup
     return () => {
@@ -181,7 +180,7 @@ export function CustomCursor() {
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('mouseover', handleMouseOver);
       window.removeEventListener('mouseout', handleMouseOut);
-      cancelAnimationFrame(raf);
+      gsap.ticker.remove(renderLoop);
     };
   }, []);
 

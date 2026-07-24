@@ -73,6 +73,19 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+* **2026-07-25 (Chế độ tự động Autonomous Goal: Tối ưu hóa Physics, Layout & GSAP Loop Sync)**:
+  * **Vòng 1 (Physics & Ease-in-out Smooth Transitions 3~6s)**:
+    - Điều chỉnh Lenis Scroll Engine trong `useExhibitionScroll.ts`: thiết lập `duration: 4.5s` (chuẩn khoảng 3~6s), sử dụng đường cong gia tốc `easeInOutCubic` (`(t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2`).
+    - Giảm `touchMultiplier` xuống `0.6` và `wheelMultiplier: 0.8` để cảm giác vuốt trên di động cực kỳ đầm, nặng và không bị vèo vọt chóng mặt.
+    - Cập nhật bộ tự động Snap (`lenis.scrollTo`) kéo dài `5.0s` với gia tốc `easeInOutCubic` cho trải nghiệm chuyển cảnh êm ái.
+  * **Vòng 2 (Fix z-index & Responsive Parallax Layout)**:
+    - Phát hiện và sửa lỗi z-index tại `ParallaxSides.tsx`: Đưa `z-index` của layer tiền cảnh từ `z-[100]` về chuẩn `z-[50]` để không đè lên con trỏ chuột (`z-[100]`), `EnterOverlay` (`z-[90]`) và `SpriteAnimation` (`z-[60]`).
+    - Giới hạn chiều rộng linh hoạt `w-[45vw] md:w-auto` cho layer parallax tiền cảnh trên mobile để không làm ảnh đè lấn chiếm khu vực trung tâm bài viết.
+  * **Vòng 3 (Đồng bộ RAF & Tối ưu hóa FPS)**:
+    - Chuyển đổi vòng lặp `requestAnimationFrame` riêng biệt trong `CustomCursor.tsx` sang `gsap.ticker.add(renderLoop)` nhằm loại bỏ xung đột dual-RAF, đưa toàn bộ hệ thống animation về 1 ticker duy nhất.
+  * **Vòng 4 (Responsive Trajectory Math)**:
+    - Cập nhật toán học Lissajous trong `SpriteAnimation.tsx` tính toán `centerX` / `centerY` động theo kích thước khung hình realtime, chống hiện tượng lệch tâm khối 2D khi xoay dọc/ngang màn hình thiết bị di động.
+
 * **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
   * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.
   * Sửa lỗi nghiêm trọng (Cropped/Layout Desync) của Sprite do resize: Đổi toàn bộ hệ thống tính toán frame sang CSS percentage (`(col/119) * 100%`) để engine luôn responsive 100%.

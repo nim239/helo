@@ -134,12 +134,12 @@ export function ParallaxSides() {
       </div>
 
       {/* Foreground Layers (Z-index 50, below Sprite which is 60) */}
-      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-12vw] h-[100vh] z-[100] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
+      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-12vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[45vw] md:w-auto">
         <div ref={fgLeftRef} className="w-full will-change-transform">
           {renderLayers(true, 'left')}
         </div>
       </div>
-      <div ref={fgRightWrapRef} className="fixed top-0 right-[-12vw] h-[100vh] z-[100] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
+      <div ref={fgRightWrapRef} className="fixed top-0 right-[-12vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[45vw] md:w-auto">
         <div ref={fgRightRef} className="w-full will-change-transform">
           {renderLayers(true, 'right')}
         </div>
