@@ -68,7 +68,7 @@ export function MediaVideo({ id, src, poster, className = "" }: MediaVideoProps)
   }, [isVisible, src, id]);
 
   return (
-    <div ref={containerRef} className={`relative w-full h-full overflow-hidden ${className}`}>
+    <div ref={containerRef} className={`relative w-full h-full overflow-hidden isolate ${className}`}>
       {/* 
         The poster image acts as a visual placeholder during the 1-2 frames 
         it takes for the video to re-attach its src and play when entering viewport.

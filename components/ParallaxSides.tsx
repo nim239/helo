@@ -26,11 +26,11 @@ export function ParallaxSides() {
   const bgLeftWrapRef = useRef<HTMLDivElement>(null);
   const bgRightWrapRef = useRef<HTMLDivElement>(null);
 
-  const [sectionHeight, setSectionHeight] = useState(0);
+  const sectionHeightRef = useRef(typeof window !== 'undefined' ? window.innerHeight : 800);
 
   useEffect(() => {
-    setSectionHeight(window.innerHeight);
-    const updateSize = () => setSectionHeight(window.innerHeight);
+    sectionHeightRef.current = window.innerHeight;
+    const updateSize = () => { sectionHeightRef.current = window.innerHeight; };
     window.addEventListener('resize', updateSize);
 
     const fgSpeed = 7 / 6;
@@ -61,7 +61,6 @@ export function ParallaxSides() {
 
     let gyroX = 0;
     let gyroY = 0;
-    let rafId: number;
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
       if (e.gamma === null || e.beta === null) return;
@@ -72,21 +71,21 @@ export function ParallaxSides() {
       gyroY += (targetY - gyroY) * 0.1;
     };
 
-    const renderLoop = () => {
+    const renderGyro = () => {
+      // Dùng chung GSAP ticker với ScrollTrigger để xoá lỗi 2 RAF song song!
       gsap.set(fgLeftWrapRef.current, { x: gyroX * 1.2, y: gyroY * 1.5 });
       gsap.set(fgRightWrapRef.current, { x: gyroX * 1.2, y: gyroY * 1.5 });
       gsap.set(bgLeftWrapRef.current, { x: gyroX * 0.3, y: gyroY * 0.5 });
       gsap.set(bgRightWrapRef.current, { x: gyroX * 0.3, y: gyroY * 0.5 });
-      rafId = requestAnimationFrame(renderLoop);
     };
 
     window.addEventListener('deviceorientation', handleOrientation);
-    rafId = requestAnimationFrame(renderLoop);
+    gsap.ticker.add(renderGyro);
 
     return () => {
       window.removeEventListener('resize', updateSize);
       window.removeEventListener('deviceorientation', handleOrientation);
-      cancelAnimationFrame(rafId);
+      gsap.ticker.remove(renderGyro);
       trigger.kill();
     };
   }, []);
@@ -95,22 +94,24 @@ export function ParallaxSides() {
     return exhibitionBuffer.map((section, idx) => {
       let scaleClass = '';
       if (isForeground && align === 'left') scaleClass = 'scale-y-[-1]';
-      if (isForeground && align === 'right') scaleClass = '-scale-x-100 scale-y-[-1]'; // scale(-1, -1)
+      if (isForeground && align === 'right') scaleClass = '-scale-x-100 scale-y-[-1]';
       if (!isForeground && align === 'right') scaleClass = '-scale-x-100';
-      if (!isForeground && align === 'left') scaleClass = ''; // Default
+      if (!isForeground && align === 'left') scaleClass = '';
 
-      const opacityClass = isForeground ? 'opacity-80' : 'opacity-30';
+      // Anchor point: Bên trái căn phải (object-right), Bên phải căn trái (object-left)
+      const objectAlign = align === 'left' ? 'object-right' : 'object-left';
+      const flexAlign = align === 'left' ? 'justify-end' : 'justify-start';
 
       return (
         <div
           key={section.key + idx}
-          className="w-full relative flex items-center justify-center overflow-hidden"
-          style={{ height: sectionHeight ? `${sectionHeight}px` : '100vh' }}
+          className={`w-full relative flex items-center ${flexAlign} overflow-visible`}
+          style={{ height: '100vh' }}
         >
           <img
             src="/paralax/ref_paralax_1.png"
             alt="Parallax Render"
-            className={`w-full h-full object-cover mix-blend-screen ${scaleClass} ${opacityClass}`}
+            className={`h-full w-auto max-w-none object-cover ${objectAlign} mix-blend-screen ${scaleClass} opacity-100`}
           />
         </div>
       );
@@ -119,25 +120,25 @@ export function ParallaxSides() {
 
   return (
     <>
-      {/* Background Layers (Z-index 0) */}
-      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-10vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
+      {/* Background Layers (Z-index 0) - Mở rộng hẳn ra ngoài màn hình (-20vw) để Gyro không bị hở/cụt chân */}
+      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-10vw] md:left-[-15vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[35vw]">
         <div ref={bgLeftRef} className="w-full will-change-transform">
           {renderLayers(false, 'left')}
         </div>
       </div>
-      <div ref={bgRightWrapRef} className="fixed top-0 right-[-10vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
+      <div ref={bgRightWrapRef} className="fixed top-0 right-[-10vw] md:right-[-15vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[35vw]">
         <div ref={bgRightRef} className="w-full will-change-transform">
           {renderLayers(false, 'right')}
         </div>
       </div>
 
-      {/* Foreground Layers (Z-index 50, below Sprite which is 60) */}
-      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-12vw] h-[100vh] z-[100] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
+      {/* Foreground Layers (Z-index 50) */}
+      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-15vw] md:left-[-17vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[40vw]">
         <div ref={fgLeftRef} className="w-full will-change-transform">
           {renderLayers(true, 'left')}
         </div>
       </div>
-      <div ref={fgRightWrapRef} className="fixed top-0 right-[-12vw] h-[100vh] z-[100] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
+      <div ref={fgRightWrapRef} className="fixed top-0 right-[-15vw] md:right-[-17vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[40vw]">
         <div ref={fgRightRef} className="w-full will-change-transform">
           {renderLayers(true, 'right')}
         </div>

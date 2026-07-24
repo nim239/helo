@@ -20,14 +20,15 @@ export function useExhibitionScroll() {
     }
 
     const lenis = new Lenis({
-      duration: 2.5,
-      easing: (t) => 1 - Math.pow(1 - t, 4),
+      duration: 4.5, // Smooth slow motion (3~6s range)
+      // easeInOutCubic: Easy-in Easy-out mượt mà chuẩn triển lãm
+      easing: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
       syncTouch: true,
-      touchMultiplier: 1.0,
-      wheelMultiplier: 1.0,
+      touchMultiplier: 0.6, // Giảm tốc độ vuốt màn hình mobile (nặng & đầm)
+      wheelMultiplier: 0.8, // Giảm tốc độ cuộn chuột desktop
       infinite: true, // NATIVE INFINITE SCROLL
     });
 
@@ -59,7 +60,7 @@ export function useExhibitionScroll() {
 
     // Debug helper
     const dbg = (msg: string) => {
-      try { window.dispatchEvent(new CustomEvent('lenis-debug', { detail: msg })); } catch(e) {}
+      try { window.dispatchEvent(new CustomEvent('lenis-debug', { detail: msg })); } catch (e) { }
     };
 
     let snapTimeout: ReturnType<typeof setTimeout>;
@@ -122,11 +123,12 @@ export function useExhibitionScroll() {
 
           if (Math.abs(lenis.scroll - targetSection) > 5) {
             dbg(`SNAP ${Math.round(lenis.scroll)} → ${Math.round(targetSection)}`);
-            
+
             // Use native lenis.scrollTo instead of GSAP proxy to prevent infinite teleport conflicts
             lenis.scrollTo(targetSection, {
-              duration: 1.5,
-              easing: (t) => 1 - Math.pow(1 - t, 3), // power3.out
+              duration: 5, // Tăng duration để snap trôi mượt và đầm hơn
+              // easeInOutCubic: Chậm vào → Tăng đà → Chậm ra
+              easing: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
               lock: false,
               onComplete: () => {
                 dbg(`SNAP DONE ${Math.round(targetSection)}`);

@@ -98,10 +98,13 @@ export function EnterOverlay() {
 
     setEntered(true);
 
-    // Animate to top center
+    // Move circle up and scale down
     const tl = gsap.timeline({
       onComplete: () => {
         setLogoSettled(true);
+        if (circleRef.current) {
+          circleRef.current.style.pointerEvents = 'none';
+        }
       }
     });
 
