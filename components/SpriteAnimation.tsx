@@ -33,21 +33,21 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
 
     let scrollTriggerInst: ScrollTrigger | null = null;
     
-    // We already have the image cached by LoadingOverlay
-    const w = spriteEl.offsetWidth;
-    const h = spriteEl.offsetHeight;
     spriteEl.style.backgroundImage = `url(${SPRITE_SHEET_PATH})`;
-    spriteEl.style.backgroundSize = `${w * COLS}px ${h}px`;
+    spriteEl.style.backgroundSize = `${COLS * 100}% 100%`;
 
     const state = { frame: 0 };
     const updateFrame = gsap.quickSetter(spriteEl, 'backgroundPosition');
 
     const renderFrame = () => {
       const col = Math.floor(state.frame) % COLS;
-      updateFrame(`${-col * w}px 0px`);
+      const xPercent = (col / (COLS - 1)) * 100;
+      updateFrame(`${xPercent}% 0%`);
     };
 
     // Calculate layout coordinates
+    const w = spriteEl.offsetWidth;
+    const h = spriteEl.offsetHeight;
     const centerX = window.innerWidth / 2 - w / 2;
     const centerY = window.innerHeight / 2 - h / 2;
     
@@ -68,7 +68,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
     };
 
     // The start point is determined by the trajectory math at initial scroll position
-    const initialScrollY = window.innerHeight * 3; // Section 1 (Index 3)
+    const initialScrollY = 0; // Section 1 (Index 0)
     
     // CONFIGURATION: Base target position for the Sprite Intro End
     const START_POINT_SPRITE = getTrajectory(initialScrollY);
@@ -144,6 +144,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
 
   return (
     <div
+      id="cube-sprite"
       ref={spriteRef}
       className="fixed top-0 left-0 w-[20vw] h-[20vw] max-w-[200px] max-h-[200px] z-[60] pointer-events-none bg-no-repeat"
     />

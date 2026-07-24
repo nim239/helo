@@ -65,11 +65,9 @@ export function useExhibitionScroll() {
     let snapTimeout: ReturnType<typeof setTimeout>;
     let startScrollY = 0;
     let isDocumentVisible = true;
-    let snapTween: gsap.core.Tween | null = null;
 
     const killSnap = () => {
       clearTimeout(snapTimeout);
-      if (snapTween) { snapTween.kill(); snapTween = null; }
     };
 
     // Visibility handler (Fix Lỗi 3: switch app)
@@ -125,20 +123,15 @@ export function useExhibitionScroll() {
           if (Math.abs(lenis.scroll - targetSection) > 5) {
             dbg(`SNAP ${Math.round(lenis.scroll)} → ${Math.round(targetSection)}`);
             
-            if (snapTween) { snapTween.kill(); }
-            const proxy = { y: lenis.scroll };
-            snapTween = gsap.to(proxy, {
-              y: targetSection,
-              duration: 3,
-              ease: 'power2.inOut',
-              onUpdate: () => {
-                lenis.scrollTo(proxy.y, { immediate: true });
-              },
+            // Use native lenis.scrollTo instead of GSAP proxy to prevent infinite teleport conflicts
+            lenis.scrollTo(targetSection, {
+              duration: 1.5,
+              easing: (t) => 1 - Math.pow(1 - t, 3), // power3.out
+              lock: false,
               onComplete: () => {
                 dbg(`SNAP DONE ${Math.round(targetSection)}`);
                 startScrollY = targetSection;
-                snapTween = null;
-              },
+              }
             });
           }
         }, 350);
