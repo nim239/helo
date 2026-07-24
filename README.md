@@ -85,6 +85,16 @@ graph TD
     - Chuyển đổi vòng lặp `requestAnimationFrame` riêng biệt trong `CustomCursor.tsx` sang `gsap.ticker.add(renderLoop)` nhằm loại bỏ xung đột dual-RAF, đưa toàn bộ hệ thống animation về 1 ticker duy nhất.
   * **Vòng 4 (Responsive Trajectory Math)**:
     - Cập nhật toán học Lissajous trong `SpriteAnimation.tsx` tính toán `centerX` / `centerY` động theo kích thước khung hình realtime, chống hiện tượng lệch tâm khối 2D khi xoay dọc/ngang màn hình thiết bị di động.
+  * **Vòng 5 (Tối ưu Stacking Context & Fix Click Leakage)**:
+    - Bổ sung CSS utility `isolate` cho container `<MediaVideo />` để tạo stacking context độc lập, đảm bảo ảnh `poster` (z-index âm `-z-10`) hiển thị chuẩn phía sau video mà không bị trôi bên dưới background của section cha.
+    - Sửa triệt để bug rò rỉ sự kiện nhấp chuột tại `EnterOverlay.tsx`: Tự động ngắt `pointer-events: none` cho nút mở đầu sau khi hoàn tất hiệu ứng thu nhỏ, tránh che khuất hoặc nuốt mất sự kiện click của các phần tử ở đỉnh màn hình.
+  * **Vòng 6 (Fix Parallax Distance Gap & Gỡ bỏ Blurry Mask)**:
+    - Gỡ bỏ hoàn toàn CSS Gradient Mask (`maskImage`) và trả lại độ sắc nét `opacity-100` cho toàn bộ 4 layer Parallax Sides theo yêu cầu thiết kế.
+    - Khắc phục triệt để khoảng trống khoảng đen khổng lồ giữa các hình parallax trên mobile: Thay thế `object-contain` bằng `object-cover` chuẩn `100vh`, giúp các hình nối tiếp nhau liên tục mà không xuất hiện vệt đen đắt khoảng.
+    - Giới hạn chiều rộng khung cố định `w-[32vw]` ở rìa màn hình điện thoại để giữ art vừa vặn hai bên.
+  * **Vòng 7 (Tái thiết lập Anchor Point & Mở rộng Bleed Off-screen cho Gyro)**:
+    - Căn chỉnh điểm neo Anchor Point chuẩn thiết kế: Cột Parallax bên trái căn phải (`object-right` / `justify-end`), Cột Parallax bên phải căn trái (`object-left` / `justify-start`) để mép trong bài trí tác phẩm hoàn chỉnh, 100% không bị crop chém vào khối art 3D.
+    - Mở rộng container tràn viền ngoài màn hình (`left-[-22vw]`, `right-[-22vw]`, `w-[55vw]`) và bật `overflow-visible`: Đảm bảo khi nghiêng cảm biến Gyro (con quay hồi chuyển) dịch chuyển X/Y, mép ngoài bức ảnh vẫn có khoảng bù trừ dư thừa (bleed margin) giúp hình không bao giờ bị lộ vết hở hay cụt chân.
 
 * **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
   * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.

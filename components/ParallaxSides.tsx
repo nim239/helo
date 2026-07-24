@@ -94,25 +94,24 @@ export function ParallaxSides() {
     return exhibitionBuffer.map((section, idx) => {
       let scaleClass = '';
       if (isForeground && align === 'left') scaleClass = 'scale-y-[-1]';
-      if (isForeground && align === 'right') scaleClass = '-scale-x-100 scale-y-[-1]'; // scale(-1, -1)
+      if (isForeground && align === 'right') scaleClass = '-scale-x-100 scale-y-[-1]';
       if (!isForeground && align === 'right') scaleClass = '-scale-x-100';
-      if (!isForeground && align === 'left') scaleClass = ''; // Default
+      if (!isForeground && align === 'left') scaleClass = '';
 
-      const opacityClass = isForeground ? 'opacity-80' : 'opacity-30';
-      const maskGradient = align === 'left' 
-        ? 'linear-gradient(to right, black 30%, transparent 100%)'
-        : 'linear-gradient(to left, black 30%, transparent 100%)';
+      // Anchor point: Bên trái căn phải (object-right), Bên phải căn trái (object-left)
+      const objectAlign = align === 'left' ? 'object-right' : 'object-left';
+      const flexAlign = align === 'left' ? 'justify-end' : 'justify-start';
 
       return (
         <div
           key={section.key + idx}
-          className="w-full relative flex items-center justify-center overflow-visible"
-          style={{ height: '100vh', maskImage: maskGradient, WebkitMaskImage: maskGradient }}
+          className={`w-full relative flex items-center ${flexAlign} overflow-visible`}
+          style={{ height: '100vh' }}
         >
           <img
             src="/paralax/ref_paralax_1.png"
             alt="Parallax Render"
-            className={`w-[60vw] md:w-full h-full object-contain md:object-cover mix-blend-screen ${scaleClass} ${opacityClass}`}
+            className={`h-full w-auto max-w-none object-cover ${objectAlign} mix-blend-screen ${scaleClass} opacity-100`}
           />
         </div>
       );
@@ -121,25 +120,25 @@ export function ParallaxSides() {
 
   return (
     <>
-      {/* Background Layers (Z-index 0) */}
-      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-10vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
+      {/* Background Layers (Z-index 0) - Mở rộng hẳn ra ngoài màn hình (-20vw) để Gyro không bị hở/cụt chân */}
+      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-10vw] md:left-[-15vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[35vw]">
         <div ref={bgLeftRef} className="w-full will-change-transform">
           {renderLayers(false, 'left')}
         </div>
       </div>
-      <div ref={bgRightWrapRef} className="fixed top-0 right-[-10vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
+      <div ref={bgRightWrapRef} className="fixed top-0 right-[-10vw] md:right-[-15vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[35vw]">
         <div ref={bgRightRef} className="w-full will-change-transform">
           {renderLayers(false, 'right')}
         </div>
       </div>
 
-      {/* Foreground Layers (Z-index 50, below Sprite which is 60) */}
-      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-12vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[45vw] md:w-auto">
+      {/* Foreground Layers (Z-index 50) */}
+      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-15vw] md:left-[-17vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[40vw]">
         <div ref={fgLeftRef} className="w-full will-change-transform">
           {renderLayers(true, 'left')}
         </div>
       </div>
-      <div ref={fgRightWrapRef} className="fixed top-0 right-[-12vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[45vw] md:w-auto">
+      <div ref={fgRightWrapRef} className="fixed top-0 right-[-15vw] md:right-[-17vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[40vw]">
         <div ref={fgRightRef} className="w-full will-change-transform">
           {renderLayers(true, 'right')}
         </div>

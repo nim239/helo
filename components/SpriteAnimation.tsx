@@ -66,16 +66,27 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       return { x: cX + moveX, y: cY + moveY, frame };
     };
 
+    const getCenterPos = () => {
+      const currentW = spriteEl.offsetWidth || 100;
+      const currentH = spriteEl.offsetHeight || 100;
+      return {
+        x: window.innerWidth / 2 - currentW / 2,
+        y: window.innerHeight / 2 - currentH / 2,
+      };
+    };
+
     // The start point is determined by the trajectory math at initial scroll position
     const initialScrollY = 0; // Section 1 (Index 0)
     
     // CONFIGURATION: Base target position for the Sprite Intro End
     const START_POINT_SPRITE = getTrajectory(initialScrollY);
     
+    const centerPos = getCenterPos();
+
     // Initial Intro State
     gsap.set(spriteEl, {
-      x: centerX,
-      y: centerY,
+      x: centerPos.x,
+      y: centerPos.y,
       scale: 2.5,
       opacity: 1,
     });
