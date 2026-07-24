@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import sectionsData from '../data/sections.json';
 import { Section } from '../components/Section';
-import { RefractionSprite } from '../components/RefractionSprite';
+import { SpriteAnimation } from '../components/SpriteAnimation';
 import { HorizontalMarquee } from '../components/HorizontalMarquee';
 import { ParallaxSides } from '../components/ParallaxSides';
 import { EnterOverlay } from '../components/EnterOverlay';
@@ -71,7 +71,7 @@ export default function Exhibition() {
       <HackerMode />
       <EnterOverlay />
       <ParallaxSides />
-      <RefractionSprite startIntro={isLogoSettled} />
+      <SpriteAnimation startIntro={isLogoSettled} />
       
       {exhibitionBuffer.map((section) => (
         <Section key={section.key} id={section.key} isClone={section.isClone}>

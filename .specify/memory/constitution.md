@@ -21,7 +21,9 @@ The implementation MUST prioritize:
 - **Triết lý:** Điểm nhấn thị giác (Visual Focus) phải sinh ra từ chính bản thân Motion/Lighting bên trong file render 3D (C4D/VFX), không dùng CSS overlay rẻ rách để làm giả chiều sâu.
 
 ### 2. Physical Momentum & Easy In / Easy Out
-- **Tốc độ & Trớn:** Chuyển động phải mượt, có quán tính hãm phanh (Decay/Friction), không cần nhanh nhưng phải tự nhiên ("mượt cứt").
+- **Tốc độ & Trớn:** Chuyển động phải mượt, có quán tính hãm phanh (Decay/Friction), không cần nhanh nhưng phải tự nhiên (“mượt cứt”).
+- **Bắt buộc EaseInOut:** Mọi động tác scroll dẫu phải có đà vào (đầu chậm, tăng tốc, sau đó giảm dần trước khi dừng). Function chuẩn: `easeInOutCubic` — `(t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2`.
+- **Mobile Phải Slow Down:** Trên cảm ứng (touch), `touchMultiplier` phải nhỏ hơn 1.0 (không vượt quá `0.65`) để người dùng cảm thấy nặng và sang.
 - **Dwell-to-Play Hãm Phanh:** Khi cụm Marquee dừng để phát video (Dwell), tốc độ trôi ngang phải giảm dần qua hàm nội suy (Lerp multiplier `1.0 -> 0.0` trong 500ms), tuyệt đối không phanh gấp ngắt quãng.
 
 ### 3. Scroll-Scrubbing & Geometric Parallax
@@ -67,6 +69,13 @@ Forbidden:
 ---
 
 ## 4. Performance Principles
+
+**FPS Là LINH HỒN CỦA WEBSITE NÀY.** Mọọi quyết định kỹ thuật phải ưu tiên FPS trước tiên.
+
+- **Mục tiêu:** Stable **60 FPS tối thiểu**, cố gắng đạt **144-165 FPS** trên màn hình cao cấp.
+- **Quy tắc sắt:** Nếu một kỹ thuật (dù đẹp đến đâu) khiến FPS xuống dưới 60 — phải loại bỏ hoặc thay thế ngưởng. WebGL đẹp hơn 2D CSS nhưng nếu nó bóp chết FPS thì 2D CSS thắng.
+- **1 RAF duy nhất:** Toàn hệ thống chỉ được có **một** vòng lặp animation (GSAP Ticker). Nghiêm cấm raw `requestAnimationFrame` song song với GSAP ticker.
+- **Bất biến:** Tuyệt đối không dùng `useState`/`useContext` cho bất kỳ dữ liệu nào cập nhật với tần suất scroll (> 10Hz). Dùng `ref` hoặc Zustand transient state.
 
 60 - 120 FPS interaction is a core requirement.
 

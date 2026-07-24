@@ -20,15 +20,16 @@ export function useExhibitionScroll() {
     }
 
     const lenis = new Lenis({
-      duration: 2.5,
-      easing: (t) => 1 - Math.pow(1 - t, 4),
+      duration: 3.0,
+      // easeInOutCubic: chậm vào → tăng tốc → chậm ra
+      easing: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
       syncTouch: true,
-      touchMultiplier: 1.0,
+      touchMultiplier: 0.65, // Mobile: heavy, deliberate feel
       wheelMultiplier: 1.0,
-      infinite: true, // NATIVE INFINITE SCROLL
+      infinite: true,
     });
 
     lenisRef.current = lenis;

@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import sectionsData from '../data/sections.json';
-
-gsap.registerPlugin(ScrollTrigger);
 
 const exhibitionBuffer = [
   ...sectionsData.map((s) => ({ ...s, key: `parallax-0-${s.id}` })),
@@ -26,68 +23,62 @@ export function ParallaxSides() {
   const bgLeftWrapRef = useRef<HTMLDivElement>(null);
   const bgRightWrapRef = useRef<HTMLDivElement>(null);
 
-  const [sectionHeight, setSectionHeight] = useState(0);
+  // Ref instead of state — zero React re-renders on resize
+  const sectionHeightRef = useRef(typeof window !== 'undefined' ? window.innerHeight : 800);
 
   useEffect(() => {
-    setSectionHeight(window.innerHeight);
-    const updateSize = () => setSectionHeight(window.innerHeight);
+    const updateSize = () => { sectionHeightRef.current = window.innerHeight; };
     window.addEventListener('resize', updateSize);
 
-    const fgSpeed = 7 / 6;
-    const bgSpeed = 5 / 6;
+    const FG_SPEED = 7 / 6;
+    const BG_SPEED = 5 / 6;
 
-    const trigger = ScrollTrigger.create({
-      start: 0,
-      end: 'max',
-      scrub: 0,
-      onUpdate: (self) => {
-        const scrollY = self.scroll();
-        const maxH = window.innerHeight * 6; // Height of 1 full cycle of real sections
-
-        // Compute wrapped Y positions to create a seamless infinite marquee
-        const rawFgY = -scrollY * fgSpeed;
-        const rawBgY = -scrollY * bgSpeed;
-
-        const fgY = gsap.utils.wrap(-maxH, 0, rawFgY);
-        const bgY = gsap.utils.wrap(-maxH, 0, rawBgY);
-
-        gsap.set(fgLeftRef.current, { y: fgY });
-        gsap.set(fgRightRef.current, { y: fgY });
-
-        gsap.set(bgLeftRef.current, { y: bgY });
-        gsap.set(bgRightRef.current, { y: bgY });
-      }
-    });
-
-    let gyroX = 0;
-    let gyroY = 0;
-    let rafId: number;
+    // Gyro stored in plain object refs — no React state, no re-renders
+    const gyro = { x: 0, y: 0, targetX: 0, targetY: 0 };
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
       if (e.gamma === null || e.beta === null) return;
-      const targetX = (e.gamma / 90) * 150;
-      const targetY = (e.beta / 90) * 150;
-
-      gyroX += (targetX - gyroX) * 0.1;
-      gyroY += (targetY - gyroY) * 0.1;
+      gyro.targetX = (e.gamma / 90) * 150;
+      gyro.targetY = (e.beta / 90) * 150;
     };
-
-    const renderLoop = () => {
-      gsap.set(fgLeftWrapRef.current, { x: gyroX * 1.2, y: gyroY * 1.5 });
-      gsap.set(fgRightWrapRef.current, { x: gyroX * 1.2, y: gyroY * 1.5 });
-      gsap.set(bgLeftWrapRef.current, { x: gyroX * 0.3, y: gyroY * 0.5 });
-      gsap.set(bgRightWrapRef.current, { x: gyroX * 0.3, y: gyroY * 0.5 });
-      rafId = requestAnimationFrame(renderLoop);
-    };
-
     window.addEventListener('deviceorientation', handleOrientation);
-    rafId = requestAnimationFrame(renderLoop);
+
+    // ONE unified GSAP ticker — runs in sync with Lenis, replaces both
+    // the old raw requestAnimationFrame loop AND the ScrollTrigger.onUpdate.
+    // This eliminates the dual-RAF conflict that was competing with Lenis.
+    const unifiedTicker = () => {
+      const scrollY = window.scrollY;
+      const maxH = sectionHeightRef.current * 6;
+
+      const fgY = gsap.utils.wrap(-maxH, 0, -scrollY * FG_SPEED);
+      const bgY = gsap.utils.wrap(-maxH, 0, -scrollY * BG_SPEED);
+
+      // Direct style mutations — no gsap.set() overhead, pure GPU compositing
+      if (fgLeftRef.current) fgLeftRef.current.style.transform = `translate3d(0,${fgY}px,0)`;
+      if (fgRightRef.current) fgRightRef.current.style.transform = `translate3d(0,${fgY}px,0)`;
+      if (bgLeftRef.current) bgLeftRef.current.style.transform = `translate3d(0,${bgY}px,0)`;
+      if (bgRightRef.current) bgRightRef.current.style.transform = `translate3d(0,${bgY}px,0)`;
+
+      // Gyro lerp — skip DOM writes entirely when gyro is idle
+      const gyroActive = Math.abs(gyro.targetX) > 0.5 || Math.abs(gyro.x) > 0.5;
+      if (gyroActive) {
+        gyro.x += (gyro.targetX - gyro.x) * 0.05;
+        gyro.y += (gyro.targetY - gyro.y) * 0.05;
+        const gx12 = gyro.x * 1.2, gy15 = gyro.y * 1.5;
+        const gx03 = gyro.x * 0.3, gy05 = gyro.y * 0.5;
+        if (fgLeftWrapRef.current)  fgLeftWrapRef.current.style.transform  = `translate3d(${gx12}px,${gy15}px,0)`;
+        if (fgRightWrapRef.current) fgRightWrapRef.current.style.transform = `translate3d(${gx12}px,${gy15}px,0)`;
+        if (bgLeftWrapRef.current)  bgLeftWrapRef.current.style.transform  = `translate3d(${gx03}px,${gy05}px,0)`;
+        if (bgRightWrapRef.current) bgRightWrapRef.current.style.transform = `translate3d(${gx03}px,${gy05}px,0)`;
+      }
+    };
+
+    gsap.ticker.add(unifiedTicker);
 
     return () => {
       window.removeEventListener('resize', updateSize);
       window.removeEventListener('deviceorientation', handleOrientation);
-      cancelAnimationFrame(rafId);
-      trigger.kill();
+      gsap.ticker.remove(unifiedTicker);
     };
   }, []);
 
@@ -95,9 +86,8 @@ export function ParallaxSides() {
     return exhibitionBuffer.map((section, idx) => {
       let scaleClass = '';
       if (isForeground && align === 'left') scaleClass = 'scale-y-[-1]';
-      if (isForeground && align === 'right') scaleClass = '-scale-x-100 scale-y-[-1]'; // scale(-1, -1)
+      if (isForeground && align === 'right') scaleClass = '-scale-x-100 scale-y-[-1]';
       if (!isForeground && align === 'right') scaleClass = '-scale-x-100';
-      if (!isForeground && align === 'left') scaleClass = ''; // Default
 
       const opacityClass = isForeground ? 'opacity-80' : 'opacity-30';
 
@@ -105,11 +95,12 @@ export function ParallaxSides() {
         <div
           key={section.key + idx}
           className="w-full relative flex items-center justify-center overflow-hidden"
-          style={{ height: sectionHeight ? `${sectionHeight}px` : '100vh' }}
+          style={{ height: '100vh' }}
         >
           <img
             src="/paralax/ref_paralax_1.png"
-            alt="Parallax Render"
+            alt=""
+            aria-hidden="true"
             className={`w-full h-full object-cover mix-blend-screen ${scaleClass} ${opacityClass}`}
           />
         </div>
@@ -119,25 +110,25 @@ export function ParallaxSides() {
 
   return (
     <>
-      {/* Background Layers (Z-index 0) */}
-      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-10vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
+      {/* Background Layers (z=0) */}
+      <div ref={bgLeftWrapRef} className="fixed top-0 left-0 h-screen z-[0] pointer-events-none overflow-hidden will-change-transform w-[28vw] md:w-[18vw] lg:w-[14vw]">
         <div ref={bgLeftRef} className="w-full will-change-transform">
           {renderLayers(false, 'left')}
         </div>
       </div>
-      <div ref={bgRightWrapRef} className="fixed top-0 right-[-10vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform">
+      <div ref={bgRightWrapRef} className="fixed top-0 right-0 h-screen z-[0] pointer-events-none overflow-hidden will-change-transform w-[28vw] md:w-[18vw] lg:w-[14vw]">
         <div ref={bgRightRef} className="w-full will-change-transform">
           {renderLayers(false, 'right')}
         </div>
       </div>
 
-      {/* Foreground Layers (Z-index 50, below Sprite which is 60) */}
-      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-12vw] h-[100vh] z-[100] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
+      {/* Foreground Layers (z=50, below Sprite z=60) */}
+      <div ref={fgLeftWrapRef} className="fixed top-0 left-0 h-screen z-[50] pointer-events-none overflow-hidden mix-blend-screen will-change-transform w-[30vw] md:w-[20vw] lg:w-[15vw]">
         <div ref={fgLeftRef} className="w-full will-change-transform">
           {renderLayers(true, 'left')}
         </div>
       </div>
-      <div ref={fgRightWrapRef} className="fixed top-0 right-[-12vw] h-[100vh] z-[100] pointer-events-none overflow-visible mix-blend-screen will-change-transform">
+      <div ref={fgRightWrapRef} className="fixed top-0 right-0 h-screen z-[50] pointer-events-none overflow-hidden mix-blend-screen will-change-transform w-[30vw] md:w-[20vw] lg:w-[15vw]">
         <div ref={fgRightRef} className="w-full will-change-transform">
           {renderLayers(true, 'right')}
         </div>
