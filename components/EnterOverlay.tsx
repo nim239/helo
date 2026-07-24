@@ -130,7 +130,7 @@ export function EnterOverlay() {
   };
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-[60] flex items-center justify-center bg-black text-white pointer-events-none">
+    <div ref={containerRef} className="fixed inset-0 z-[90] flex items-center justify-center bg-black text-white pointer-events-none">
       
       {/* Circle Button */}
       <button 

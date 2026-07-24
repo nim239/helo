@@ -73,6 +73,14 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+* **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
+  * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.
+  * Sửa lỗi nghiêm trọng (Cropped/Layout Desync) của Sprite do resize: Đổi toàn bộ hệ thống tính toán frame sang CSS percentage (`(col/119) * 100%`) để engine luôn responsive 100%.
+  * Fix lỗi Offset 300vh ban đầu, đồng bộ hệ trục tọa độ `0vh` và xử lý triệt để bug "BUFFER CLONE" gây hoang mang bằng hệ màu debug trực quan tại component Section.
+  * **Hotfix 1**: Bọc `<React.Suspense>` cho WebGL Canvas để chặn vòng lặp re-render vô tận của React (gây vắt kiệt CPU 64% và tụt FPS xuống 16).
+  * **Hotfix 2**: Thêm `pointer-events: none` vào `<Canvas>` và đẩy `z-index` của thẻ `EnterOverlay` lên `90` để trả lại khả năng click cho nút cấp quyền. Tái tạo thẻ `div#cube-sprite` để Custom Cursor tiếp tục Tracking chuẩn xác vị trí WebGL Mesh.
+
+
 * **2026-07-23 (Hoàn thiện Phase 3: Curtains Transition & Production CDN)**:
   * Triển khai hệ thống deep link: Phát hiện hash (ví dụ `/#work-a`), đẩy vào Zustand store `deepLinkTarget`.
   * Xây dựng màn rèm `CurtainsTransition` (z-40): Tách đôi rèm sang 2 bên màn hình với easing `power4.inOut` trong vòng 5.0s tạo cảm giác mở màn cinematic.

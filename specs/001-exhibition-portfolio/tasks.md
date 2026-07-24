@@ -16,9 +16,12 @@
 - [x] T011 [US7] Implement 2.5D Gyroscope Depth Motion in `components/ParallaxSides.tsx`
 - [x] T012 [P] [US8] Implement DevTools Hacker Mode in `components/HackerMode.tsx`
 
-## Phase 3: Curtains Deep Link & Spatial Polish (Pending)
+## Phase 3: Curtains Deep Link & Spatial Polish (Completed)
 - [x] T013 [P] [US9] Implement Seamless Hash Deep Linking and hash routing state in `app/page.tsx`
 - [x] T014 [US9] Implement Curtains Split-Screen Transition (5.0s `power4.inOut`) in `components/CurtainsTransition.tsx`
 - [x] T015 [US9] Update `SpriteAnimation.tsx` to ensure Sprite Intro plays in front of the Curtains effect.
 - [x] T016 [US10] Integrate 3D Spatial Asset (Chromatic Dispersion Cubi WebM) into `components/Section.tsx`.
 - [x] T017 [US10] Update video URLs in `data/sections.json` to use Production CDN URLs.
+
+## Phase 4: Convergence
+- [ ] T018 [HIGH] Integrate 3D Spatial Asset (Chromatic Dispersion Cubi WebM) into `components/Section.tsx` or `app/page.tsx` per T016 / US10 (`missing`)

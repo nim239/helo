@@ -2,16 +2,20 @@
 
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
+import { useScrollStore } from '../lib/store/useScrollStore';
 
 export function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
-  
+
   const [isFinePointer, setIsFinePointer] = useState<boolean>(true);
   const [isHovering, setIsHovering] = useState<boolean>(false);
   const [isClicking, setIsClicking] = useState<boolean>(false);
   const [isIdle, setIsIdle] = useState<boolean>(false);
-  
+
+  // Ref to bypass React closures inside requestAnimationFrame
+  const stateRef = useRef({ isIdle: false, isHovering: false, isClicking: false });
+
   const mouse = useRef({ x: -100, y: -100 });
   const pos = useRef({ x: -100, y: -100 }); // Inertia position
 
@@ -41,12 +45,16 @@ export function CustomCursor() {
     // 2. IDLE MAGNET SYSTEM (Idle/Provocation Timer)
     // -------------------------------------------------------------
     let idleTimeout: NodeJS.Timeout;
-    const IDLE_DELAY_MS = 2500; // 2.5s không di chuột sẽ rơi vào chế độ lơ lửng khiêu khích
+    const IDLE_DELAY_MS = 500; // 2.5s không di chuột sẽ rơi vào chế độ lơ lửng khiêu khích
 
     const resetIdleTimer = () => {
       clearTimeout(idleTimeout);
-      setIsIdle(false);
+      if (stateRef.current.isIdle) {
+        stateRef.current.isIdle = false;
+        setIsIdle(false);
+      }
       idleTimeout = setTimeout(() => {
+        stateRef.current.isIdle = true;
         setIsIdle(true);
       }, IDLE_DELAY_MS);
     };
@@ -60,28 +68,36 @@ export function CustomCursor() {
     const handleMouseMove = (e: MouseEvent) => {
       mouse.current.x = e.clientX;
       mouse.current.y = e.clientY;
-      
+
       xDotSet(e.clientX);
       yDotSet(e.clientY);
 
       resetIdleTimer();
     };
 
-    const handleMouseDown = () => setIsClicking(true);
-    const handleMouseUp = () => setIsClicking(false);
+    const handleMouseDown = () => {
+      stateRef.current.isClicking = true;
+      setIsClicking(true);
+    };
+    const handleMouseUp = () => {
+      stateRef.current.isClicking = false;
+      setIsClicking(false);
+    };
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const magnetEl = target.closest('[data-magnet="true"]') as HTMLElement;
       if (magnetEl) {
+        stateRef.current.isHovering = true;
         setIsHovering(true);
         magnetTarget = magnetEl;
       }
     };
-    
+
     const handleMouseOut = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest('[data-magnet="true"]')) {
+        stateRef.current.isHovering = false;
         setIsHovering(false);
         magnetTarget = null;
         magnetPos = null;
@@ -105,7 +121,7 @@ export function CustomCursor() {
       let targetY = mouse.current.y;
 
       // Magnet Active Mode
-      if (magnetTarget && isHovering) {
+      if (magnetTarget && stateRef.current.isHovering) {
         const rect = magnetTarget.getBoundingClientRect();
         magnetPos = {
           x: rect.left + rect.width / 2,
@@ -113,35 +129,44 @@ export function CustomCursor() {
         };
         targetX = magnetPos.x;
         targetY = magnetPos.y;
-      } 
-      // Idle / Provocation Mode: Tự động lơ lửng & trôi về tâm màn hình (khối 3D Cubi)
-      else if (isIdle) {
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        
+      }
+      // Idle / Provocation Mode: Tự động lơ lửng & trôi về tâm sprite (chỉ khi đã qua intro)
+      else if (stateRef.current.isIdle && useScrollStore.getState().isIntroComplete) {
+        let spriteX = window.innerWidth / 2;
+        let spriteY = window.innerHeight / 2;
+        const spriteEl = document.getElementById('cube-sprite');
+
+        if (spriteEl) {
+          const rect = spriteEl.getBoundingClientRect();
+          spriteX = rect.left + rect.width / 2;
+          spriteY = rect.top + rect.height / 2;
+        }
+
         idleAngle += 0.02;
         const breatheX = Math.cos(idleAngle) * 20;
         const breatheY = Math.sin(idleAngle * 1.5) * 15;
 
-        // Trôi dạt 70% về tâm màn hình + dao động nhịp thở
-        targetX = pos.current.x + (centerX - pos.current.x) * 0.03 + breatheX * 0.1;
-        targetY = pos.current.y + (centerY - pos.current.y) * 0.03 + breatheY * 0.1;
+        // Điểm đích là vị trí của cube cộng dao động
+        targetX = spriteX + breatheX;
+        targetY = spriteY + breatheY;
       }
 
       // Physics Lerp (Inertia)
-      const dt = 1.0 - Math.pow(1.0 - 0.15, gsap.ticker.deltaRatio());
+      // Khi rảnh rỗi (idle), chuột trôi lờ đờ về phía cube (0.02). Khi bình thường (hoặc di chuột), bám sát nhanh (0.15).
+      const baseLerp = stateRef.current.isIdle ? 0.0005 : 0.5;
+      const dt = 1.0 - Math.pow(1.0 - baseLerp, gsap.ticker.deltaRatio());
       pos.current.x += (targetX - pos.current.x) * dt;
       pos.current.y += (targetY - pos.current.y) * dt;
-      
+
       xSet(pos.current.x);
       ySet(pos.current.y);
 
       // Nếu đang Idle và ở tâm, Dot cũng trôi nhịp nhàng
-      if (isIdle) {
+      if (stateRef.current.isIdle) {
         xDotSet(pos.current.x);
         yDotSet(pos.current.y);
       }
-      
+
       raf = requestAnimationFrame(renderLoop);
     };
 
@@ -158,25 +183,25 @@ export function CustomCursor() {
       window.removeEventListener('mouseout', handleMouseOut);
       cancelAnimationFrame(raf);
     };
-  }, [isIdle, isHovering]);
+  }, []);
 
   if (!isFinePointer) return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden mix-blend-difference hidden md:block">
       {/* Outer Circle (Inertia, Magnet & Idle Breathe) */}
-      <div 
-        ref={cursorRef} 
+      <div
+        ref={cursorRef}
         className={`absolute top-0 left-0 -ml-6 -mt-6 rounded-full border border-white transition-all duration-500 ease-out flex items-center justify-center
           ${isHovering ? 'w-16 h-16 bg-white/20 scale-150 border-white/80' : 'w-12 h-12'}
           ${isClicking ? 'scale-90 bg-white/40' : ''}
           ${isIdle ? 'w-16 h-16 bg-white/10 animate-pulse scale-125 border-dashed border-white/60' : ''}
         `}
       />
-      
+
       {/* Inner Dot (Instant / Idle Drift) */}
-      <div 
-        ref={dotRef} 
+      <div
+        ref={dotRef}
         className={`absolute top-0 left-0 w-2 h-2 -ml-1 -mt-1 bg-white rounded-full transition-transform duration-200
           ${isHovering ? 'scale-[0.5]' : 'scale-100'}
           ${isIdle ? 'scale-150 bg-cyan-300 shadow-[0_0_8px_#06b6d4]' : ''}
