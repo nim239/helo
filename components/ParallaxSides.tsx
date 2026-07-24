@@ -120,25 +120,27 @@ export function ParallaxSides() {
 
   return (
     <>
-      {/* Background Layers (Z-index 0) - Mở rộng hẳn ra ngoài màn hình (-20vw) để Gyro không bị hở/cụt chân */}
-      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-10vw] md:left-[-15vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[35vw]">
+      {/* Background Layers (Z-index 0) */}
+      {/* Mobile: vạch vàng ok (left-[-10vw] w-[50vw]) | Desktop: vạch xanh (left-[-22vw] w-[28vw] -> inner edge tại +6vw, phần đỏ xé lề bay ra ngoài) */}
+      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-10vw] md:left-[-22vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[28vw]">
         <div ref={bgLeftRef} className="w-full will-change-transform">
           {renderLayers(false, 'left')}
         </div>
       </div>
-      <div ref={bgRightWrapRef} className="fixed top-0 right-[-10vw] md:right-[-15vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[35vw]">
+      <div ref={bgRightWrapRef} className="fixed top-0 right-[-10vw] md:right-[-22vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[28vw]">
         <div ref={bgRightRef} className="w-full will-change-transform">
           {renderLayers(false, 'right')}
         </div>
       </div>
 
       {/* Foreground Layers (Z-index 50) */}
-      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-15vw] md:left-[-17vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[40vw]">
+      {/* Mobile: vạch vàng ok (left-[-15vw] w-[55vw]) | Desktop: vạch xanh (left-[-24vw] w-[32vw] -> inner edge tại +8vw) */}
+      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-15vw] md:left-[-24vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[32vw]">
         <div ref={fgLeftRef} className="w-full will-change-transform">
           {renderLayers(true, 'left')}
         </div>
       </div>
-      <div ref={fgRightWrapRef} className="fixed top-0 right-[-15vw] md:right-[-17vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[40vw]">
+      <div ref={fgRightWrapRef} className="fixed top-0 right-[-15vw] md:right-[-24vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[32vw]">
         <div ref={fgRightRef} className="w-full will-change-transform">
           {renderLayers(true, 'right')}
         </div>

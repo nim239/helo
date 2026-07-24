@@ -95,6 +95,9 @@ graph TD
   * **Vòng 7 (Tái thiết lập Anchor Point & Mở rộng Bleed Off-screen cho Gyro)**:
     - Căn chỉnh điểm neo Anchor Point chuẩn thiết kế: Cột Parallax bên trái căn phải (`object-right` / `justify-end`), Cột Parallax bên phải căn trái (`object-left` / `justify-start`) để mép trong bài trí tác phẩm hoàn chỉnh, 100% không bị crop chém vào khối art 3D.
     - Mở rộng container tràn viền ngoài màn hình (`left-[-22vw]`, `right-[-22vw]`, `w-[55vw]`) và bật `overflow-visible`: Đảm bảo khi nghiêng cảm biến Gyro (con quay hồi chuyển) dịch chuyển X/Y, mép ngoài bức ảnh vẫn có khoảng bù trừ dư thừa (bleed margin) giúp hình không bao giờ bị lộ vết hở hay cụt chân.
+  * **Vòng 8 (Tách biệt Responsive Breakpoints: Vạch vàng trên Mobile & Vạch xanh trên Desktop)**:
+    - Điện thoại (`< md`): Giữ nguyên vị trí chuẩn tại **Vạch Vàng** (`left-[-10vw] w-[50vw]`), đảm bảo art ôm sát khung hình đứng.
+    - Máy tính Desktop (`md:`): Đẩy mép ngoài (Khu vực gạch đỏ) giấu hẳn sang 2 bên lề ngoài màn hình (`md:left-[-22vw]`), thu gọn tỉ lệ (`md:w-[28vw]`). Mép trong của hình được neo chính xác tại vị trí **Vạch Xanh** theo đúng sơ đồ vẽ của bản thiết kế.
 
 * **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
   * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.
