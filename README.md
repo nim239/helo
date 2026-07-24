@@ -102,6 +102,9 @@ graph TD
     - Sử dụng Subagent chụp ảnh màn hình thời gian thực ở cả 2 độ phân giải Desktop (1920x1080) và Mobile (390x844).
     - **Kết quả Desktop**: Xử lý triệt để hiện tượng lơ lửng giữa màn hình. Khối Art 2D 2 bên dạt hẳn về 2 biên (khoảng cách 40-60px), các góc ngoài xé lề tràn viền đúng chuẩn **Vạch Xanh**.
     - **Kết quả Mobile**: Giữ trọn vẹn điểm neo **Vạch Vàng**, đảm bảo không bị đè lên tiêu đề và khung media trung tâm. Tác phẩm 2D 100% không bị crop chém hình.
+  * **Vòng 10 (Điều chỉnh toạ độ Desktop lùi lại sát lề viền Vạch Xanh)**:
+    - Sửa sai số đẩy quá xa lề khiến hình ảnh bị biến mất ngoài khung hình: Điều chỉnh toạ độ Desktop từ `left-[-30vw]` về `md:left-[-8vw]` (Background) và `md:left-[-10vw]` (Foreground).
+    - Giữ vị trí mép trong của các khối 3D thò ra đúng ~4%-5% khung hình (~60px-80px), bám đúng **Vạch Xanh** trên hình vẽ minh hoạ của người dùng.
 
 * **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
   * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.
