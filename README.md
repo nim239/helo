@@ -105,6 +105,9 @@ graph TD
   * **Vòng 10 (Điều chỉnh toạ độ Desktop lùi lại sát lề viền Vạch Xanh)**:
     - Sửa sai số đẩy quá xa lề khiến hình ảnh bị biến mất ngoài khung hình: Điều chỉnh toạ độ Desktop từ `left-[-30vw]` về `md:left-[-8vw]` (Background) và `md:left-[-10vw]` (Foreground).
     - Giữ vị trí mép trong của các khối 3D thò ra đúng ~4%-5% khung hình (~60px-80px), bám đúng **Vạch Xanh** trên hình vẽ minh hoạ của người dùng.
+  * **Vòng 11 (Chuẩn hoá chính xác tỉ lệ 1.5/10 chiều ngang Desktop theo chỉ thị)**:
+    - Cập nhật toạ độ Desktop theo đúng tỉ lệ định lượng 1.5/10 (15% chiều ngang màn hình): `md:left-[-13vw] md:w-[28vw]` (Background) và `md:left-[-15vw] md:w-[32vw]` (Foreground).
+    - Đo đạc thực tế qua Browser Subagent tại Viewport 1920x1080: Tác phẩm Art 2D 2 bên thò đúng **285px** mỗi bên (~15% chiều ngang), phần còn lại tràn viền lề ngoài. Màn hình Mobile hoàn toàn không bị ảnh hưởng.
 
 * **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
   * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.
