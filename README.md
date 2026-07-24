@@ -79,6 +79,9 @@ graph TD
   * Fix lỗi Offset 300vh ban đầu, đồng bộ hệ trục tọa độ `0vh` và xử lý triệt để bug "BUFFER CLONE" gây hoang mang bằng hệ màu debug trực quan tại component Section.
   * **Hotfix 1**: Bọc `<React.Suspense>` cho WebGL Canvas để chặn vòng lặp re-render vô tận của React (gây vắt kiệt CPU 64% và tụt FPS xuống 16).
   * **Hotfix 2**: Thêm `pointer-events: none` vào `<Canvas>` và đẩy `z-index` của thẻ `EnterOverlay` lên `90` để trả lại khả năng click cho nút cấp quyền. Tái tạo thẻ `div#cube-sprite` để Custom Cursor tiếp tục Tracking chuẩn xác vị trí WebGL Mesh.
+  * **Hotfix 3 (Khắc phục triệt để vụ 65% CPU)**: 
+    - Gỡ bỏ việc nạp texture `spritesheet.png` (Nặng tới ~10MB) làm background texture và bắt GPU nội suy 3 lần/pixel mỗi frame. Thay bằng lưới Background Procedural tự sinh bằng thuật toán trên Fragment Shader để tối ưu GPU Cache.
+    - Loại bỏ hàm dirty DOM (`domEl.style.transform = ...`) ra khỏi vòng lặp `useFrame` 144Hz. Hành vi này trước đó đã ép trình duyệt phải Layout Thrashing (ép tính toán lại vị trí màn hình 144 lần 1 giây). Chuyển logic này vào sự kiện ScrollTrigger để chỉ chạy khi có tương tác cuộn. Tối ưu cực mạnh cho CPU!
 
 
 * **2026-07-23 (Hoàn thiện Phase 3: Curtains Transition & Production CDN)**:

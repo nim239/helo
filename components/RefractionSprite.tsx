@@ -19,7 +19,6 @@ const RefractionMaterial = new THREE.ShaderMaterial({
     tBeauty: { value: null },
     tNormal: { value: null }, // Optional: If we had a normal pass
     tAlpha: { value: null },  // Optional: If we had an alpha pass
-    tBg: { value: null },
     uFrame: { value: 0 },
     uCols: { value: COLS },
     uAberration: { value: 0 },
@@ -37,7 +36,6 @@ const RefractionMaterial = new THREE.ShaderMaterial({
   `,
   fragmentShader: `
     uniform sampler2D tBeauty;
-    uniform sampler2D tBg;
     uniform float uFrame;
     uniform float uCols;
     uniform float uAberration;
@@ -72,14 +70,19 @@ const RefractionMaterial = new THREE.ShaderMaterial({
       vec2 refractedUv = screenUv + fakeNormal;
 
       // 5. Chromatic Aberration based on uAberration (driven by velocity)
-      // Aberration separates the RGB channels along the normal vector
       float ab = uAberration * 0.05;
       
-      float r = texture2D(tBg, refractedUv + fakeNormal * ab).r;
-      float g = texture2D(tBg, refractedUv).g;
-      float b = texture2D(tBg, refractedUv - fakeNormal * ab).b;
+      // Procedural Background (instead of sampling a massive 10MB NPOT texture 3 times which kills FPS)
+      vec2 rUv = refractedUv + fakeNormal * ab;
+      vec2 gUv = refractedUv;
+      vec2 bUv = refractedUv - fakeNormal * ab;
       
-      vec3 bgColor = vec3(r, g, b);
+      // Simple grid pattern to show refraction
+      float r = mod(floor(rUv.x * 20.0) + floor(rUv.y * 20.0), 2.0) * 0.2;
+      float g = mod(floor(gUv.x * 20.0) + floor(gUv.y * 20.0), 2.0) * 0.2;
+      float b = mod(floor(bUv.x * 20.0) + floor(bUv.y * 20.0), 2.0) * 0.2;
+      
+      vec3 bgColor = vec3(r, g, b) + vec3(0.05); // slight base color
 
       // Blend the background and the beauty pass
       // texColor acts as the "glass" specular highlights / tint
@@ -105,18 +108,12 @@ function Scene({ startIntro }: { startIntro: boolean }) {
   const isIntroComplete = useScrollStore((state) => state.isIntroComplete);
 
   // Load textures
-  // For the background, we can just use a fake grid or a placeholder image.
-  // In a real app, this might be a render target capturing the DOM.
-  const [beautyTex, bgTex] = useTexture([
-    SPRITE_SHEET_PATH,
-    '/png/spritesheet.png' // Using the same as a fallback background to avoid crash
-  ]);
+  const [beautyTex] = useTexture([SPRITE_SHEET_PATH]);
 
   useEffect(() => {
     materialRef.current.uniforms.tBeauty.value = beautyTex;
-    materialRef.current.uniforms.tBg.value = bgTex; // Fake background for now
     materialRef.current.uniforms.resolution.value.set(size.width, size.height);
-  }, [beautyTex, bgTex, size]);
+  }, [beautyTex, size]);
 
   // Trajectory Math (replicated from SpriteAnimation)
   const getTrajectory = (scrollY: number) => {
@@ -183,10 +180,26 @@ function Scene({ startIntro }: { startIntro: boolean }) {
         y: START_POINT.y,
         duration: 2.2,
         ease: 'power3.inOut',
+        onUpdate: () => {
+          const domEl = document.getElementById('cube-sprite');
+          if (domEl) {
+            const screenX = (mesh.position.x / viewport.width) * window.innerWidth + window.innerWidth / 2;
+            const screenY = -(mesh.position.y / viewport.height) * window.innerHeight + window.innerHeight / 2;
+            domEl.style.transform = `translate(${screenX}px, ${screenY}px)`;
+          }
+        }
       }, 0);
     } else {
       mesh.scale.set(1, 1, 1);
       mesh.position.set(START_POINT.x, START_POINT.y, 0);
+      
+      const domEl = document.getElementById('cube-sprite');
+      if (domEl) {
+        const screenX = (START_POINT.x / viewport.width) * window.innerWidth + window.innerWidth / 2;
+        const screenY = -(START_POINT.y / viewport.height) * window.innerHeight + window.innerHeight / 2;
+        domEl.style.transform = `translate(${screenX}px, ${screenY}px)`;
+      }
+      
       initScrollJourney();
     }
 
@@ -201,6 +214,13 @@ function Scene({ startIntro }: { startIntro: boolean }) {
           
           materialRef.current.uniforms.uFrame.value = stateData.frame;
           mesh.position.set(stateData.x, stateData.y, 0);
+          
+          const domEl = document.getElementById('cube-sprite');
+          if (domEl) {
+            const screenX = (stateData.x / viewport.width) * window.innerWidth + window.innerWidth / 2;
+            const screenY = -(stateData.y / viewport.height) * window.innerHeight + window.innerHeight / 2;
+            domEl.style.transform = `translate(${screenX}px, ${screenY}px)`;
+          }
         },
       });
     }
@@ -227,19 +247,6 @@ function Scene({ startIntro }: { startIntro: boolean }) {
 
   // Calculate base size: 20vw max 200px equivalent in 3D units
   const baseSize = Math.min((viewport.width * 0.2), 2); // Approximation
-
-  // Sync DOM element for CustomCursor
-  useFrame(() => {
-    const mesh = meshRef.current;
-    const domEl = document.getElementById('cube-sprite');
-    if (mesh && domEl) {
-      // Convert 3D position to screen pixels (very rough approximation for cursor)
-      const screenX = (mesh.position.x / viewport.width) * window.innerWidth + window.innerWidth / 2;
-      const screenY = -(mesh.position.y / viewport.height) * window.innerHeight + window.innerHeight / 2;
-      // We use standard DOM style updates for the tracker
-      domEl.style.transform = `translate(${screenX}px, ${screenY}px)`;
-    }
-  });
 
   return (
     <mesh ref={meshRef} material={materialRef.current}>
