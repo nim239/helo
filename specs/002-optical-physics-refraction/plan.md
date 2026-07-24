@@ -6,9 +6,6 @@
 
 ## Summary
 
-> [!NOTE]
-> **Architectural Pivot (2026-07-24)**: Per the strict Constitution rule ("FPS Over Everything, 144-165Hz Goal"), the WebGL Refraction Engine (`RefractionSprite.tsx`) was suspended due to mobile VRAM/shader rendering overhead. The system reverted to the hyper-optimized 2D CSS Sprite (`SpriteAnimation.tsx`), which runs at 144-165 FPS on all devices via background-position step animations.
-
 Implement a WebGL-based refraction engine for a 3D glass sprite using React Three Fiber. The engine will combine Beauty, Normal, and Alpha passes to realistically distort DOM elements rendered as background textures. Additionally, the existing resize and trajectory bugs in `SpriteAnimation.tsx` will be fixed to ensure robust responsive layout.
 
 ## Technical Context
@@ -25,7 +22,7 @@ Implement a WebGL-based refraction engine for a 3D glass sprite using React Thre
 
 **Project Type**: Next.js Web App
 
-**Performance Goals**: Stable 60 FPS, < 16ms frame time. Zero frame desync between texture passes.
+**Performance Goals**: Stable 60 FPS, try to reach max 165 fps in mobile resolution(cố gắng - không được thì thôi), < 16ms frame time. Zero frame desync between texture passes.
 
 **Constraints**: Must bypass React Virtual DOM for physics/scroll updates per Constitution.
 
