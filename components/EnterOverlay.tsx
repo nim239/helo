@@ -12,10 +12,6 @@ export function EnterOverlay() {
   const pathRef = useRef<SVGCircleElement>(null);
 
   useEffect(() => {
-    // Start Preloading
-    const img = new Image();
-    img.src = '/png/spritesheet.png';
-    
     let simulatedProgress = { val: 0 };
     
     // Trim path animation
@@ -39,25 +35,42 @@ export function EnterOverlay() {
       }
     });
 
-    tl.to(simulatedProgress, {
-      val: 100,
-      duration: 3, // Fake load time or wait for real load
-      ease: 'power2.inOut'
-    });
-
-    const handleLoadComplete = () => {
-      // If loaded fast, we still wait for the 3s timeline.
-      // If it takes longer, the timeline finishes at 100% and waits.
-    };
-
-    img.onload = handleLoadComplete;
-    img.onerror = handleLoadComplete;
-
     if (pathRef.current) {
       const len = pathRef.current.getTotalLength();
       pathRef.current.style.strokeDasharray = len.toString();
       pathRef.current.style.strokeDashoffset = len.toString();
     }
+
+    // Start Preloading Engine
+    const assetsToLoad = ['/sprite_cubi/cubi.webp', '/sprite_cubi/cubi_glow.webp'];
+    
+    // We animate progress to at least 90% while waiting for network
+    tl.to(simulatedProgress, {
+      val: 90,
+      duration: 2.5,
+      ease: 'power2.out'
+    });
+
+    const loadPromises = assetsToLoad.map(src => {
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // Always resolve to prevent infinite lock
+      });
+    });
+
+    Promise.all(loadPromises).then(() => {
+      // Once 100% loaded in RAM, push timeline to 100% immediately
+      gsap.to(simulatedProgress, {
+        val: 100,
+        duration: 0.5,
+        ease: 'power2.inOut',
+        onUpdate: tl.vars.onUpdate,
+        onComplete: tl.vars.onComplete
+      });
+    });
+
   }, [setAssetsLoaded]);
 
   const handleEnter = async () => {

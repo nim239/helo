@@ -7,7 +7,6 @@ import { useScrollStore } from '../lib/store/useScrollStore';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const SPRITE_SHEET_PATH = '/png/spritesheet.png';
 const FRAME_COUNT = 120;
 const COLS = 120;
 
@@ -17,12 +16,16 @@ interface SpriteAnimationProps {
 
 export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
   const spriteRef = useRef<HTMLDivElement>(null);
+  const baseLayerRef = useRef<HTMLDivElement>(null);
+  const glowLayerRef = useRef<HTMLDivElement>(null);
   const completeIntro = useScrollStore((state) => state.completeIntro);
   const isIntroComplete = useScrollStore((state) => state.isIntroComplete);
 
   useEffect(() => {
     const spriteEl = spriteRef.current;
-    if (!spriteEl) return;
+    const baseEl = baseLayerRef.current;
+    const glowEl = glowLayerRef.current;
+    if (!spriteEl || !baseEl || !glowEl) return;
 
     // Wait until startIntro is true to begin anything
     if (!startIntro) {
@@ -33,16 +36,16 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
 
     let scrollTriggerInst: ScrollTrigger | null = null;
     
-    spriteEl.style.backgroundImage = `url(${SPRITE_SHEET_PATH})`;
-    spriteEl.style.backgroundSize = `${COLS * 100}% 100%`;
-
     const state = { frame: 0 };
-    const updateFrame = gsap.quickSetter(spriteEl, 'backgroundPosition');
+    const updateFrameBase = gsap.quickSetter(baseEl, 'backgroundPosition');
+    const updateFrameGlow = gsap.quickSetter(glowEl, 'backgroundPosition');
 
     const renderFrame = () => {
       const col = Math.floor(state.frame) % COLS;
       const xPercent = (col / (COLS - 1)) * 100;
-      updateFrame(`${xPercent}% 0%`);
+      const pos = `${xPercent}% 0%`;
+      updateFrameBase(pos);
+      updateFrameGlow(pos);
     };
 
     // Function to calculate exact Lissajous coordinate for any given scroll offset
@@ -156,7 +159,19 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
     <div
       id="cube-sprite"
       ref={spriteRef}
-      className="fixed top-0 left-0 w-[20vw] h-[20vw] max-w-[200px] max-h-[200px] z-[60] pointer-events-none bg-no-repeat"
-    />
+      className="fixed top-0 left-0 w-[20vw] h-[20vw] max-w-[200px] max-h-[200px] z-[60] pointer-events-none"
+    >
+      <div 
+        ref={baseLayerRef}
+        className="absolute inset-0 w-full h-full bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: `url('/sprite_cubi/cubi.webp')`, backgroundSize: `${COLS * 100}% 100%` }}
+      />
+      <div 
+        ref={glowLayerRef}
+        className="absolute inset-0 w-full h-full bg-no-repeat pointer-events-none mix-blend-plus-lighter"
+        style={{ backgroundImage: `url('/sprite_cubi/cubi_glow.webp')`, backgroundSize: `${COLS * 100}% 100%` }}
+      />
+    </div>
   );
 }
+

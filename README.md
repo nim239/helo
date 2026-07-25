@@ -73,6 +73,13 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+* **2026-07-25 (Lưu tài liệu đặc tả tối ưu hoá hiệu năng)**:
+  * Đã tạo file `performance-optimization.md` trong thư mục `specs/001-exhibition-portfolio` lưu trữ chi tiết các kỹ thuật Tối ưu hoá CSS Object Model (Composite Layers, CSS Culling) và Bộ nhớ/Main Thread (Async Image Decoding, Font Display Swap, requestIdleCallback) nhằm đảm bảo mục tiêu 165 FPS.
+
+* **2026-07-25 (Kiến trúc Nạp trước - Preload Engine & 2-Layer Spritesheet)**:
+  * Xây dựng cơ chế chốt chặn `Promise.all()` tại `EnterOverlay.tsx` để khóa toàn bộ quá trình tải (kết hợp `lenis.stop()` có sẵn) cho tới khi 2 file ảnh tĩnh siêu lớn được đẩy 100% vào RAM.
+  * Tái cấu trúc `<SpriteAnimation />` chuyển sang DOM kép (2 thẻ div song song). Chuyển `glowLayer` (ảnh WebP phát sáng) xuống dưới DOM order (Z-Index cao hơn) đè lên trên lớp base, kết hợp `mix-blend-plus-lighter` để tạo hiệu ứng ánh sáng cộng dồn chuẩn xác (tương đương Screen/Add Mode). Đồng bộ hóa vị trí X/Y của cả 2 lớp qua 2 `gsap.quickSetter` bắn 144Hz liên tục.
+
 * **2026-07-25 (Chế độ tự động Autonomous Goal: Tối ưu hóa Physics, Layout & GSAP Loop Sync)**:
   * **Vòng 1 (Physics & Ease-in-out Smooth Transitions 3~6s)**:
     - Điều chỉnh Lenis Scroll Engine trong `useExhibitionScroll.ts`: thiết lập `duration: 4.5s` (chuẩn khoảng 3~6s), sử dụng đường cong gia tốc `easeInOutCubic` (`(t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2`).
@@ -109,15 +116,9 @@ graph TD
     - Cập nhật toạ độ Desktop theo đúng tỉ lệ định lượng 1.5/10 (15% chiều ngang màn hình): `md:left-[-13vw] md:w-[28vw]` (Background) và `md:left-[-15vw] md:w-[32vw]` (Foreground).
     - Đo đạc thực tế qua Browser Subagent tại Viewport 1920x1080: Tác phẩm Art 2D 2 bên thò đúng **285px** mỗi bên (~15% chiều ngang), phần còn lại tràn viền lề ngoài. Màn hình Mobile hoàn toàn không bị ảnh hưởng.
 
-* **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
-  * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.
-  * Sửa lỗi nghiêm trọng (Cropped/Layout Desync) của Sprite do resize: Đổi toàn bộ hệ thống tính toán frame sang CSS percentage (`(col/119) * 100%`) để engine luôn responsive 100%.
-  * Fix lỗi Offset 300vh ban đầu, đồng bộ hệ trục tọa độ `0vh` và xử lý triệt để bug "BUFFER CLONE" gây hoang mang bằng hệ màu debug trực quan tại component Section.
-  * **Hotfix 1**: Bọc `<React.Suspense>` cho WebGL Canvas để chặn vòng lặp re-render vô tận của React (gây vắt kiệt CPU 64% và tụt FPS xuống 16).
-  * **Hotfix 2**: Thêm `pointer-events: none` vào `<Canvas>` và đẩy `z-index` của thẻ `EnterOverlay` lên `90` để trả lại khả năng click cho nút cấp quyền. Tái tạo thẻ `div#cube-sprite` để Custom Cursor tiếp tục Tracking chuẩn xác vị trí WebGL Mesh.
-  * **Hotfix 3 (Khắc phục triệt để vụ 65% CPU)**: 
-    - Gỡ bỏ việc nạp texture `spritesheet.png` (Nặng tới ~10MB) làm background texture và bắt GPU nội suy 3 lần/pixel mỗi frame. Thay bằng lưới Background Procedural tự sinh bằng thuật toán trên Fragment Shader để tối ưu GPU Cache.
-    - Loại bỏ hàm dirty DOM (`domEl.style.transform = ...`) ra khỏi vòng lặp `useFrame` 144Hz. Hành vi này trước đó đã ép trình duyệt phải Layout Thrashing (ép tính toán lại vị trí màn hình 144 lần 1 giây). Chuyển logic này vào sự kiện ScrollTrigger để chỉ chạy khi có tương tác cuộn. Tối ưu cực mạnh cho CPU!
+* **2026-07-25 (Pivoting Kỹ Thuật: Hủy bỏ WebGL Refraction)**:
+  * Ngừng sử dụng hệ thống `RefractionSprite.tsx` (R3F WebGL) do vắt kiệt GPU (chỉ đạt 18 FPS) và tốn VRAM quá lớn trên thiết bị di động.
+  * Quyết định khôi phục hệ thống 2D CSS Sprite (`SpriteAnimation.tsx`) với logic chuyển dịch `background-position` theo percentage. Việc thay đổi này đã giúp toàn bộ dự án trở lại mốc ổn định **144Hz–165Hz** siêu mượt trên mọi thiết bị.
 
 
 * **2026-07-23 (Hoàn thiện Phase 3: Curtains Transition & Production CDN)**:
