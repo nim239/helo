@@ -6,6 +6,7 @@ import { Section } from '../components/Section';
 import { SpriteAnimation } from '../components/SpriteAnimation';
 import { HorizontalMarquee } from '../components/HorizontalMarquee';
 import { ParallaxSides } from '../components/ParallaxSides';
+import { BackgroundGrid } from '../components/BackgroundGrid';
 import { EnterOverlay } from '../components/EnterOverlay';
 import { HackerMode } from '../components/HackerMode';
 import { AudioController } from '../components/AudioController';
@@ -65,6 +66,7 @@ export default function Exhibition() {
 
   return (
     <main className="relative w-full bg-black text-white selection:bg-white/20 overflow-hidden">
+      <BackgroundGrid />
       <CustomCursor />
       <CurtainsTransition />
       <AudioController />

@@ -15,53 +15,81 @@ interface SpriteAnimationProps {
 
 export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const baseImgRef = useRef<HTMLImageElement>(null);
-  const glowImgRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
   const completeIntro = useScrollStore((state) => state.completeIntro);
   const isIntroComplete = useScrollStore((state) => state.isIntroComplete);
 
   useEffect(() => {
     const wrapperEl = wrapperRef.current;
-    const baseEl = baseImgRef.current;
-    const glowEl = glowImgRef.current;
-    if (!wrapperEl || !baseEl || !glowEl) return;
+    const canvasEl = canvasRef.current;
+    if (!wrapperEl || !canvasEl) return;
 
     if (!startIntro) {
       gsap.set(wrapperEl, { opacity: 0 });
       return;
     }
 
-    // --- KHỞI TẠO IMAGE SEQUENCE (CACHE IN RAM) ---
-    // 💡 LƯU Ý CHO USER: ĐƯỜNG DẪN ẢNH VÀ ĐỊNH DẠNG (SRC)
-    const baseImages: string[] = [];
-    const glowImages: string[] = [];
+    const ctx = canvasEl.getContext('2d', { alpha: true });
+    if (!ctx) return;
+
+    // --- GIAI ĐOẠN 3: TÍCH HỢP CANVAS RENDER ENGINE ---
+    // Loại bỏ CSS Render, khởi tạo Image object trực tiếp trong RAM.
+    const baseImages: HTMLImageElement[] = [];
+    const glowImages: HTMLImageElement[] = [];
     
     for (let i = 0; i < FRAME_COUNT; i++) {
       const idx = i.toString().padStart(5, '0');
-      baseImages.push(`/sprite_cubi/cubi/cubi_${idx}.png`);
-      glowImages.push(`/sprite_cubi/cubi_glow/cubi_glow_${idx}.png`);
+      
+      const bImg = new Image();
+      bImg.src = `/sprite_cubi/cubi/cubi_${idx}.webp`;
+      baseImages.push(bImg);
+      
+      const gImg = new Image();
+      gImg.src = `/sprite_cubi/cubi_glow/cubi_glow_${idx}.webp`;
+      glowImages.push(gImg);
     }
 
     let scrollTriggerInst: ScrollTrigger | null = null;
     const state = { frame: 0 };
     let lastFrame = -1;
 
-    // Rendering Loop via DOM src swap (GPU Hardware Accelerated)
-    // Tránh dùng Canvas drawImage vì 1080x1080 sẽ ép CPU tính toán pixel quá nặng gây tụt FPS
+    // Vòng lặp Render (Render Loop)
     const renderFrame = () => {
       const frameIndex = Math.floor(state.frame) % FRAME_COUNT;
+      
       if (frameIndex !== lastFrame) {
-        baseEl.src = baseImages[frameIndex];
-        glowEl.src = glowImages[frameIndex];
+        // Clear canvas
+        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+        
+        // Vẽ Base (Layer 1)
+        ctx.globalCompositeOperation = 'source-over';
+        const bImg = baseImages[frameIndex];
+        if (bImg && bImg.complete && bImg.naturalWidth !== 0) {
+          ctx.drawImage(bImg, 0, 0, canvasEl.width, canvasEl.height);
+        }
+
+        // Vẽ Glow (Layer 2) - Kỹ thuật Additive Blending
+        ctx.globalCompositeOperation = 'lighter';
+        const gImg = glowImages[frameIndex];
+        if (gImg && gImg.complete && gImg.naturalWidth !== 0) {
+          ctx.drawImage(gImg, 0, 0, canvasEl.width, canvasEl.height);
+        }
+        
         lastFrame = frameIndex;
       }
     };
 
-    renderFrame();
+    // Đảm bảo render frame đầu tiên ngay khi ảnh đầu tiên load xong
+    if (baseImages[0].complete && glowImages[0].complete) {
+      renderFrame();
+    } else {
+      baseImages[0].onload = renderFrame;
+    }
 
     const getTrajectory = (scrollY: number) => {
-      const currentW = wrapperEl.offsetWidth || 200;
-      const currentH = wrapperEl.offsetHeight || 200;
+      const currentW = wrapperEl.offsetWidth || 400;
+      const currentH = wrapperEl.offsetHeight || 400;
       const cX = window.innerWidth / 2 - currentW / 2;
       const cY = window.innerHeight / 2 - currentH / 2;
 
@@ -78,8 +106,8 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
     };
 
     const getCenterPos = () => {
-      const currentW = wrapperEl.offsetWidth || 200;
-      const currentH = wrapperEl.offsetHeight || 200;
+      const currentW = wrapperEl.offsetWidth || 400;
+      const currentH = wrapperEl.offsetHeight || 400;
       return {
         x: window.innerWidth / 2 - currentW / 2,
         y: window.innerHeight / 2 - currentH / 2,
@@ -141,12 +169,25 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       });
     }
 
+    // --- GIAI ĐOẠN 4: ĐO LƯỜNG & DỌN DẸP MEMORY LEAK ---
     return () => {
       if (scrollTriggerInst) {
         scrollTriggerInst.kill();
       }
       gsap.killTweensOf(state);
       gsap.killTweensOf(wrapperEl);
+      
+      // Garbage Collection Cleanup
+      baseImages.forEach(img => {
+        img.onload = null;
+        img.src = "";
+      });
+      glowImages.forEach(img => {
+        img.onload = null;
+        img.src = "";
+      });
+      baseImages.length = 0;
+      glowImages.length = 0;
     };
   }, [startIntro, completeIntro, isIntroComplete]);
 
@@ -156,15 +197,11 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       ref={wrapperRef}
       className="fixed top-0 left-0 w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] z-[60] pointer-events-none"
     >
-      <img
-        ref={baseImgRef}
-        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
-        alt=""
-      />
-      <img
-        ref={glowImgRef}
-        className="absolute inset-0 w-full h-full object-contain pointer-events-none mix-blend-plus-lighter"
-        alt=""
+      <canvas 
+        ref={canvasRef}
+        width={1080}
+        height={1080}
+        className="w-full h-full object-contain pointer-events-none"
       />
     </div>
   );

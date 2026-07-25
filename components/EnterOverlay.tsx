@@ -49,8 +49,8 @@ export function EnterOverlay() {
     // Số lượng 120 frames cho mỗi layer.
     for (let i = 0; i < 120; i++) {
       const idx = i.toString().padStart(5, '0');
-      assetsToLoad.push(`/sprite_cubi/cubi/cubi_${idx}.png`);
-      assetsToLoad.push(`/sprite_cubi/cubi_glow/cubi_glow_${idx}.png`);
+      assetsToLoad.push(`/sprite_cubi/cubi/cubi_${idx}.webp`);
+      assetsToLoad.push(`/sprite_cubi/cubi_glow/cubi_glow_${idx}.webp`);
     }
     
     // We animate progress to at least 90% while waiting for network
