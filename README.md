@@ -80,9 +80,10 @@ graph TD
   * Đổi cấu hình script dev trong `package.json` sang `next dev -H 0.0.0.0 -p 3005`. Thiết lập `-H 0.0.0.0` cho phép thiết bị di động truy cập server qua mạng WiFi LAN nội bộ thay vì bị chặn ở Localhost.
   * Việc đổi sang port `3005` giúp khắc phục triệt để lỗi `ERR_INVALID_HTTP_RESPONSE` do tiến trình hoặc trình duyệt Chrome bắt HTTPS đè lên port 3000 mặc định.
 
-* **2026-07-25 (Kiến trúc Nạp trước - Preload Engine & Canvas Image Sequence 240 Frames)**:
-  * Xây dựng cơ chế chốt chặn `Promise.all()` tại `EnterOverlay.tsx` để khóa toàn bộ quá trình tải (kết hợp `lenis.stop()` có sẵn) cho tới khi 240 file ảnh tĩnh siêu lớn (.png) được đẩy 100% vào RAM.
-  * Tái cấu trúc `<SpriteAnimation />` chuyển từ DOM kép sang **Canvas API**. Render siêu tốc 165FPS bằng cách vẽ frame Base lên canvas rồi đè tiếp frame Glow với `ctx.globalCompositeOperation = 'lighter'` để tạo hiệu ứng ánh sáng cộng dồn chuẩn xác (tương đương Screen/Add Mode). Đồng bộ hóa vị trí X/Y thông qua wrapper GSAP.
+* **2026-07-25 (Kiến trúc Nạp trước - Preload Engine & Tối ưu hóa FPS Image Sequence)**:
+  * Xây dựng cơ chế chốt chặn `Promise.all()` tại `EnterOverlay.tsx` để khóa toàn bộ quá trình tải cho tới khi 240 file ảnh tĩnh siêu lớn (.png) được đẩy 100% vào RAM.
+  * Tái cấu trúc `<SpriteAnimation />`: Gỡ bỏ `Canvas API` (do hàm `drawImage` 1080x1080 liên tục 144Hz làm nghẽn CPU), chuyển sang kiến trúc **DOM Image src Swap** (thay đổi `img.src` bằng mảng RAM Cache). Tận dụng GPU Compositing Layer với thuộc tính `mix-blend-plus-lighter` trên thẻ img để trả lại FPS mượt mà 165Hz.
+  * Tăng gấp đôi tỷ lệ hiển thị của khối Cubi (từ 20vw/200px lên 40vw/400px).
 
 * **2026-07-25 (Chế độ tự động Autonomous Goal: Tối ưu hóa Physics, Layout & GSAP Loop Sync)**:
   * **Vòng 1 (Physics & Ease-in-out Smooth Transitions 3~6s)**:

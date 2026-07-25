@@ -15,77 +15,53 @@ interface SpriteAnimationProps {
 
 export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const baseImgRef = useRef<HTMLImageElement>(null);
+  const glowImgRef = useRef<HTMLImageElement>(null);
   const completeIntro = useScrollStore((state) => state.completeIntro);
   const isIntroComplete = useScrollStore((state) => state.isIntroComplete);
 
   useEffect(() => {
     const wrapperEl = wrapperRef.current;
-    const canvasEl = canvasRef.current;
-    if (!wrapperEl || !canvasEl) return;
-    
-    const ctx = canvasEl.getContext('2d', { alpha: true });
-    if (!ctx) return;
+    const baseEl = baseImgRef.current;
+    const glowEl = glowImgRef.current;
+    if (!wrapperEl || !baseEl || !glowEl) return;
 
-    // Wait until startIntro is true to begin anything
     if (!startIntro) {
       gsap.set(wrapperEl, { opacity: 0 });
       return;
     }
 
-    // --- KHỞI TẠO IMAGE SEQUENCE ---
+    // --- KHỞI TẠO IMAGE SEQUENCE (CACHE IN RAM) ---
     // 💡 LƯU Ý CHO USER: ĐƯỜNG DẪN ẢNH VÀ ĐỊNH DẠNG (SRC)
-    // Nếu anh nén ảnh thành webp thì đổi đuôi .png bên dưới thành .webp nhé
-    const baseImages: HTMLImageElement[] = [];
-    const glowImages: HTMLImageElement[] = [];
+    const baseImages: string[] = [];
+    const glowImages: string[] = [];
     
     for (let i = 0; i < FRAME_COUNT; i++) {
       const idx = i.toString().padStart(5, '0');
-      
-      const baseImg = new Image();
-      baseImg.src = `/sprite_cubi/cubi/cubi_${idx}.png`;
-      baseImages.push(baseImg);
-      
-      const glowImg = new Image();
-      glowImg.src = `/sprite_cubi/cubi_glow/cubi_glow_${idx}.png`;
-      glowImages.push(glowImg);
+      baseImages.push(`/sprite_cubi/cubi/cubi_${idx}.png`);
+      glowImages.push(`/sprite_cubi/cubi_glow/cubi_glow_${idx}.png`);
     }
 
     let scrollTriggerInst: ScrollTrigger | null = null;
     const state = { frame: 0 };
+    let lastFrame = -1;
 
-    // Rendering Loop via Canvas
+    // Rendering Loop via DOM src swap (GPU Hardware Accelerated)
+    // Tránh dùng Canvas drawImage vì 1080x1080 sẽ ép CPU tính toán pixel quá nặng gây tụt FPS
     const renderFrame = () => {
       const frameIndex = Math.floor(state.frame) % FRAME_COUNT;
-      
-      // Xóa khung hình cũ
-      ctx.clearRect(0, 0, 1080, 1080);
-      
-      // Vẽ ảnh Base (Lớp dưới)
-      ctx.globalCompositeOperation = 'source-over';
-      const baseImg = baseImages[frameIndex];
-      if (baseImg && baseImg.complete && baseImg.naturalWidth !== 0) {
-        ctx.drawImage(baseImg, 0, 0, 1080, 1080);
-      }
-
-      // Vẽ ảnh Glow (Lớp trên - Blend Mode ADD)
-      ctx.globalCompositeOperation = 'lighter'; // 'lighter' in canvas acts exactly like Screen/Add
-      const glowImg = glowImages[frameIndex];
-      if (glowImg && glowImg.complete && glowImg.naturalWidth !== 0) {
-        ctx.drawImage(glowImg, 0, 0, 1080, 1080);
+      if (frameIndex !== lastFrame) {
+        baseEl.src = baseImages[frameIndex];
+        glowEl.src = glowImages[frameIndex];
+        lastFrame = frameIndex;
       }
     };
 
-    // Ensure first frame is drawn initially once ready
-    if (baseImages[0].complete) {
-      renderFrame();
-    } else {
-      baseImages[0].onload = renderFrame;
-    }
+    renderFrame();
 
     const getTrajectory = (scrollY: number) => {
-      const currentW = wrapperEl.offsetWidth || 100;
-      const currentH = wrapperEl.offsetHeight || 100;
+      const currentW = wrapperEl.offsetWidth || 200;
+      const currentH = wrapperEl.offsetHeight || 200;
       const cX = window.innerWidth / 2 - currentW / 2;
       const cY = window.innerHeight / 2 - currentH / 2;
 
@@ -102,8 +78,8 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
     };
 
     const getCenterPos = () => {
-      const currentW = wrapperEl.offsetWidth || 100;
-      const currentH = wrapperEl.offsetHeight || 100;
+      const currentW = wrapperEl.offsetWidth || 200;
+      const currentH = wrapperEl.offsetHeight || 200;
       return {
         x: window.innerWidth / 2 - currentW / 2,
         y: window.innerHeight / 2 - currentH / 2,
@@ -178,13 +154,17 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
     <div
       id="cube-sprite-wrapper"
       ref={wrapperRef}
-      className="fixed top-0 left-0 w-[20vw] h-[20vw] max-w-[200px] max-h-[200px] z-[60] pointer-events-none"
+      className="fixed top-0 left-0 w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] z-[60] pointer-events-none"
     >
-      <canvas 
-        ref={canvasRef}
-        width={1080}
-        height={1080}
-        className="w-full h-full object-contain pointer-events-none"
+      <img
+        ref={baseImgRef}
+        className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+        alt=""
+      />
+      <img
+        ref={glowImgRef}
+        className="absolute inset-0 w-full h-full object-contain pointer-events-none mix-blend-plus-lighter"
+        alt=""
       />
     </div>
   );
