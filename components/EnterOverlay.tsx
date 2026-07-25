@@ -41,8 +41,17 @@ export function EnterOverlay() {
       pathRef.current.style.strokeDashoffset = len.toString();
     }
 
-    // Start Preloading Engine
-    const assetsToLoad = ['/sprite_cubi/cubi.webp', '/sprite_cubi/cubi_glow.webp'];
+    // Start Preloading Engine (240 Frames Image Sequence)
+    const assetsToLoad: string[] = [];
+    
+    // 💡 LƯU Ý CHO USER: ĐƯỜNG DẪN ẢNH VÀ ĐỊNH DẠNG (SRC)
+    // Nếu sau này nén ảnh thành .webp, chỉ cần đổi đuôi '.png' thành '.webp' ở 2 dòng push bên dưới.
+    // Số lượng 120 frames cho mỗi layer.
+    for (let i = 0; i < 120; i++) {
+      const idx = i.toString().padStart(5, '0');
+      assetsToLoad.push(`/sprite_cubi/cubi/cubi_${idx}.png`);
+      assetsToLoad.push(`/sprite_cubi/cubi_glow/cubi_glow_${idx}.png`);
+    }
     
     // We animate progress to at least 90% while waiting for network
     tl.to(simulatedProgress, {

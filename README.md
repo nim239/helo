@@ -80,9 +80,9 @@ graph TD
   * Đổi cấu hình script dev trong `package.json` sang `next dev -H 0.0.0.0 -p 3005`. Thiết lập `-H 0.0.0.0` cho phép thiết bị di động truy cập server qua mạng WiFi LAN nội bộ thay vì bị chặn ở Localhost.
   * Việc đổi sang port `3005` giúp khắc phục triệt để lỗi `ERR_INVALID_HTTP_RESPONSE` do tiến trình hoặc trình duyệt Chrome bắt HTTPS đè lên port 3000 mặc định.
 
-* **2026-07-25 (Kiến trúc Nạp trước - Preload Engine & 2-Layer Spritesheet)**:
-  * Xây dựng cơ chế chốt chặn `Promise.all()` tại `EnterOverlay.tsx` để khóa toàn bộ quá trình tải (kết hợp `lenis.stop()` có sẵn) cho tới khi 2 file ảnh tĩnh siêu lớn được đẩy 100% vào RAM.
-  * Tái cấu trúc `<SpriteAnimation />` chuyển sang DOM kép (2 thẻ div song song). Chuyển `glowLayer` (ảnh WebP phát sáng) xuống dưới DOM order (Z-Index cao hơn) đè lên trên lớp base, kết hợp `mix-blend-plus-lighter` để tạo hiệu ứng ánh sáng cộng dồn chuẩn xác (tương đương Screen/Add Mode). Đồng bộ hóa vị trí X/Y của cả 2 lớp qua 2 `gsap.quickSetter` bắn 144Hz liên tục.
+* **2026-07-25 (Kiến trúc Nạp trước - Preload Engine & Canvas Image Sequence 240 Frames)**:
+  * Xây dựng cơ chế chốt chặn `Promise.all()` tại `EnterOverlay.tsx` để khóa toàn bộ quá trình tải (kết hợp `lenis.stop()` có sẵn) cho tới khi 240 file ảnh tĩnh siêu lớn (.png) được đẩy 100% vào RAM.
+  * Tái cấu trúc `<SpriteAnimation />` chuyển từ DOM kép sang **Canvas API**. Render siêu tốc 165FPS bằng cách vẽ frame Base lên canvas rồi đè tiếp frame Glow với `ctx.globalCompositeOperation = 'lighter'` để tạo hiệu ứng ánh sáng cộng dồn chuẩn xác (tương đương Screen/Add Mode). Đồng bộ hóa vị trí X/Y thông qua wrapper GSAP.
 
 * **2026-07-25 (Chế độ tự động Autonomous Goal: Tối ưu hóa Physics, Layout & GSAP Loop Sync)**:
   * **Vòng 1 (Physics & Ease-in-out Smooth Transitions 3~6s)**:
