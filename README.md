@@ -76,6 +76,10 @@ graph TD
 * **2026-07-25 (Lưu tài liệu đặc tả tối ưu hoá hiệu năng)**:
   * Đã tạo file `performance-optimization.md` trong thư mục `specs/001-exhibition-portfolio` lưu trữ chi tiết các kỹ thuật Tối ưu hoá CSS Object Model (Composite Layers, CSS Culling) và Bộ nhớ/Main Thread (Async Image Decoding, Font Display Swap, requestIdleCallback) nhằm đảm bảo mục tiêu 165 FPS.
 
+* **2026-07-25 (Khắc phục xung đột Port Localhost & Cấu hình mạng LAN)**:
+  * Đổi cấu hình script dev trong `package.json` sang `next dev -H 0.0.0.0 -p 3005`. Thiết lập `-H 0.0.0.0` cho phép thiết bị di động truy cập server qua mạng WiFi LAN nội bộ thay vì bị chặn ở Localhost.
+  * Việc đổi sang port `3005` giúp khắc phục triệt để lỗi `ERR_INVALID_HTTP_RESPONSE` do tiến trình hoặc trình duyệt Chrome bắt HTTPS đè lên port 3000 mặc định.
+
 * **2026-07-25 (Kiến trúc Nạp trước - Preload Engine & 2-Layer Spritesheet)**:
   * Xây dựng cơ chế chốt chặn `Promise.all()` tại `EnterOverlay.tsx` để khóa toàn bộ quá trình tải (kết hợp `lenis.stop()` có sẵn) cho tới khi 2 file ảnh tĩnh siêu lớn được đẩy 100% vào RAM.
   * Tái cấu trúc `<SpriteAnimation />` chuyển sang DOM kép (2 thẻ div song song). Chuyển `glowLayer` (ảnh WebP phát sáng) xuống dưới DOM order (Z-Index cao hơn) đè lên trên lớp base, kết hợp `mix-blend-plus-lighter` để tạo hiệu ứng ánh sáng cộng dồn chuẩn xác (tương đương Screen/Add Mode). Đồng bộ hóa vị trí X/Y của cả 2 lớp qua 2 `gsap.quickSetter` bắn 144Hz liên tục.
