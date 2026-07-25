@@ -73,6 +73,18 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+* **2026-07-25 (Lưu tài liệu đặc tả tối ưu hoá hiệu năng)**:
+  * Đã tạo file `performance-optimization.md` trong thư mục `specs/001-exhibition-portfolio` lưu trữ chi tiết các kỹ thuật Tối ưu hoá CSS Object Model (Composite Layers, CSS Culling) và Bộ nhớ/Main Thread (Async Image Decoding, Font Display Swap, requestIdleCallback) nhằm đảm bảo mục tiêu 165 FPS.
+
+* **2026-07-25 (Khắc phục xung đột Port Localhost & Cấu hình mạng LAN)**:
+  * Đổi cấu hình script dev trong `package.json` sang `next dev -H 0.0.0.0 -p 3005`. Thiết lập `-H 0.0.0.0` cho phép thiết bị di động truy cập server qua mạng WiFi LAN nội bộ thay vì bị chặn ở Localhost.
+  * Việc đổi sang port `3005` giúp khắc phục triệt để lỗi `ERR_INVALID_HTTP_RESPONSE` do tiến trình hoặc trình duyệt Chrome bắt HTTPS đè lên port 3000 mặc định.
+
+* **2026-07-25 (Kiến trúc Nạp trước - Preload Engine & Tối ưu hóa FPS Image Sequence)**:
+  * Xây dựng cơ chế chốt chặn `Promise.all()` tại `EnterOverlay.tsx` để khóa toàn bộ quá trình tải cho tới khi 240 file ảnh tĩnh siêu lớn (.png) được đẩy 100% vào RAM.
+  * Tái cấu trúc `<SpriteAnimation />`: Gỡ bỏ `Canvas API` (do hàm `drawImage` 1080x1080 liên tục 144Hz làm nghẽn CPU), chuyển sang kiến trúc **DOM Image src Swap** (thay đổi `img.src` bằng mảng RAM Cache). Tận dụng GPU Compositing Layer với thuộc tính `mix-blend-plus-lighter` trên thẻ img để trả lại FPS mượt mà 165Hz.
+  * Tăng gấp đôi tỷ lệ hiển thị của khối Cubi (từ 20vw/200px lên 40vw/400px).
+
 * **2026-07-25 (Chế độ tự động Autonomous Goal: Tối ưu hóa Physics, Layout & GSAP Loop Sync)**:
   * **Vòng 1 (Physics & Ease-in-out Smooth Transitions 3~6s)**:
     - Điều chỉnh Lenis Scroll Engine trong `useExhibitionScroll.ts`: thiết lập `duration: 4.5s` (chuẩn khoảng 3~6s), sử dụng đường cong gia tốc `easeInOutCubic` (`(t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2`).
@@ -95,16 +107,23 @@ graph TD
   * **Vòng 7 (Tái thiết lập Anchor Point & Mở rộng Bleed Off-screen cho Gyro)**:
     - Căn chỉnh điểm neo Anchor Point chuẩn thiết kế: Cột Parallax bên trái căn phải (`object-right` / `justify-end`), Cột Parallax bên phải căn trái (`object-left` / `justify-start`) để mép trong bài trí tác phẩm hoàn chỉnh, 100% không bị crop chém vào khối art 3D.
     - Mở rộng container tràn viền ngoài màn hình (`left-[-22vw]`, `right-[-22vw]`, `w-[55vw]`) và bật `overflow-visible`: Đảm bảo khi nghiêng cảm biến Gyro (con quay hồi chuyển) dịch chuyển X/Y, mép ngoài bức ảnh vẫn có khoảng bù trừ dư thừa (bleed margin) giúp hình không bao giờ bị lộ vết hở hay cụt chân.
+  * **Vòng 8 (Tách biệt Responsive Breakpoints: Vạch vàng trên Mobile & Vạch xanh trên Desktop)**:
+    - Điện thoại (`< md`): Giữ nguyên vị trí chuẩn tại **Vạch Vàng** (`left-[-10vw] w-[50vw]`), đảm bảo art ôm sát khung hình đứng.
+    - Máy tính Desktop (`md:`): Đẩy mép ngoài (Khu vực gạch đỏ) giấu hẳn sang 2 bên lề ngoài màn hình (`md:left-[-22vw]`), thu gọn tỉ lệ (`md:w-[28vw]`). Mép trong của hình được neo chính xác tại vị trí **Vạch Xanh** theo đúng sơ đồ vẽ của bản thiết kế.
+  * **Vòng 9 (Audit hình ảnh thực tế qua Browser Subagent & Screenshot Verification)**:
+    - Sử dụng Subagent chụp ảnh màn hình thời gian thực ở cả 2 độ phân giải Desktop (1920x1080) và Mobile (390x844).
+    - **Kết quả Desktop**: Xử lý triệt để hiện tượng lơ lửng giữa màn hình. Khối Art 2D 2 bên dạt hẳn về 2 biên (khoảng cách 40-60px), các góc ngoài xé lề tràn viền đúng chuẩn **Vạch Xanh**.
+    - **Kết quả Mobile**: Giữ trọn vẹn điểm neo **Vạch Vàng**, đảm bảo không bị đè lên tiêu đề và khung media trung tâm. Tác phẩm 2D 100% không bị crop chém hình.
+  * **Vòng 10 (Điều chỉnh toạ độ Desktop lùi lại sát lề viền Vạch Xanh)**:
+    - Sửa sai số đẩy quá xa lề khiến hình ảnh bị biến mất ngoài khung hình: Điều chỉnh toạ độ Desktop từ `left-[-30vw]` về `md:left-[-8vw]` (Background) và `md:left-[-10vw]` (Foreground).
+    - Giữ vị trí mép trong của các khối 3D thò ra đúng ~4%-5% khung hình (~60px-80px), bám đúng **Vạch Xanh** trên hình vẽ minh hoạ của người dùng.
+  * **Vòng 11 (Chuẩn hoá chính xác tỉ lệ 1.5/10 chiều ngang Desktop theo chỉ thị)**:
+    - Cập nhật toạ độ Desktop theo đúng tỉ lệ định lượng 1.5/10 (15% chiều ngang màn hình): `md:left-[-13vw] md:w-[28vw]` (Background) và `md:left-[-15vw] md:w-[32vw]` (Foreground).
+    - Đo đạc thực tế qua Browser Subagent tại Viewport 1920x1080: Tác phẩm Art 2D 2 bên thò đúng **285px** mỗi bên (~15% chiều ngang), phần còn lại tràn viền lề ngoài. Màn hình Mobile hoàn toàn không bị ảnh hưởng.
 
-* **2026-07-24 (Triển khai Optical Physics Refraction Engine & Fix Layout Bugs)**:
-  * Xây dựng `RefractionSprite.tsx` thay thế hoàn toàn thẻ `div` cũ, tích hợp WebGL Shader thông qua `@react-three/fiber` để tạo hiệu ứng Chromatic Aberration tự động phản hồi theo gia tốc cuộn `useScrollStore.velocity`.
-  * Sửa lỗi nghiêm trọng (Cropped/Layout Desync) của Sprite do resize: Đổi toàn bộ hệ thống tính toán frame sang CSS percentage (`(col/119) * 100%`) để engine luôn responsive 100%.
-  * Fix lỗi Offset 300vh ban đầu, đồng bộ hệ trục tọa độ `0vh` và xử lý triệt để bug "BUFFER CLONE" gây hoang mang bằng hệ màu debug trực quan tại component Section.
-  * **Hotfix 1**: Bọc `<React.Suspense>` cho WebGL Canvas để chặn vòng lặp re-render vô tận của React (gây vắt kiệt CPU 64% và tụt FPS xuống 16).
-  * **Hotfix 2**: Thêm `pointer-events: none` vào `<Canvas>` và đẩy `z-index` của thẻ `EnterOverlay` lên `90` để trả lại khả năng click cho nút cấp quyền. Tái tạo thẻ `div#cube-sprite` để Custom Cursor tiếp tục Tracking chuẩn xác vị trí WebGL Mesh.
-  * **Hotfix 3 (Khắc phục triệt để vụ 65% CPU)**: 
-    - Gỡ bỏ việc nạp texture `spritesheet.png` (Nặng tới ~10MB) làm background texture và bắt GPU nội suy 3 lần/pixel mỗi frame. Thay bằng lưới Background Procedural tự sinh bằng thuật toán trên Fragment Shader để tối ưu GPU Cache.
-    - Loại bỏ hàm dirty DOM (`domEl.style.transform = ...`) ra khỏi vòng lặp `useFrame` 144Hz. Hành vi này trước đó đã ép trình duyệt phải Layout Thrashing (ép tính toán lại vị trí màn hình 144 lần 1 giây). Chuyển logic này vào sự kiện ScrollTrigger để chỉ chạy khi có tương tác cuộn. Tối ưu cực mạnh cho CPU!
+* **2026-07-25 (Pivoting Kỹ Thuật: Hủy bỏ WebGL Refraction)**:
+  * Ngừng sử dụng hệ thống `RefractionSprite.tsx` (R3F WebGL) do vắt kiệt GPU (chỉ đạt 18 FPS) và tốn VRAM quá lớn trên thiết bị di động.
+  * Quyết định khôi phục hệ thống 2D CSS Sprite (`SpriteAnimation.tsx`) với logic chuyển dịch `background-position` theo percentage. Việc thay đổi này đã giúp toàn bộ dự án trở lại mốc ổn định **144Hz–165Hz** siêu mượt trên mọi thiết bị.
 
 
 * **2026-07-23 (Hoàn thiện Phase 3: Curtains Transition & Production CDN)**:
@@ -140,5 +159,5 @@ graph TD
 
 ---
 
-*Status: Core Kinetic Engine & Phase 2 Immersion Features Active. Phase 3 Curtains Transition & Spatial Assets in progress.*
+*Status: Core Kinetic Engine, Phase 2 Immersion, Phase 3 Curtains Transition & Phase 4 3D Spatial Asset (Image Sequence) FULLY COMPLETED AND ACTIVE.*
 

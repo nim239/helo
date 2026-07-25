@@ -194,7 +194,7 @@ Styling:
 - TailwindCSS
 
 Optional:
-- React Three Fiber
+- Không có (Nghiêm cấm WebGL/React Three Fiber vì gây tụt FPS trên mobile)
 
 Technology choices MUST serve the exhibition experience.
 

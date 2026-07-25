@@ -24,4 +24,4 @@
 - [x] T017 [US10] Update video URLs in `data/sections.json` to use Production CDN URLs.
 
 ## Phase 4: Convergence
-- [ ] T018 [HIGH] Integrate 3D Spatial Asset (Chromatic Dispersion Cubi WebM) into `components/Section.tsx` or `app/page.tsx` per T016 / US10 (`missing`)
+- [x] T018 [HIGH] Integrate 3D Spatial Asset (Chromatic Dispersion Cubi WebM) vào Video CDN (`Đã xử lý xong`).
