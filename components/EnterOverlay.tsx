@@ -26,6 +26,9 @@ export function EnterOverlay() {
         loop: false,
         autoplay: false,
         path: '/lotie/hitmebabyonemoretime.json',
+        rendererSettings: {
+          preserveAspectRatio: 'xMidYMid meet',
+        }
       });
     }
 
@@ -238,7 +241,7 @@ export function EnterOverlay() {
         `}
         aria-label="Enter Experience"
       >
-        <div ref={lottieContainerRef} className="absolute w-[24rem] h-[24rem] max-w-[20vw] max-h-[20vh] opacity-0 pointer-events-none" />
+        <div ref={lottieContainerRef} className="absolute w-[50vmin] h-[50vmin] opacity-0 pointer-events-none" />
 
         <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 100 100">
           <circle 
