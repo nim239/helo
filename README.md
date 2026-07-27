@@ -78,8 +78,8 @@ graph TD
   * **File ảnh hưởng:** `components/ParallaxSides.tsx`, `components/EnterOverlay.tsx`
   * **Lý do/Kết quả:** 
     1. **Side Art Scaling**: Áp dụng `scale-50` cho container của `man running.json` bên trong `ParallaxSides.tsx` để giảm kích thước hiển thị xuống một nửa nhưng vẫn duy trì đúng trục tọa độ.
-    2. **Enter Overlay Animation**: Thay đổi logic hoàn tất tải trang (100%). Thay vì chỉ phóng to nhẹ (`scale: 1.05`), vòng loading giờ đây sẽ lan rộng thành `90vmin` (90% kích thước ngắn nhất của màn hình). Sau khi lan rộng, vòng tròn sẽ tiếp tục giữ hiệu ứng nhấp nháy (pulse) nhẹ để báo hiệu sẵn sàng tương tác.
-    3. **Tương tác cấp quyền bằng Lottie**: Tích hợp `hitmebabyonemoretime.json` sử dụng `lottie-web`. Khi vòng lan rộng, Lottie sẽ chạy vòng lặp nhàn rỗi (Idle: frames 119-199). Khi user click cấp quyền, Lottie sẽ phát hoạt hình nhảy (Jump: frames 0-118) trong 2 giây trước khi tiến hành chuyển cảnh Intro, giúp trải nghiệm tương tác tự nhiên và hấp dẫn hơn. Đã sửa triệt để lỗi Lottie bị bẹp/nhỏ bằng cách thiết lập kích thước `w-[50vmin] h-[50vmin]` kết hợp `preserveAspectRatio: 'xMidYMid meet'`. Renderer `svg` giúp hình ảnh vector nét căng tuyệt đối trên mọi độ phân giải.
+    2. **Enter Overlay Animation**: Thay đổi logic hoàn tất tải trang (100%). Vòng loading lan rộng thành `90vmin` (90% kích thước ngắn nhất của màn hình) tĩnh mà không pulse. Khi chuyển cảnh, vòng tròn và Lottie tan biến mờ dần tại chỗ (opacity: 0) chứ không bay vọt lên trên nữa.
+    3. **Tương tác cấp quyền bằng Lottie & Chuyển cảnh liền mạch**: Tích hợp `hitmebabyonemoretime.json` nét căng `w-[50vmin] h-[50vmin]`. Sửa lỗi khoảng trống màn hình đen khi Overlay mờ đi bằng cách truyền `startIntro={hasEntered}` cho `SpriteAnimation`, giúp khối Sprite Cubi kích hoạt và render ngay lập tức đằng sau Overlay, loại bỏ hoàn toàn độ trễ hiển thị.
 
 * **2026-07-28 (Sửa lỗi vị trí Lottie Side Art 2D)**:
   * **Tên tính năng/bugfix:** Khắc phục lỗi vị trí Lottie Side Art bị cắt nửa và nhân bản giữa màn hình.

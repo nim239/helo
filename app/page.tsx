@@ -73,7 +73,7 @@ export default function Exhibition() {
       <HackerMode />
       <EnterOverlay />
       <ParallaxSides />
-      <SpriteAnimation startIntro={isLogoSettled} />
+      <SpriteAnimation startIntro={hasEntered} />
       
       {exhibitionBuffer.map((section) => (
         <Section key={section.key} id={section.key} isClone={section.isClone}>

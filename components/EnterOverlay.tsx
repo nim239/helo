@@ -112,18 +112,6 @@ export function EnterOverlay() {
               height: '90vmin',
               duration: 1.5,
               ease: 'power3.inOut',
-              onComplete: () => {
-                // Make it pulse slightly when expanded
-                if (circleRef.current) {
-                  gsap.to(circleRef.current, {
-                    scale: 1.05,
-                    duration: 1,
-                    repeat: -1,
-                    yoyo: true,
-                    ease: 'power1.inOut'
-                  });
-                }
-              }
             });
             
             // Fade in Lottie and play Idle segment (frames 119 to 199)
@@ -203,13 +191,12 @@ export function EnterOverlay() {
         }
       });
 
-      // Move circle up and scale down
+      // Fade out circle in place (no flying up)
       tl.to(circleRef.current, {
-        y: '-35vh',
-        scale: 0.5,
         opacity: 0,
-        duration: 1.2,
-        ease: 'power4.inOut'
+        scale: 0.95,
+        duration: 1.0,
+        ease: 'power2.inOut'
       });
 
       // Fade in placeholder "N" logo
