@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import gsap from 'gsap';
+import lottie, { AnimationItem } from 'lottie-web';
 import { useAppStore } from '../lib/store/useAppStore';
 
 export function EnterOverlay() {
@@ -10,8 +11,27 @@ export function EnterOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGCircleElement>(null);
+  const bgCircleRef = useRef<SVGCircleElement>(null);
+  const lottieContainerRef = useRef<HTMLDivElement>(null);
+  const lottieInstRef = useRef<AnimationItem | null>(null);
+  
+  const [isEntering, setIsEntering] = useState(false);
 
   useEffect(() => {
+    // Initialize Lottie
+    if (lottieContainerRef.current && !lottieInstRef.current) {
+      lottieInstRef.current = lottie.loadAnimation({
+        container: lottieContainerRef.current,
+        renderer: 'svg',
+        loop: false,
+        autoplay: false,
+        path: '/lotie/hitmebabyonemoretime.json',
+        rendererSettings: {
+          preserveAspectRatio: 'xMidYMid meet',
+        }
+      });
+    }
+
     let simulatedProgress = { val: 0 };
     
     // Trim path animation
@@ -30,12 +50,8 @@ export function EnterOverlay() {
       pathRef.current.style.strokeDashoffset = len.toString();
     }
 
-    // Start Preloading Engine (240 Frames Image Sequence)
+    // Start Preloading Engine
     const assetsToLoad: string[] = [];
-    
-    // 💡 LƯU Ý CHO USER: ĐƯỜNG DẪN ẢNH VÀ ĐỊNH DẠNG (SRC)
-    // Nếu sau này nén ảnh thành .webp, chỉ cần đổi đuôi '.png' thành '.webp' ở 2 dòng push bên dưới.
-    // Số lượng 120 frames cho mỗi layer.
     for (let i = 0; i < 120; i++) {
       const idx = i.toString().padStart(5, '0');
       assetsToLoad.push(`/sprite_cubi/cubi/cubi_${idx}.webp`);
@@ -54,7 +70,7 @@ export function EnterOverlay() {
         const img = new Image();
         img.src = src;
         img.onload = () => resolve();
-        img.onerror = () => resolve(); // Always resolve to prevent infinite lock
+        img.onerror = () => resolve();
       });
     });
 
@@ -75,26 +91,55 @@ export function EnterOverlay() {
         },
         onComplete: () => {
           setAssetsLoaded(true);
-          // Make it pulse slightly when ready
+          // Expand circle to 90vmin
           if (circleRef.current) {
-            gsap.to(circleRef.current, {
-              scale: 1.05,
-              duration: 1,
-              repeat: -1,
-              yoyo: true,
-              ease: 'power1.inOut'
+            // Remove dasharray to prevent dash gaps when using non-scaling-stroke
+            if (pathRef.current) {
+              pathRef.current.style.strokeDasharray = 'none';
+              pathRef.current.style.strokeDashoffset = '0';
+            }
+
+            // Transition stroke to 1px and 10% opacity
+            gsap.to([pathRef.current, bgCircleRef.current], {
+              strokeWidth: 1,
+              stroke: 'rgba(255,255,255,0.1)',
+              duration: 1.5,
+              ease: 'power3.inOut'
             });
+
+            gsap.to(circleRef.current, {
+              width: '90vmin',
+              height: '90vmin',
+              duration: 1.5,
+              ease: 'power3.inOut',
+            });
+            
+            // Fade in Lottie and play Idle segment (frames 119 to 199)
+            if (lottieContainerRef.current) {
+              gsap.to(lottieContainerRef.current, { opacity: 1, duration: 1, delay: 0.5 });
+            }
+            if (lottieInstRef.current) {
+              lottieInstRef.current.loop = true;
+              lottieInstRef.current.playSegments([119, 199], true);
+            }
           }
         }
       });
     });
 
+    return () => {
+      if (lottieInstRef.current) {
+        lottieInstRef.current.destroy();
+        lottieInstRef.current = null;
+      }
+    };
   }, [setAssetsLoaded]);
 
   const handleEnter = async () => {
-    if (!isAssetsLoaded) return; // Can't click until loaded
+    if (!isAssetsLoaded || isEntering) return;
+    setIsEntering(true);
 
-    // Stop pulsing
+    // Stop pulsing if any
     gsap.killTweensOf(circleRef.current);
 
     // 1. Audio setup
@@ -127,40 +172,47 @@ export function EnterOverlay() {
       setGyroEnabled(true);
     }
 
-    setEntered(true);
+    // Play Jump segment (frames 0 to 118) for 2 seconds
+    if (lottieInstRef.current) {
+      lottieInstRef.current.loop = false;
+      lottieInstRef.current.playSegments([0, 118], true);
+    }
 
-    // Move circle up and scale down
-    const tl = gsap.timeline({
-      onComplete: () => {
-        setLogoSettled(true);
-        if (circleRef.current) {
-          circleRef.current.style.pointerEvents = 'none';
+    // Wait 2 seconds before continuing with intro
+    gsap.delayedCall(2, () => {
+      setEntered(true);
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setLogoSettled(true);
+          if (circleRef.current) {
+            circleRef.current.style.pointerEvents = 'none';
+          }
         }
-      }
+      });
+
+      // Fade out circle in place (no flying up)
+      tl.to(circleRef.current, {
+        opacity: 0,
+        scale: 0.95,
+        duration: 1.0,
+        ease: 'power2.inOut'
+      });
+
+      // Fade in placeholder "N" logo
+      tl.to(logoRef.current, {
+        opacity: 1,
+        duration: 0.5,
+        ease: 'power2.out'
+      }, "-=0.4");
+
+      // Fade out background
+      tl.to(containerRef.current, {
+        backgroundColor: 'rgba(0,0,0,0)',
+        duration: 1.0,
+        ease: 'power2.inOut'
+      }, "-=1.2");
     });
-
-    // Move circle up and scale down
-    tl.to(circleRef.current, {
-      y: '-35vh', // Move to top (adjust based on center)
-      scale: 0.5,
-      opacity: 0,
-      duration: 1.2,
-      ease: 'power4.inOut'
-    });
-
-    // Fade in placeholder "N" logo
-    tl.to(logoRef.current, {
-      opacity: 1,
-      duration: 0.5,
-      ease: 'power2.out'
-    }, "-=0.4");
-
-    // Fade out background so we can see the exhibition, but keep the container mounted
-    tl.to(containerRef.current, {
-      backgroundColor: 'rgba(0,0,0,0)',
-      duration: 1.0,
-      ease: 'power2.inOut'
-    }, "-=1.2");
   };
 
   return (
@@ -172,16 +224,20 @@ export function EnterOverlay() {
         onClick={handleEnter}
         data-magnet="true"
         className={`relative w-32 h-32 rounded-full flex items-center justify-center bg-transparent transition-colors
-          ${isAssetsLoaded ? 'pointer-events-auto cursor-pointer hover:bg-white/5' : 'pointer-events-none'}
+          ${isAssetsLoaded && !isEntering ? 'pointer-events-auto cursor-pointer hover:bg-white/5' : 'pointer-events-none'}
         `}
         aria-label="Enter Experience"
       >
+        <div ref={lottieContainerRef} className="absolute w-[50vmin] h-[50vmin] opacity-0 pointer-events-none" />
+
         <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 100 100">
           <circle 
+            ref={bgCircleRef}
             cx="50" cy="50" r="48" 
             fill="none" 
             stroke="rgba(255,255,255,0.1)" 
             strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
           />
           <circle 
             ref={pathRef}
@@ -190,6 +246,7 @@ export function EnterOverlay() {
             stroke="rgba(255,255,255,0.8)" 
             strokeWidth="2"
             strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
           />
         </svg>
       </button>
