@@ -73,10 +73,40 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+* **2026-07-28 (Nâng cấp EnterOverlay & Điều chỉnh tỉ lệ Side Art Lottie)**:
+  * **Tên tính năng/bugfix:** Thu nhỏ Side Art `man running.json` 50% và tích hợp Lottie tương tác cấp quyền vào vòng loading.
+  * **File ảnh hưởng:** `components/ParallaxSides.tsx`, `components/EnterOverlay.tsx`
+  * **Lý do/Kết quả:** 
+    1. **Side Art Scaling**: Áp dụng `scale-50` cho container của `man running.json` bên trong `ParallaxSides.tsx` để giảm kích thước hiển thị xuống một nửa nhưng vẫn duy trì đúng trục tọa độ.
+    2. **Enter Overlay Animation**: Thay đổi logic hoàn tất tải trang (100%). Thay vì chỉ phóng to nhẹ (`scale: 1.05`), vòng loading giờ đây sẽ lan rộng thành `90vmin` (90% kích thước ngắn nhất của màn hình). Sau khi lan rộng, vòng tròn sẽ tiếp tục giữ hiệu ứng nhấp nháy (pulse) nhẹ để báo hiệu sẵn sàng tương tác.
+    3. **Tương tác cấp quyền bằng Lottie**: Tích hợp `hitmebabyonemoretime.json` sử dụng `lottie-web`. Khi vòng lan rộng, Lottie sẽ chạy vòng lặp nhàn rỗi (Idle: frames 119-199). Khi user click cấp quyền, Lottie sẽ phát hoạt hình nhảy (Jump: frames 0-118) trong 2 giây trước khi tiến hành chuyển cảnh Intro, giúp trải nghiệm tương tác tự nhiên và hấp dẫn hơn. Theo thiết kế mới, Lottie được làm to ra gấp 3 lần (`w-[24rem] h-[24rem]`) và giới hạn tối đa ở mức 1/5 màn hình (`max-w-[20vw] max-h-[20vh]`) nằm ở tâm. Viền của vòng tròn 90vmin sẽ tự động mờ dần về mức opacity 10% và mỏng lại chỉ còn 1px để làm nền tinh tế cho nút Lottie. Đã thay đổi renderer của `lottie-web` từ `canvas` sang `svg` để đảm bảo chất lượng hình ảnh vector nét căng tuyệt đối ở bất kỳ kích thước nào mà không bị mờ nhòe. Đã khắc phục lỗi nét đứt (dash) khi vòng tròn phóng to bằng cách gỡ bỏ hoàn toàn `stroke-dasharray` ngay khi load xong 100%. Lottie Canvas cũng đã được cấu hình kết hợp `vectorEffect="non-scaling-stroke"` trên SVG để mọi thứ luôn sắc nét và giữ đúng tỷ lệ trên màn hình.
+
+* **2026-07-28 (Sửa lỗi vị trí Lottie Side Art 2D)**:
+  * **Tên tính năng/bugfix:** Khắc phục lỗi vị trí Lottie Side Art bị cắt nửa và nhân bản giữa màn hình.
+  * **File ảnh hưởng:** `components/ParallaxSides.tsx`
+  * **Lý do/Kết quả:** 
+    1. Lỗi mép trái: Container cũ thiết lập `left-[-27vw] w-[54vw]`, khiến tâm điểm Canvas nằm chính xác tại mép trái màn hình (0vw), làm ảnh nhân vật bị cắt làm đôi. Đã tịnh tiến thành `left-[-15vw] md:left-[-10vw]` và hẹp lại `w-[50vw] md:w-[40vw]`.
+    2. Lỗi nhảy vào giữa màn hình: Container phải dùng `origin-left` kết hợp `scaleX(-1)` khiến tác phẩm bị lật ngược vào giữa màn hình. Đã đổi sang `origin-center` để lật tại chỗ (bám mép phải).
+    3. Xung đột Responsive: Thuộc tính lật (`-scale-x-100`) bị CSS Media Query `@media (max-width: 768px)` ghi đè mất do cùng sử dụng thuộc tính `transform`. Đã tách riêng cấu trúc DOM để việc thu phóng và lật gương hoạt động độc lập mà không "đá" nhau.
+
+* **2026-07-27 (Tích hợp Lottie 2D Side Art - 4 Layer Canvas 2D x Velocity Speed Booster)**:
+  * **Tên tính năng/bugfix:** Thay thế hoàn toàn Zdog 3D bằng hệ thống 4 lớp Lottie 2D Side Art vẽ bằng Canvas 2D, có gia tốc cuộn `velocity` điều khiển nhịp phát (Speed Acceleration Only).
+  * **File ảnh hưởng:** `package.json`, `components/ParallaxSides.tsx`
+  * **Lý do/Kết quả:**
+    1. Trảm toàn bộ logic và dependency của `zdog`, `@types/zdog` khỏi dự án, cài đặt `lottie-web`.
+    2. Khởi tạo 4 Lottie instances cho 2 bên mép (Trái & Phải x 2 lớp): Lớp nền phía sau tải `public/lotie/Sparkles.json`, Lớp tiền cảnh tải `public/lotie/man running.json`, hoàn toàn render bằng `renderer: 'canvas'` (cấm SVG để tránh Layout Thrashing).
+    3. Đồng bộ hóa tốc độ phát Lottie (`setSpeed(speed)`) với bộ đếm nhịp gốc `gsap.ticker` và gia tốc cuộn `velocity` từ Lenis Store (`useScrollStore`): khi Idle chạy loop `1.0x`, khi cuộn nhanh tăng tốc lên tới `3.0x` theo nguyên tắc **Speed Acceleration Only** (không co giãn hay méo mó hình ảnh).
+    4. Quản lý bộ nhớ nghiêm ngặt: Tự động điều chỉnh độ phân giải Canvas theo `window.devicePixelRatio` chống răng cưa Retina và hủy cả 4 Lottie instances (`.destroy()`) khi unmount.
+
 * **2026-07-27 (Dọn dẹp tàn dư WebGL / ThreeJS)**:
   * **Tên tính năng/bugfix:** Xóa bỏ hoàn toàn mã nguồn và thư viện không dùng tới.
   * **File ảnh hưởng:** `package.json`, `components/RefractionSprite.tsx`
   * **Lý do/Kết quả:** Hệ thống đã chuyển sang dùng Canvas 2D (SpriteAnimation) thay cho WebGL (RefractionSprite) từ trước để tối ưu FPS. Tuy nhiên file code cũ và các thư viện nặng nề như `three`, `@react-three/fiber`, `@react-three/drei` vẫn còn nằm rác trong dự án. Đã tiến hành "trảm" toàn bộ: xóa file `RefractionSprite.tsx` và gỡ bỏ hoàn toàn các package ThreeJS khỏi `package.json` giúp project nhẹ đi đáng kể và sạch sẽ hơn.
+
+* **2026-07-27 (Giải phẫu kiến trúc Figma - Sửa lỗi Parallax Mobile Crop)**:
+  * **Tên tính năng/bugfix:** Khôi phục cấu trúc Side Art chuẩn từ Figma, xoá sổ lỗi cắt hình (crop) trên Mobile.
+  * **File ảnh hưởng:** `components/ParallaxSides.tsx`
+  * **Lý do/Kết quả:** Đã sử dụng Figma MCP Server để truy xuất lớp layer gốc trong file thiết kế. Phát hiện ra bí mật của Designer: Bức ảnh gốc là ảnh ngang (Horizontal 2060x1030). Để nhét vào cột đứng (Vertical) mà không vỡ tỷ lệ, Figma đã dựng một khung xoay ngang `rotate-90` và ép ảnh ngang vào. Trong khi đó, hệ thống React trước giờ lại dùng `object-cover` thẳng vào cột dọc, khiến ảnh bị xén mất phần lớn nội dung khi lên Mobile! Đã code lại cấu trúc DOM y hệt Figma (`width: 100vh`, `rotate-90`) với thông số Responsive `vw`. Kết quả: Hình ảnh render ra chính xác tỷ lệ 100% trên cả Desktop lẫn Mobile (iPhone F12 / Đời thực) y như bản thiết kế.
 
 * **2026-07-27 (Tối ưu Trải nghiệm Custom Cursor 144Hz & Thiết lập Hiến Pháp Ease-In-Out)**:
   * **Tên tính năng/bugfix:** Hoàn thiện vật lý, sửa lỗi "Teleport" chấm tâm, sửa lỗi Cursor đi lạc, và **triệt tiêu lỗi Nhảy Tưng Tưng (CSS Conflict)**.
@@ -88,10 +118,21 @@ graph TD
     4. Sửa lỗi "Mất Phương Hướng": Vòng tròn ngoài bị lỗi bay ào ra giữa màn hình thay vì đuổi theo khối Cubi. Nguyên nhân do ID của khối Cubi đã bị đổi thành `cube-sprite-wrapper` (Task T016), khiến Cursor không tìm thấy mục tiêu. Đã update lại đúng ID.
     5. Vòng tròn ngoài (Outer Circle) vi phạm "Hiến Pháp" (yêu cầu Ease-In-Out bồng bềnh). Đã thay thế hoàn toàn Lerp (Ease-Out) bằng thuật toán **Spring Physics** tự thiết kế: Tính toán gia tốc (Lực kéo `stiffness`) để tạo pha **Ease-In** và triệt tiêu động năng (Lực cản `damping`) để tạo pha **Ease-Out**. Kết quả là một quỹ đạo bám đuổi mượt mà, hữu cơ và chuẩn triển lãm.
 
-* **2026-07-27 (Rollback & Fix Parallax Mobile/Square Screen Bounds)**:
-  * **Tên tính năng/bugfix:** Sửa lỗi Side Art nuốt trọn màn hình di động nhưng lại bị mất tích khi dùng Fullscreen Wrapper.
+* **2026-07-27 (Giải phẫu kiến trúc Figma - Căn chỉnh Side Art hoàn hảo)**:
+  * **Tên tính năng/bugfix:** Giải quyết triệt để lỗi Crop mất Art trên màn hình dọc (Mobile).
   * **File ảnh hưởng:** `components/ParallaxSides.tsx`
-  * **Lý do/Kết quả:** Kế hoạch mở rộng vỏ bọc lên `100vw` bị phá sản vì bức ảnh thiết kế gốc có padding lề (khoảng trống). Khi kéo giãn `object-cover`, phần khoảng trống này phình to đẩy văng phần hình khối ra khỏi khung hình nhìn thấy, gây lỗi "mất tích". Giải pháp quay lại phương pháp của Vòng 6: Hủy bỏ hoàn toàn các rule riêng biệt cho di động (`w-[50vw]` và `w-[55vw]`). Ép cứng tất cả mọi màn hình về tỉ lệ vàng của Desktop (`w-[32vw]` và `w-[28vw]`). Bằng cách khóa chặt vỏ bọc nhỏ lại, Side Art buộc phải co lại thành một dải hẹp, viền ôm tinh tế xung quanh 17% màn hình mà vĩnh viễn không thể lấn át nội dung ở giữa.
+  * **Lý do/Kết quả:** Mặc dù đã chia tỷ lệ chuẩn Figma, thuật toán `object-cover` mặc định (`object-center`) vẫn tự động xén đều 2 cạnh trái/phải trên màn hình dọc, vô tình chém bay phần hình khối nghệ thuật nằm ở rìa ảnh. Đã khắc phục bằng tổ hợp 3 kỹ thuật:
+    1. **Anchor Edge (`object-right`)**: Ép toàn bộ khung hình luôn bám sát vào rìa phải của ảnh gốc (nơi chứa Art), khiến trình duyệt chỉ được phép xén phần không gian trống bên trái.
+    2. **CSS Transform Flip**: Thay vì lật bằng class Tailwind dễ gây nhầm lẫn tọa độ, chuyển sang dùng biến `--sx`, `--sy` kết hợp `scaleX/scaleY` inline để lật chiều ảnh chuẩn xác cho từng góc (Foreground/Background, Trái/Phải). Kỹ thuật này giúp khối Art luôn bị hất ngược lại đúng vào phần màn hình hiển thị.
+    3. **Dynamic Mobile Scale**: Sử dụng `@media` CSS và `transformOrigin` bám sát mép màn hình (`left center` hoặc `right center`). Trên Mobile, khối Art tự động thu nhỏ lại 55% kích thước (`scale(0.55)`) để không bị "phóng to quá khổ" (do ảnh hưởng của object-cover chiều cao 100vh), trong khi vẫn dính chặt vào viền màn hình một cách hoàn hảo.
+
+* **2026-07-27 (Nâng cấp Pseudo-3D Engine: Zdog.js x Lenis Scroll - Bản Đặc Tả 002-zdog-lenis-integration)**:
+  * **Tên tính năng/bugfix:** Hủy bỏ hệ thống Parallax Ảnh Tĩnh, chuyển đổi sang Side Art 3D thời gian thực trên Canvas 2D.
+  * **File ảnh hưởng:** `package.json`, `components/ParallaxSides.tsx`
+  * **Lý do/Kết quả:** Triển khai theo đúng đặc tả kỹ thuật `002-zdog-lenis-integration`:
+    1. **Kiến trúc Canvas 2D Thuần & Niêm phong chuột (FR-001, FR-002, FR-003):** Thay thế toàn bộ thẻ `<img>` bằng 2 thẻ `<canvas>` 2D, vẽ khối nguyên thủy (Polygon, Hemisphere, Box, Cylinder) nét viền dày neon (`stroke: true`). Niêm phong hoàn toàn sự kiện xoay bằng chuột (`dragRotate: false`).
+    2. **Đồng bộ 1 RAF Duy Nhất & Squash & Stretch Physics (FR-004, FR-005, FR-006):** Kết nối nhịp Zdog vào `gsap.ticker.add()`, đọc trực tiếp `velocity` từ `useScrollStore.getState()`. Ánh xạ gia tốc cuộn vào tốc độ quay (`rotate`) và tỷ lệ biến dạng cơ học (`scale.y` ép dọc, `scale.x/z` bóp nghẹt ngang để bảo toàn thể tích).
+    3. **Tối ưu Retina & Debounce Resize (FR-007, FR-008):** Áp dụng `window.devicePixelRatio` cho độ phân giải sắc nét trên màn hình Retina, kết hợp Debounce 200ms cho sự kiện `resize` để bảo vệ hiệu năng CPU/GPU.
 
 * **2026-07-27 (Sửa lỗi Loading Overlay Bị Kẹt Tại 90%)**:
   * **Tên tính năng/bugfix:** Fix logic chặn Click và lỗi xung đột GSAP Tween khi nạp Asset.
