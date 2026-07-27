@@ -22,3 +22,14 @@
 ## Non-Functional Requirements
 - [ ] CHK010 Are memory management requirements (VRAM flushing) defined for the WebGL Canvas? [NFR]
 - [ ] CHK011 Are performance budget constraints documented for the `ogl` shader loop? [NFR]
+
+## Marquee & Asset Management Updates
+- [x] CHK012 Are CDN fallback requirements explicitly defined if Supabase/Cloudinary becomes unavailable? [Edge Case, Gap]
+- [ ] CHK013 Is the 'Rule of 3' video unmount condition precisely defined for high-speed scrolling scenarios? [Completeness, Spec §FR-008]
+- [ ] CHK014 Are the specific resize boundaries for `ResizeObserver` track width recalculations documented? [Measurability, Spec §FR-006]
+- [ ] CHK015 Are video pre-loading constraints specified for off-screen marquee items? [Performance, Gap]
+
+## Custom Cursor & Audio Clarifications
+- [x] CHK016 Is the exact threshold for 'Mobile Extermination' of the custom cursor defined (e.g., by viewport width vs pointer type)? [Clarity]
+- [x] CHK017 Are the recovery paths defined for Web Audio API if the user revokes audio permissions? [Exception Flow, Gap]
+- [ ] CHK018 Does the spec clarify whether the Custom Cursor Idle Magnet System overrides ongoing scroll events? [Consistency]

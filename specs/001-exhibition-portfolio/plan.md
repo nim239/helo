@@ -8,10 +8,11 @@ This plan outlines the architecture and implementation details for the 5 Phase 2
   - Web Audio API `AudioContext` with synthesizers (0KB asset overhead).
   - Oscillators & Gain/Filter nodes dynamically controlled by `lenis.velocity` in RAF loop.
   - Initialized on user interaction via `EnterOverlay`.
+  - Recovery Path: Silently continue without audio if permissions are revoked.
 
 - **Feature 2: Custom Inertia DOM Cursor (Idle Magnet System)**
   - Powered by HTML DOM and GSAP `quickSetter` for extreme performance, dropping `ogl` dependency.
-  - Implements Mobile Extermination to save VRAM/battery on touch devices.
+  - Implements Mobile Extermination to save VRAM/battery on touch devices. Threshold: CSS Media Query `(pointer: coarse)` and `matchMedia`.
   - Provocation Idle System drifts toward center after 2.5s of inactivity.
 
 - **Feature 3: 2.5D Gyroscope Depth Motion**
@@ -24,6 +25,11 @@ This plan outlines the architecture and implementation details for the 5 Phase 2
 - **Feature 5: Seamless Hash Deep Linking With Curtains Transition**
   - Detect `window.location.hash` on mount.
   - Play 120-frame Sprite Intro, followed by a 5.0s `power4.inOut` Curtains split-screen reveal animation.
+
+- **Feature 6: CDN & Asset Management Optimization**
+  - Media hosted on Free-Tier CDN (Supabase/Cloudinary).
+  - Fallback: Silently fallback to static `poster` images if CDN is unavailable.
+  - Marquee tracking width uses `ResizeObserver`.
 
 ## 2. Constitution Check
 

@@ -14,10 +14,10 @@ export function BackgroundGrid() {
     if (!el) return;
 
     const speed = 0.2;
-    let tileSize = window.innerWidth * 0.05; // 5vw
+    let tileSize = window.innerWidth * 0.07; // 7vw
 
     const updateSize = () => {
-      tileSize = window.innerWidth * 0.05;
+      tileSize = window.innerWidth * 0.07;
     };
     window.addEventListener('resize', updateSize);
 
@@ -27,12 +27,12 @@ export function BackgroundGrid() {
       scrub: 0,
       onUpdate: (self) => {
         const scrollY = self.scroll();
-        
+
         // GPU Accelerated translate3d thay vì backgroundPosition (giúp ko bị trigger Paint)
         const rawY = -scrollY * speed;
         // Lặp vô tận (wrap) trong khoảng 1 ô lưới (5vw)
         const y = gsap.utils.wrap(-tileSize, 0, rawY);
-        
+
         gsap.set(el, { y });
       }
     });
@@ -46,14 +46,14 @@ export function BackgroundGrid() {
   return (
     <div
       ref={gridRef}
-      className="fixed top-0 left-0 w-full z-[-1] pointer-events-none will-change-transform"
+      className="fixed top-0 left-0 w-full z-[0] pointer-events-none will-change-transform"
       style={{
-        height: 'calc(100vh + 5vw)', // Bù thêm 5vw height để khi translate -5vw ko bị hở chân
+        height: 'calc(100vh + 7vw)', // Bù thêm 7vw height để khi translate -7vw ko bị hở chân
         backgroundImage: `
-          linear-gradient(to right, #2c2c2c 1px, transparent 1px),
-          linear-gradient(to bottom, #2c2c2c 1px, transparent 1px)
+          linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px)
         `,
-        backgroundSize: '5vw 5vw', // 1/20 width
+        backgroundSize: '7vw 7vw', // 1/14 width
         backgroundPosition: 'center top',
       }}
     />

@@ -13,6 +13,7 @@ export function MediaVideo({ id, src, poster, className = "" }: MediaVideoProps)
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -64,6 +65,8 @@ export function MediaVideo({ id, src, poster, className = "" }: MediaVideoProps)
       video.pause();
       video.removeAttribute('src');
       video.load();
+      // Reset error state on flush so it can try again next time it enters viewport
+      setHasError(false);
     }
   }, [isVisible, src, id]);
 
@@ -86,9 +89,10 @@ export function MediaVideo({ id, src, poster, className = "" }: MediaVideoProps)
         muted
         loop
         playsInline
+        onError={() => setHasError(true)}
         // We explicitly do NOT autoPlay here because we control it via JS logic
         className={`w-full h-full object-cover transition-opacity duration-300 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
+          isVisible && !hasError ? 'opacity-100' : 'opacity-0'
         }`}
       />
       

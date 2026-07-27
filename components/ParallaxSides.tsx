@@ -98,8 +98,8 @@ export function ParallaxSides() {
       if (!isForeground && align === 'right') scaleClass = '-scale-x-100';
       if (!isForeground && align === 'left') scaleClass = '';
 
-      // Anchor point: Bên trái căn phải (object-right), Bên phải căn trái (object-left)
-      const objectAlign = align === 'left' ? 'object-right' : 'object-left';
+      // Anchor point: Desktop bám sát lề (right/left), Mobile neo dịch về tâm để không bị crop mất Side Art
+      const objectAlign = align === 'left' ? 'object-[75%] md:object-right' : 'object-[25%] md:object-left';
       const flexAlign = align === 'left' ? 'justify-end' : 'justify-start';
 
       return (
@@ -110,8 +110,8 @@ export function ParallaxSides() {
         >
           <img
             src="/paralax/ref_paralax_1.png"
-            alt="Parallax Render"
-            className={`h-full w-auto max-w-none object-cover ${objectAlign} mix-blend-screen ${scaleClass} opacity-100`}
+            alt="Side Art Render"
+            className={`w-full h-full object-cover ${objectAlign} mix-blend-screen ${scaleClass} opacity-100`}
           />
         </div>
       );
@@ -121,26 +121,24 @@ export function ParallaxSides() {
   return (
     <>
       {/* Background Layers (Z-index 0) */}
-      {/* Mobile: GIỮ NGUYÊN (left-[-10vw] w-[50vw]) | Desktop: Thò đúng 1.5/10 chiều ngang màn hình (+15vw visible, left-[-13vw] w-[28vw]) */}
-      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-10vw] md:left-[-13vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[28vw]">
+      <div ref={bgLeftWrapRef} className="fixed top-0 left-[-13vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[28vw]">
         <div ref={bgLeftRef} className="w-full will-change-transform">
           {renderLayers(false, 'left')}
         </div>
       </div>
-      <div ref={bgRightWrapRef} className="fixed top-0 right-[-10vw] md:right-[-13vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[50vw] md:w-[28vw]">
+      <div ref={bgRightWrapRef} className="fixed top-0 right-[-13vw] h-[100vh] z-[0] pointer-events-none overflow-visible will-change-transform w-[28vw]">
         <div ref={bgRightRef} className="w-full will-change-transform">
           {renderLayers(false, 'right')}
         </div>
       </div>
 
       {/* Foreground Layers (Z-index 50) */}
-      {/* Mobile: GIỮ NGUYÊN (left-[-15vw] w-[55vw]) | Desktop: Thò đúng ~1.7/10 (+17vw visible, left-[-15vw] w-[32vw]) */}
-      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-15vw] md:left-[-15vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[32vw]">
+      <div ref={fgLeftWrapRef} className="fixed top-0 left-[-15vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[32vw]">
         <div ref={fgLeftRef} className="w-full will-change-transform">
           {renderLayers(true, 'left')}
         </div>
       </div>
-      <div ref={fgRightWrapRef} className="fixed top-0 right-[-15vw] md:right-[-15vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[55vw] md:w-[32vw]">
+      <div ref={fgRightWrapRef} className="fixed top-0 right-[-15vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen will-change-transform w-[32vw]">
         <div ref={fgRightRef} className="w-full will-change-transform">
           {renderLayers(true, 'right')}
         </div>
