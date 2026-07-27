@@ -20,6 +20,11 @@
 - Q: DevTools "Hacker Mode" Easter Egg sẽ được kích hoạt như thế nào? → A: Tự động in ASCII Logo + Bảng thông số đo đạc thời gian thực (Teleport Math, VRAM Flushed Count, FPS) ngay khi người dùng mở F12 Console.
 - Q: Hiệu ứng mở rèm (Curtains Transition) khi Deep Linking sẽ có thời lượng bao lâu? → A: 5.0s với easing power4.inOut để tạo hiệu ứng mở rèm siêu chậm, cực kỳ đắm chìm và cinematic.
 
+### Session 2026-07-27
+- Q: If the Free-Tier CDN (Supabase/Cloudinary) is unavailable or rate-limited, how should the exhibition handle video loading failures? → A: Silently fallback to static poster images to maintain continuous exhibition flow.
+- Q: For the 'Mobile Extermination' of the custom cursor, what exact threshold or method should trigger the disabling of the custom cursor? → A: Purely CSS media query (pointer: coarse) and matchMedia in JS (respects device capability).
+- Q: If the browser aggressively blocks the AudioContext or the user revokes permissions after entering, what is the recovery path? → A: Silently continue the exhibition without audio (maintains the strict 'Look but don't touch' UX).
+
 ## Post-MVP Architecture Refinements (2026-07-23)
 
 ### 1. Scroll Snap (Dừng tại section tiếp theo - Chill Glide)
@@ -123,6 +128,7 @@ The interface behaves like a physical museum. **"Look but don't touch"**.
 - **Native Video Only**: MUST use native HTML5 `<video>` tags. Embeds from YouTube, Vimeo, or other iframe-based providers are strictly forbidden, as they break VRAM flushing and Dwell-to-Play logic.
 - **Format & Hosting**: Video assets MUST be served in `.webm` format (with `.mp4` as fallback) for extreme compression efficiency.
 - **Free CDN Architecture**: To achieve instant byte-range requests without buffering, videos MUST be hosted on a Free-Tier CDN optimized for media delivery (e.g., Supabase Storage, Cloudinary, or Firebase Storage). Direct hosting in the Next.js `public` folder is discouraged for massive video assets to save Vercel bandwidth.
+- **CDN Failure Fallback**: If the CDN is unavailable or rate-limited, the system MUST silently fallback to the static `poster` images to maintain a continuous exhibition flow without explicit error overlays.
 
 ---
 
@@ -264,6 +270,7 @@ Dưới đây là 5 ý tưởng tính năng đẳng cấp studio quốc tế (nh
 - **Ý tưởng**: Mặc dù video bị cấm phát tiếng (Strict Mute Policy), nhưng khi anh yêu cuộn trang, toàn bộ không gian web sẽ phát ra âm thanh môi trường (Ambient Sound) rủ rê, thì thầm.
 - **Cơ chế WOW**: Tần số (Pitch) và Âm lượng (Volume) của tiếng Ambient này sẽ biến thiên 100% theo vận tốc cuộn Lenis (`lenis.velocity`). Cuộn càng nhanh, tiếng vèo vèo càng dồn dập; dừng lại thì âm thanh dịu đi như tiếng gió đêm.
 - **Độ khét**: Xài Web Audio API (chạy hoàn toàn ở client, 0KB asset) tạo âm thanh tổng hợp (Synthesizer), không tốn băng thông CDN!
+- **Recovery Path**: Nếu trình duyệt chặn AudioContext hoặc user từ chối quyền truy cập, hệ thống sẽ im lặng tiếp tục trải nghiệm triển lãm (Silently continue) để bảo toàn luật "Non-Interactive", không hiện cảnh báo hay chặn luồng.
 
 ### 2. Custom Inertia WebGL Cursor (Con Trỏ Chuột Tùy Chỉnh Có Độ Trễ Vật Lý)
 - **Ý tưởng**: Bỏ con trỏ chuột mặc định của hệ điều hành. Thay vào đó là một chấm sáng hoặc vòng tròn mờ có hiệu ứng chất lỏng (Liquid Distortion).
@@ -271,6 +278,7 @@ Dưới đây là 5 ý tưởng tính năng đẳng cấp studio quốc tế (nh
   - Khi lướt qua các đoạn video art, con trỏ chuột sẽ tự "hút" (Magnet effect) nhẹ vào tâm video.
   - Khi đứng yên ở trạng thái `DWELLING`, con trỏ chuột biến đổi thành một đĩa CD đếm ngược 400ms xoay tròn báo hiệu video sắp phát.
 - **Độ khét**: Tính toán tọa độ chuột trực tiếp bằng RAF canvas, đéo re-render React.
+- **Mobile Extermination Threshold**: Sử dụng thuần túy CSS Media Query `(pointer: coarse)` và hàm `matchMedia` trong JS để phát hiện và hủy bỏ (exterminate) logic con trỏ chuột trên thiết bị cảm ứng, tôn trọng đúng năng lực thiết bị thay vì chặn theo chiều rộng màn hình.
 
 ### 3. 2.5D Gyroscope Depth Motion (Hiệu Ứng Bẻ Nghiêng Màn Hình Trên Mobile)
 - **Ý tưởng**: Trên máy tính có chuột để tạo Parallax, nhưng trên Mobile Safari/Android thì sao?

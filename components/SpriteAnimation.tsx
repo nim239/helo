@@ -16,7 +16,7 @@ interface SpriteAnimationProps {
 export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   const completeIntro = useScrollStore((state) => state.completeIntro);
   const isIntroComplete = useScrollStore((state) => state.isIntroComplete);
 
@@ -37,14 +37,14 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
     // Loại bỏ CSS Render, khởi tạo Image object trực tiếp trong RAM.
     const baseImages: HTMLImageElement[] = [];
     const glowImages: HTMLImageElement[] = [];
-    
+
     for (let i = 0; i < FRAME_COUNT; i++) {
       const idx = i.toString().padStart(5, '0');
-      
+
       const bImg = new Image();
       bImg.src = `/sprite_cubi/cubi/cubi_${idx}.webp`;
       baseImages.push(bImg);
-      
+
       const gImg = new Image();
       gImg.src = `/sprite_cubi/cubi_glow/cubi_glow_${idx}.webp`;
       glowImages.push(gImg);
@@ -57,11 +57,11 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
     // Vòng lặp Render (Render Loop)
     const renderFrame = () => {
       const frameIndex = Math.floor(state.frame) % FRAME_COUNT;
-      
+
       if (frameIndex !== lastFrame) {
         // Clear canvas
         ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-        
+
         // Vẽ Base (Layer 1)
         ctx.globalCompositeOperation = 'source-over';
         const bImg = baseImages[frameIndex];
@@ -75,7 +75,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
         if (gImg && gImg.complete && gImg.naturalWidth !== 0) {
           ctx.drawImage(gImg, 0, 0, canvasEl.width, canvasEl.height);
         }
-        
+
         lastFrame = frameIndex;
       }
     };
@@ -95,11 +95,11 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
 
       const cycleLength = window.innerHeight * 6;
       const progressCycle = scrollY / cycleLength;
-      
+
       const moveX = Math.sin(progressCycle * Math.PI * 2 * 3) * (window.innerWidth * 0.35);
       const moveY = Math.sin(progressCycle * Math.PI * 2 * 4) * (window.innerHeight * 0.25);
-      
-      const spriteP = (progressCycle * 12) % 1;
+
+      const spriteP = (progressCycle * 36) % 1; // tốc độ quay 
       const frame = spriteP * (FRAME_COUNT - 1);
 
       return { x: cX + moveX, y: cY + moveY, frame };
@@ -114,7 +114,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       };
     };
 
-    const initialScrollY = 0; 
+    const initialScrollY = 0;
     const START_POINT_SPRITE = getTrajectory(initialScrollY);
     const centerPos = getCenterPos();
 
@@ -160,7 +160,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
         onUpdate: (self) => {
           const scrollY = self.scroll();
           const stateData = getTrajectory(scrollY);
-          
+
           state.frame = stateData.frame;
           renderFrame();
 
@@ -176,7 +176,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       }
       gsap.killTweensOf(state);
       gsap.killTweensOf(wrapperEl);
-      
+
       // Garbage Collection Cleanup
       baseImages.forEach(img => {
         img.onload = null;
@@ -197,7 +197,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       ref={wrapperRef}
       className="fixed top-0 left-0 w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] z-[60] pointer-events-none"
     >
-      <canvas 
+      <canvas
         ref={canvasRef}
         width={1080}
         height={1080}

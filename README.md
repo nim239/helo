@@ -73,6 +73,33 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+* **2026-07-27 (Dọn dẹp tàn dư WebGL / ThreeJS)**:
+  * **Tên tính năng/bugfix:** Xóa bỏ hoàn toàn mã nguồn và thư viện không dùng tới.
+  * **File ảnh hưởng:** `package.json`, `components/RefractionSprite.tsx`
+  * **Lý do/Kết quả:** Hệ thống đã chuyển sang dùng Canvas 2D (SpriteAnimation) thay cho WebGL (RefractionSprite) từ trước để tối ưu FPS. Tuy nhiên file code cũ và các thư viện nặng nề như `three`, `@react-three/fiber`, `@react-three/drei` vẫn còn nằm rác trong dự án. Đã tiến hành "trảm" toàn bộ: xóa file `RefractionSprite.tsx` và gỡ bỏ hoàn toàn các package ThreeJS khỏi `package.json` giúp project nhẹ đi đáng kể và sạch sẽ hơn.
+
+* **2026-07-27 (Tối ưu Trải nghiệm Custom Cursor 144Hz & Thiết lập Hiến Pháp Ease-In-Out)**:
+  * **Tên tính năng/bugfix:** Hoàn thiện vật lý, sửa lỗi "Teleport" chấm tâm, sửa lỗi Cursor đi lạc, và **triệt tiêu lỗi Nhảy Tưng Tưng (CSS Conflict)**.
+  * **File ảnh hưởng:** `components/CustomCursor.tsx`
+  * **Lý do/Kết quả:** 
+    1. Lỗi "Nhảy Tưng Tưng / Bouncing": Phát hiện nguyên nhân gốc rễ khiến con chuột thỉnh thoảng giật lag hoặc nảy lên xuống là do **xung đột hệ thống Render**. Ban đầu, thuộc tính `transform` vừa bị GSAP ghi đè 60 lần/giây, vừa bị ép phải chạy qua engine `transition-all duration-500` của CSS. 2 hệ thống đánh nhau giành quyền điều khiển gây ra lỗi nội suy (interpolation glitch). Đã giải quyết triệt để bằng kiến trúc **Wrapper-Visual Separation**: Tách con trỏ làm 2 lớp. Lớp Wrapper ngoài (không có CSS Transition) chỉ dùng để GSAP cập nhật tọa độ. Lớp Visual bên trong (chứa CSS Transition) chỉ dùng để đổi màu, co giãn kích thước (Tailwind). Kết quả: Mượt mà tuyệt đối 100%.
+    2. Chấm tròn ở giữa trước đây bị giật cục do bắt sự kiện trực tiếp từ `mousemove`. Đã gỡ bỏ hoàn toàn thuật toán Lerp gây trễ (Input Lag), cho phép chấm tròn **bám dính tức thì (0ms lag)** vào tọa độ chuột vật lý, NHƯNG vẫn được render bên trong vòng lặp `gsap.ticker` (V-Sync 144Hz). Đồng thời tăng kích thước chấm tròn từ 8px lên 12px.
+    3. Sửa lỗi "Teleport": Khi ngưng di chuột 2.5s (chế độ Idle), chấm tâm nhỏ từng bị lỗi *Dịch chuyển tức thời* (Teleport) thẳng vào tâm vòng tròn lớn. Đã cấp cho chấm nhỏ một gia tốc Lerp nhẹ để nó từ từ trôi vào tâm vòng lớn một cách mượt mà.
+    4. Sửa lỗi "Mất Phương Hướng": Vòng tròn ngoài bị lỗi bay ào ra giữa màn hình thay vì đuổi theo khối Cubi. Nguyên nhân do ID của khối Cubi đã bị đổi thành `cube-sprite-wrapper` (Task T016), khiến Cursor không tìm thấy mục tiêu. Đã update lại đúng ID.
+    5. Vòng tròn ngoài (Outer Circle) vi phạm "Hiến Pháp" (yêu cầu Ease-In-Out bồng bềnh). Đã thay thế hoàn toàn Lerp (Ease-Out) bằng thuật toán **Spring Physics** tự thiết kế: Tính toán gia tốc (Lực kéo `stiffness`) để tạo pha **Ease-In** và triệt tiêu động năng (Lực cản `damping`) để tạo pha **Ease-Out**. Kết quả là một quỹ đạo bám đuổi mượt mà, hữu cơ và chuẩn triển lãm.
+
+* **2026-07-27 (Rollback & Fix Parallax Mobile/Square Screen Bounds)**:
+  * **Tên tính năng/bugfix:** Sửa lỗi Side Art nuốt trọn màn hình di động nhưng lại bị mất tích khi dùng Fullscreen Wrapper.
+  * **File ảnh hưởng:** `components/ParallaxSides.tsx`
+  * **Lý do/Kết quả:** Kế hoạch mở rộng vỏ bọc lên `100vw` bị phá sản vì bức ảnh thiết kế gốc có padding lề (khoảng trống). Khi kéo giãn `object-cover`, phần khoảng trống này phình to đẩy văng phần hình khối ra khỏi khung hình nhìn thấy, gây lỗi "mất tích". Giải pháp quay lại phương pháp của Vòng 6: Hủy bỏ hoàn toàn các rule riêng biệt cho di động (`w-[50vw]` và `w-[55vw]`). Ép cứng tất cả mọi màn hình về tỉ lệ vàng của Desktop (`w-[32vw]` và `w-[28vw]`). Bằng cách khóa chặt vỏ bọc nhỏ lại, Side Art buộc phải co lại thành một dải hẹp, viền ôm tinh tế xung quanh 17% màn hình mà vĩnh viễn không thể lấn át nội dung ở giữa.
+
+* **2026-07-27 (Sửa lỗi Loading Overlay Bị Kẹt Tại 90%)**:
+  * **Tên tính năng/bugfix:** Fix logic chặn Click và lỗi xung đột GSAP Tween khi nạp Asset.
+  * **File ảnh hưởng:** `components/EnterOverlay.tsx`
+  * **Lý do/Kết quả:** 
+    1. Sự kiện `onComplete` của vòng tải 90% (2.5s) vô tình kích hoạt `setAssetsLoaded(true)` quá sớm. Đã di dời toàn bộ logic kích hoạt sự kiện bấm vào chính xác bên trong `Promise.all().then()`.
+    2. Khắc phục lỗi hiển thị "Vòng tròn kẹt ở một vạch nhỏ": Khi mạng tải nhanh, tween 100% (thời lượng 0.5s) hoàn tất trước nhưng tween 90% (thời lượng 2.5s) vẫn tiếp tục chạy ngầm, kéo lùi giá trị thanh tiến trình từ 100% về 90%. Đã bổ sung `gsap.killTweensOf(simulatedProgress)` để hủy bỏ triệt để tween 90% cũ trước khi kích hoạt tween 100%.
+
 * **2026-07-25 (Lưu tài liệu đặc tả tối ưu hoá hiệu năng)**:
   * Đã tạo file `performance-optimization.md` trong thư mục `specs/001-exhibition-portfolio` lưu trữ chi tiết các kỹ thuật Tối ưu hoá CSS Object Model (Composite Layers, CSS Culling) và Bộ nhớ/Main Thread (Async Image Decoding, Font Display Swap, requestIdleCallback) nhằm đảm bảo mục tiêu 165 FPS.
 
@@ -141,6 +168,12 @@ graph TD
   * Đã thực hiện `git merge origin/main` đồng bộ 20 commits từ remote repo.
   * Sửa lỗi TypeScript tại `useExhibitionScroll.ts` (loại bỏ thuộc tính `teleportCooldownActive` đã refactor trong `useScrollStore.ts`).
   * Cập nhật toàn bộ Spec, Roadmap và tạo quy tắc làm việc tự động cho Agent tại [.agents/AGENTS.md](./.agents/AGENTS.md).
+
+* **2026-07-27 (Hoàn tất Đồng bộ Hoá Kiến trúc Kỹ thuật - Documentation Convergence & Bugfixes)**:
+  * Thực thi `/speckit-clarify` và `/speckit-plan`: Giải quyết dứt điểm các kịch bản hụt (Edge cases) liên quan đến CDN Video Fallback, Web Audio Context Recovery và Mobile Extermination Threshold cho Custom Cursor.
+  * Thực thi `/speckit-converge` và `/speckit-analyze`: Phân tích chéo (cross-artifact) toàn bộ dự án, bổ sung các Task T019 (CDN Fallback) và T020 (ResizeObserver) vào `tasks.md` để mapping trọn vẹn 100% với Codebase đã hoàn thiện. Sự đồng nhất giữa mã nguồn thực tế và tài liệu đạt mức tuyệt đối (✅ Converged).
+  * **Fix Bug CSS Mobile Parallax (`ParallaxSides.tsx`)**: Đổi thẻ `<img>` từ `w-auto max-w-none` sang `w-full h-full object-cover` và tinh chỉnh `object-[75%]` (trái) / `object-[25%]` (phải) để giữ nguyên Art Area nằm trọn vẹn trong `w-[50vw]` bounds, khắc phục triệt để lỗi mất Side Art khi lắc Gyro trên thiết bị di động.
+  * Thiết lập thành công kết nối **Figma MCP Server (Local SSE)** tại port `3845` vào file `mcp.json` giúp Agent truy xuất trực tiếp layer design từ màn hình Figma Desktop.
 
 ---
 

@@ -13,7 +13,7 @@ export function Section({ id, isClone = false, children }: SectionProps) {
     <section
       id={id}
       aria-hidden={isClone ? "true" : "false"}
-      className="relative w-full overflow-hidden flex items-center justify-center border-b border-white/10"
+      className="relative w-full overflow-hidden flex items-center justify-center"
       style={{ height: 'var(--section-height, 100vh)' }}
     >
       {/* 

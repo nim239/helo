@@ -1,68 +1,47 @@
 # Data Model: Exhibition Portfolio
 
-This document defines the Local Static JSON schema (`data/sections.json`) that powers the exhibition engine.
+## 1. Exhibition Data Model Configuration (Static JSON)
+Located at: `data/sections.json`
 
-## Base Section Model
+This structure enforces a unified `layout` system with nested array items for marquees.
 
-Every section object in the exhibition array must conform to this interface:
+### Entity: Section
+- `id` (string): Unique identifier for the section.
+- `title` (string): Display title of the section.
+- `layout` (string): Defines the rendering component (e.g., `"fullscreen-video"`, `"horizontal-marquee"`).
+- `parallax` (object, optional): Configuration for 2.5D Parallax.
+  - `foreground` (number): Parallax speed multiplier for foreground layers (e.g., `1.2`).
+  - `background` (number): Parallax speed multiplier for background layers (e.g., `0.8`).
+- `mediaType` (string, optional): Type of primary media (e.g., `"video"`, `"image"`).
+- `src` (string, optional): URL to the media asset on the CDN.
+- `poster` (string, optional): URL to the static fallback poster image.
+- `marquee` (object, optional): Configuration for auto-scrolling track.
+  - `direction` (string): e.g., `"left"`.
+  - `speed` (number): e.g., `0.8`.
+  - `pauseOnHover` (boolean): Usually `false`.
+  - `infinite` (boolean): `true`.
+- `items` (array, optional): Nested media items for horizontal marquees.
+  - `id` (string): Unique ID for the media item.
+  - `mediaType` (string): `"video"` or `"image"`.
+  - `src` (string): URL to the media asset on the CDN.
+  - `poster` (string, optional): URL to the static fallback poster image.
 
-```typescript
-type LayoutType = 'fullscreen-video' | 'horizontal-marquee' | 'vertical-gallery' | 'interactive-scene';
+## 2. Transient State Architecture (Zustand Store)
 
-interface Section {
-  id: string;
-  title: string;
-  layout: LayoutType;
-  parallax?: {
-    foreground: number;
-    background: number;
-  };
-}
-```
+This store manages scroll coordinates, snapping, and teleportation logic outside the React render cycle.
 
-## Marquee Layout Specifics
+### Entity: ExhibitionState
+- `currentPhase` (string): Current state of the exhibition.
+  - Enum: `IDLE`, `SCROLLING`, `TELEPORTING`, `SNAPPING`, `DWELLING`.
+- `scrollProgress` (number): Normalized or absolute scroll value synchronized directly from Lenis.
+- `snapTarget` (number | null): The target scroll `y` coordinate when snapping to a section.
+- `teleportCooldown` (boolean): Prevents snap/dwell events immediately after a teleport. True for 500ms after a teleport.
 
-When `layout === 'horizontal-marquee'`, the section expands to include marquee configurations and a nested `items` array.
-
-```typescript
-interface MarqueeConfig {
-  direction: 'left' | 'right';
-  speed: number;
-  pauseOnHover: boolean; // Note: Currently overridden by Non-Interactive Rule (false)
-  infinite: boolean;
-}
-
-interface MarqueeMediaItem {
-  id: string;
-  mediaType: 'video' | 'image';
-  src: string;        // CDN URL for .webm or .webp
-  poster?: string;    // Mandatory if mediaType === 'video'
-  caption?: string;
-}
-
-interface MarqueeSection extends Section {
-  layout: 'horizontal-marquee';
-  marquee: MarqueeConfig;
-  items: MarqueeMediaItem[];
-}
-```
-
-## Zustand State Models (Transient)
-
-These states are maintained purely in memory during runtime and do not persist.
-
-```typescript
-// useScrollStore.ts
-type ScrollPhase = 'IDLE' | 'SCROLLING' | 'SNAPPING';
-
-interface ScrollState {
-  currentPhase: ScrollPhase;
-  scrollProgress: number; // 0 to 1
-  velocity: number;
-  isIntroComplete: boolean;
-  completeIntro: () => void;
-  setPhase: (phase: ScrollPhase) => void;
-  setScrollProgress: (progress: number) => void;
-  setVelocity: (velocity: number) => void;
-}
-```
+### State Transitions (Machine)
+- **IDLE -> SCROLLING**: On user scroll. Cancels active snaps.
+- **SCROLLING -> TELEPORTING**: On crossing virtual loop boundary. Triggers teleport math.
+- **TELEPORTING -> SCROLLING**: Math executes, cooldown starts.
+- **SCROLLING -> SNAPPING**: `onScrollEnd` (vel ~0) OUTSIDE cooldown.
+- **SNAPPING -> IDLE**: Lerp completes.
+- **IDLE -> DWELLING**: Scroll stopped >= 400ms. Marquee pauses, auto-plays center video.
+- **DWELLING -> SCROLLING**: User resumes scrolling. Marquee track resumes.

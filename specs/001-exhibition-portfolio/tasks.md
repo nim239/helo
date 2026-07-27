@@ -25,3 +25,5 @@
 
 ## Phase 4: Convergence
 - [x] T018 [HIGH] Integrate 3D Spatial Asset (Chromatic Dispersion Cubi WebM) vào Video CDN (`Đã xử lý xong`).
+- [x] T019 [MEDIUM] Implement CDN Video Fallback to static poster images (`MediaVideo.tsx`).
+- [x] T020 [MEDIUM] Implement ResizeObserver for accurate track width calculation (`HorizontalMarquee.tsx`).

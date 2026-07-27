@@ -17,7 +17,9 @@ export function CustomCursor() {
   const stateRef = useRef({ isIdle: false, isHovering: false, isClicking: false });
 
   const mouse = useRef({ x: -100, y: -100 });
-  const pos = useRef({ x: -100, y: -100 }); // Inertia position
+  const pos = useRef({ x: -100, y: -100 }); // Inertia position (outer)
+  const vel = useRef({ x: 0, y: 0 }); // Spring velocity for outer circle
+  const dotPos = useRef({ x: -100, y: -100 }); // High-speed inertia position (inner dot)
 
   useEffect(() => {
     // -------------------------------------------------------------
@@ -68,9 +70,6 @@ export function CustomCursor() {
     const handleMouseMove = (e: MouseEvent) => {
       mouse.current.x = e.clientX;
       mouse.current.y = e.clientY;
-
-      xDotSet(e.clientX);
-      yDotSet(e.clientY);
 
       resetIdleTimer();
     };
@@ -133,7 +132,7 @@ export function CustomCursor() {
       else if (stateRef.current.isIdle && useScrollStore.getState().isIntroComplete) {
         let spriteX = window.innerWidth / 2;
         let spriteY = window.innerHeight / 2;
-        const spriteEl = document.getElementById('cube-sprite');
+        const spriteEl = document.getElementById('cube-sprite-wrapper');
 
         if (spriteEl) {
           const rect = spriteEl.getBoundingClientRect();
@@ -150,21 +149,40 @@ export function CustomCursor() {
         targetY = spriteY + breatheY;
       }
 
-      // Physics Lerp (Inertia)
-      // Khi rảnh rỗi (idle), chuột trôi lờ đờ về phía cube (0.02). Khi bình thường (hoặc di chuột), bám sát nhanh (0.15).
-      const baseLerp = stateRef.current.isIdle ? 0.0005 : 0.5;
-      const dt = 1.0 - Math.pow(1.0 - baseLerp, gsap.ticker.deltaRatio());
-      pos.current.x += (targetX - pos.current.x) * dt;
-      pos.current.y += (targetY - pos.current.y) * dt;
+      // Thay thế Lerp (Ease-Out) bằng Spring Physics (Ease-In-Out hữu cơ chuẩn Hiến Pháp)
+      const dt = gsap.ticker.deltaRatio();
+      const stiffness = stateRef.current.isIdle ? 0.002 : 0.25; // Lực kéo về đích
+      const damping = stateRef.current.isIdle ? 0.95 : 0.45;    // Ma sát (chống overshoot)
+
+      // Gia tốc tăng dần (Ease-in)
+      vel.current.x += (targetX - pos.current.x) * stiffness * dt;
+      vel.current.y += (targetY - pos.current.y) * stiffness * dt;
+
+      // Ma sát giảm dần (Ease-out)
+      vel.current.x *= Math.pow(damping, dt);
+      vel.current.y *= Math.pow(damping, dt);
+
+      // Cập nhật vị trí
+      pos.current.x += vel.current.x * dt;
+      pos.current.y += vel.current.y * dt;
 
       xSet(pos.current.x);
       ySet(pos.current.y);
 
-      // Nếu đang Idle và ở tâm, Dot cũng trôi nhịp nhàng
+      // Inner Dot Physics: 
       if (stateRef.current.isIdle) {
-        xDotSet(pos.current.x);
-        yDotSet(pos.current.y);
+        // Nội suy mượt mà (Lerp) để từ từ trôi về tâm vòng ngoài, tránh bị giật cục (Teleport)
+        const idleDotDt = 1.0 - Math.pow(1.0 - 0.1, gsap.ticker.deltaRatio());
+        dotPos.current.x += (pos.current.x - dotPos.current.x) * idleDotDt;
+        dotPos.current.y += (pos.current.y - dotPos.current.y) * idleDotDt;
+      } else {
+        // Bắt dính tức thì (0 lag) nhưng render trong RAF để đảm bảo mượt 144Hz V-Sync, không bị rách hình.
+        dotPos.current.x = mouse.current.x;
+        dotPos.current.y = mouse.current.y;
       }
+
+      xDotSet(dotPos.current.x);
+      yDotSet(dotPos.current.y);
 
       // Render via GSAP ticker
     };
@@ -188,24 +206,28 @@ export function CustomCursor() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden mix-blend-difference hidden md:block">
-      {/* Outer Circle (Inertia, Magnet & Idle Breathe) */}
-      <div
-        ref={cursorRef}
-        className={`absolute top-0 left-0 -ml-6 -mt-6 rounded-full border border-white transition-all duration-500 ease-out flex items-center justify-center
-          ${isHovering ? 'w-16 h-16 bg-white/20 scale-150 border-white/80' : 'w-12 h-12'}
-          ${isClicking ? 'scale-90 bg-white/40' : ''}
-          ${isIdle ? 'w-16 h-16 bg-white/10 animate-pulse scale-125 border-dashed border-white/60' : ''}
-        `}
-      />
+      {/* Outer Circle Wrapper (GSAP Translate ONLY, NO CSS TRANSITIONS) */}
+      <div ref={cursorRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
+        {/* Visual Outer Circle (Tailwind Size/Scale/Color, WITH CSS TRANSITIONS) */}
+        <div
+          className={`absolute rounded-full border border-white transition-all duration-500 ease-out flex items-center justify-center
+            ${isHovering ? 'w-16 h-16 bg-white/20 scale-150 border-white/80' : 'w-12 h-12'}
+            ${isClicking ? 'scale-90 bg-white/40' : ''}
+            ${isIdle ? 'w-16 h-16 bg-white/10 animate-pulse scale-125 border-dashed border-white/60' : ''}
+          `}
+        />
+      </div>
 
-      {/* Inner Dot (Instant / Idle Drift) */}
-      <div
-        ref={dotRef}
-        className={`absolute top-0 left-0 w-2 h-2 -ml-1 -mt-1 bg-white rounded-full transition-transform duration-200
-          ${isHovering ? 'scale-[0.5]' : 'scale-100'}
-          ${isIdle ? 'scale-150 bg-cyan-300 shadow-[0_0_8px_#06b6d4]' : ''}
-        `}
-      />
+      {/* Inner Dot Wrapper (GSAP Translate ONLY, NO CSS TRANSITIONS) */}
+      <div ref={dotRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
+        {/* Visual Inner Dot (Tailwind Size/Scale/Color, WITH CSS TRANSITIONS) */}
+        <div
+          className={`absolute w-3 h-3 bg-white rounded-full transition-all duration-200
+            ${isHovering ? 'scale-[0.5]' : 'scale-100'}
+            ${isIdle ? 'scale-150 bg-cyan-300 shadow-[0_0_8px_#06b6d4]' : ''}
+          `}
+        />
+      </div>
     </div>
   );
 }

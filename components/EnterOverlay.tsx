@@ -21,17 +21,6 @@ export function EnterOverlay() {
           const len = pathRef.current.getTotalLength();
           pathRef.current.style.strokeDashoffset = (len - (len * simulatedProgress.val) / 100).toString();
         }
-      },
-      onComplete: () => {
-        setAssetsLoaded(true);
-        // Make it pulse slightly when ready
-        gsap.to(circleRef.current, {
-          scale: 1.05,
-          duration: 1,
-          repeat: -1,
-          yoyo: true,
-          ease: 'power1.inOut'
-        });
       }
     });
 
@@ -70,13 +59,33 @@ export function EnterOverlay() {
     });
 
     Promise.all(loadPromises).then(() => {
+      // Kill the 90% fallback tween so it doesn't fight the 100% tween
+      gsap.killTweensOf(simulatedProgress);
+
       // Once 100% loaded in RAM, push timeline to 100% immediately
       gsap.to(simulatedProgress, {
         val: 100,
         duration: 0.5,
         ease: 'power2.inOut',
-        onUpdate: tl.vars.onUpdate,
-        onComplete: tl.vars.onComplete
+        onUpdate: () => {
+          if (pathRef.current) {
+            const len = pathRef.current.getTotalLength();
+            pathRef.current.style.strokeDashoffset = (len - (len * simulatedProgress.val) / 100).toString();
+          }
+        },
+        onComplete: () => {
+          setAssetsLoaded(true);
+          // Make it pulse slightly when ready
+          if (circleRef.current) {
+            gsap.to(circleRef.current, {
+              scale: 1.05,
+              duration: 1,
+              repeat: -1,
+              yoyo: true,
+              ease: 'power1.inOut'
+            });
+          }
+        }
       });
     });
 
