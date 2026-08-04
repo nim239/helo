@@ -43,16 +43,16 @@ export function KineticStringsCanvas() {
     // 2. Chiều cao sóng Amplitude (60px -> 20px).
     // 3. Tụ chặt 2 điểm mút tại Y=0 và Y=height 100%.
     // ------------------------------------------------------------------
-    const STRING_COUNT = 5;
+    const STRING_COUNT = 3;
     const stringDefs = Array.from({ length: STRING_COUNT }).map((_, i) => {
-      const harmonicOrder = i + 1; // N = 1, 2, 3, 4, 5 chuẩn đét
+      const harmonicOrder = i + 1; // N = 1, 2, 3 chuẩn đét
       return {
         harmonicOrder,
-        amplitude: 60 - i * 10,                            // Chiều cao sóng vừa vặn (60px -> 20px)
-        spatialFrequency: (Math.PI * harmonicOrder) / height, // Tần số Harmonic N = 1..5
+        amplitude: 65 - i * 14,                            // Chiều cao sóng vừa vặn (65px -> 37px)
+        spatialFrequency: (Math.PI * harmonicOrder) / height, // Tần số Harmonic N = 1..3
         temporalSpeed: 1 + i * 0.4,                         // Tốc độ nhịp rung âm thanh mượt
         phaseOffset: (i * Math.PI) / 3,
-        xOffset: (i - 2) * 12,
+        xOffset: (i - 1) * 14,                              // Đối xứng quanh tâm (i=0 -> -14, i=1 -> 0, i=2 -> +14)
       };
     });
 
