@@ -14,7 +14,7 @@ Bảo tàng không gian 2.5D trình diễn portfolio cinematic chuẩn 144Hz. Ki
   * Cuộn xuống: Khi `scrollY >= 9 * window.innerHeight` ➔ Teleport tức thì về `scrollY - 6 * window.innerHeight`.
   * Cuộn lên: Khi `scrollY <= 2 * window.innerHeight` ➔ Teleport tức thì về `scrollY + 6 * window.innerHeight`.
 * **Forward-Only Scroll Snap**: Trôi bồng bềnh (Chill Glide) về section tiếp theo theo đà cuộn qua GSAP proxy tween trong `3.0s` (`power2.inOut`).
-* **Mobile Physics & Touch Freeze Bypass**: Kích hoạt `syncTouch: true` trong Lenis, thay thế hàm cuộn gốc bằng proxy GSAP tween kết hợp `lenis.scrollTo(..., { immediate: true })` để khắc phục triệt để lỗi đứng hình touch trên Android Chrome & iOS Safari.
+* **Mobile Physics & Touch Freeze Bypass**: Kích hoạt `syncTouch: true` trong Lenis, thay thế hàm cuộn gốc bằng proxy GSAP tween kết hợp `lenis.scrollTo(..., { immediate: true })` để khắc phục triệt me lỗi đứng hình touch trên Android Chrome & iOS Safari.
 
 ### 2. Zustand Transient State Architecture (120FPS Performance)
 * **Bypass React Render Cycle**: Mọi thông số vận tốc (`velocity`), tọa độ cuộn (`scrollProgress`), góc nghiêng Gyroscope được ghi trực tiếp vào Zustand store và cập nhật thẳng lên DOM qua `ref.current.style.transform`.
@@ -30,7 +30,7 @@ Bảo tàng không gian 2.5D trình diễn portfolio cinematic chuẩn 144Hz. Ki
 
 ### 5. Nguyên Tắc Trải Nghiệm "Triển Lãm Không Tương Tác" (Look but don't touch)
 * **Tự động toàn phần**: Toàn bộ video, sprite 2D, và hiệu ứng 3D chuyển động 100% dựa trên tiến trình cuộn hoặc timeline tự động. Cấm toàn bộ các nút play/pause, hover-to-reveal, drag-to-rotate.
-* **Ngoại lệ 1**: Overlay "Enter Exhibition" xuất hiện duy nhất 1 lần khi truy cập để xin quyền Web Audio & Gyroscope iOS.
+* **Ngoại lệ 1**: Overlay "Enter Overlay" xuất hiện duy nhất 1 lần khi truy cập để xin quyền Web Audio & Gyroscope iOS.
 * **Ngoại lệ 2**: Section 6 (`Contact`) là nơi duy nhất cho phép tương tác nhấp chuột.
 
 ---
@@ -73,148 +73,20 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
-* **2026-07-28 (Nâng cấp EnterOverlay & Điều chỉnh tỉ lệ Side Art Lottie)**:
-  * **Tên tính năng/bugfix:** Thu nhỏ Side Art `man running.json` 50% và tích hợp Lottie tương tác cấp quyền vào vòng loading.
-  * **File ảnh hưởng:** `components/ParallaxSides.tsx`, `components/EnterOverlay.tsx`
-  * **Lý do/Kết quả:** 
-    1. **Side Art Scaling**: Áp dụng `scale-50` cho container của `man running.json` bên trong `ParallaxSides.tsx` để giảm kích thước hiển thị xuống một nửa nhưng vẫn duy trì đúng trục tọa độ.
-    2. **Enter Overlay Animation**: Thay đổi logic hoàn tất tải trang (100%). Vòng loading lan rộng thành `90vmin` (90% kích thước ngắn nhất của màn hình) tĩnh mà không pulse. Khi chuyển cảnh, vòng tròn và Lottie tan biến mờ dần tại chỗ (opacity: 0) chứ không bay vọt lên trên nữa.
-    3. **Tương tác cấp quyền bằng Lottie & Chuyển cảnh liền mạch**: Tích hợp `hitmebabyonemoretime.json` nét căng `w-[50vmin] h-[50vmin]`. Sửa lỗi khoảng trống màn hình đen khi Overlay mờ đi bằng cách truyền `startIntro={hasEntered}` cho `SpriteAnimation`, giúp khối Sprite Cubi kích hoạt và render ngay lập tức đằng sau Overlay, loại bỏ hoàn toàn độ trễ hiển thị.
-
-* **2026-07-28 (Sửa lỗi vị trí Lottie Side Art 2D)**:
-  * **Tên tính năng/bugfix:** Khắc phục lỗi vị trí Lottie Side Art bị cắt nửa và nhân bản giữa màn hình.
-  * **File ảnh hưởng:** `components/ParallaxSides.tsx`
-  * **Lý do/Kết quả:** 
-    1. Lỗi mép trái: Container cũ thiết lập `left-[-27vw] w-[54vw]`, khiến tâm điểm Canvas nằm chính xác tại mép trái màn hình (0vw), làm ảnh nhân vật bị cắt làm đôi. Đã tịnh tiến thành `left-[-15vw] md:left-[-10vw]` và hẹp lại `w-[50vw] md:w-[40vw]`.
-    2. Lỗi nhảy vào giữa màn hình: Container phải dùng `origin-left` kết hợp `scaleX(-1)` khiến tác phẩm bị lật ngược vào giữa màn hình. Đã đổi sang `origin-center` để lật tại chỗ (bám mép phải).
-    3. Xung đột Responsive: Thuộc tính lật (`-scale-x-100`) bị CSS Media Query `@media (max-width: 768px)` ghi đè mất do cùng sử dụng thuộc tính `transform`. Đã tách riêng cấu trúc DOM để việc thu phóng và lật gương hoạt động độc lập mà không "đá" nhau.
-
-* **2026-07-27 (Tích hợp Lottie 2D Side Art - 4 Layer Canvas 2D x Velocity Speed Booster)**:
-  * **Tên tính năng/bugfix:** Thay thế hoàn toàn Zdog 3D bằng hệ thống 4 lớp Lottie 2D Side Art vẽ bằng Canvas 2D, có gia tốc cuộn `velocity` điều khiển nhịp phát (Speed Acceleration Only).
-  * **File ảnh hưởng:** `package.json`, `components/ParallaxSides.tsx`
+* **2026-08-04 (Chuẩn Hóa Mật Độ Sóng Dây Đàn N = 1, 2, 3, 4, 5)**:
+  * **Tên tính năng/bugfix:** Đưa hệ họa âm dây đàn trở về $N = 1, 2, 3, 4, 5$ vừa vặn, tinh tế theo yêu cầu.
+  * **File ảnh hưởng:** `components/KineticStringsCanvas.tsx`
   * **Lý do/Kết quả:**
-    1. Trảm toàn bộ logic và dependency của `zdog`, `@types/zdog` khỏi dự án, cài đặt `lottie-web`.
-    2. Khởi tạo 4 Lottie instances cho 2 bên mép (Trái & Phải x 2 lớp): Lớp nền phía sau tải `public/lotie/Sparkles.json`, Lớp tiền cảnh tải `public/lotie/man running.json`, hoàn toàn render bằng `renderer: 'canvas'` (cấm SVG để tránh Layout Thrashing).
-    3. Đồng bộ hóa tốc độ phát Lottie (`setSpeed(speed)`) với bộ đếm nhịp gốc `gsap.ticker` và gia tốc cuộn `velocity` từ Lenis Store (`useScrollStore`): khi Idle chạy loop `1.0x`, khi cuộn nhanh tăng tốc lên tới `3.0x` theo nguyên tắc **Speed Acceleration Only** (không co giãn hay méo mó hình ảnh).
-    4. Quản lý bộ nhớ nghiêm ngặt: Tự động điều chỉnh độ phân giải Canvas theo `window.devicePixelRatio` chống răng cưa Retina và hủy cả 4 Lottie instances (`.destroy()`) khi unmount.
+    1. **Harmonic Order N = 1..5**: Đưa tần số họa âm không gian `spatialFrequency = (PI * N) / height` về mốc chuẩn $N = 1, 2, 3, 4, 5$, tạo vừa đúng từ **1 đến 5 bụng sóng** thanh thoát, cân đối trên chiều cao màn hình.
+    2. **Aesthetic Balance**: Cân bằng chiều cao sóng vừa vặn ($60px \rightarrow 20px$). Giữ 100% điểm mút chập tụ ở 2 đầu $Y=0$ và $Y=height$.
 
-* **2026-07-27 (Dọn dẹp tàn dư WebGL / ThreeJS)**:
-  * **Tên tính năng/bugfix:** Xóa bỏ hoàn toàn mã nguồn và thư viện không dùng tới.
-  * **File ảnh hưởng:** `package.json`, `components/RefractionSprite.tsx`
-  * **Lý do/Kết quả:** Hệ thống đã chuyển sang dùng Canvas 2D (SpriteAnimation) thay cho WebGL (RefractionSprite) từ trước để tối ưu FPS. Tuy nhiên file code cũ và các thư viện nặng nề như `three`, `@react-three/fiber`, `@react-three/drei` vẫn còn nằm rác trong dự án. Đã tiến hành "trảm" toàn bộ: xóa file `RefractionSprite.tsx` và gỡ bỏ hoàn toàn các package ThreeJS khỏi `package.json` giúp project nhẹ đi đáng kể và sạch sẽ hơn.
-
-* **2026-07-27 (Giải phẫu kiến trúc Figma - Sửa lỗi Parallax Mobile Crop)**:
-  * **Tên tính năng/bugfix:** Khôi phục cấu trúc Side Art chuẩn từ Figma, xoá sổ lỗi cắt hình (crop) trên Mobile.
-  * **File ảnh hưởng:** `components/ParallaxSides.tsx`
-  * **Lý do/Kết quả:** Đã sử dụng Figma MCP Server để truy xuất lớp layer gốc trong file thiết kế. Phát hiện ra bí mật của Designer: Bức ảnh gốc là ảnh ngang (Horizontal 2060x1030). Để nhét vào cột đứng (Vertical) mà không vỡ tỷ lệ, Figma đã dựng một khung xoay ngang `rotate-90` và ép ảnh ngang vào. Trong khi đó, hệ thống React trước giờ lại dùng `object-cover` thẳng vào cột dọc, khiến ảnh bị xén mất phần lớn nội dung khi lên Mobile! Đã code lại cấu trúc DOM y hệt Figma (`width: 100vh`, `rotate-90`) với thông số Responsive `vw`. Kết quả: Hình ảnh render ra chính xác tỷ lệ 100% trên cả Desktop lẫn Mobile (iPhone F12 / Đời thực) y như bản thiết kế.
-
-* **2026-07-27 (Tối ưu Trải nghiệm Custom Cursor 144Hz & Thiết lập Hiến Pháp Ease-In-Out)**:
-  * **Tên tính năng/bugfix:** Hoàn thiện vật lý, sửa lỗi "Teleport" chấm tâm, sửa lỗi Cursor đi lạc, và **triệt tiêu lỗi Nhảy Tưng Tưng (CSS Conflict)**.
-  * **File ảnh hưởng:** `components/CustomCursor.tsx`
-  * **Lý do/Kết quả:** 
-    1. Lỗi "Nhảy Tưng Tưng / Bouncing": Phát hiện nguyên nhân gốc rễ khiến con chuột thỉnh thoảng giật lag hoặc nảy lên xuống là do **xung đột hệ thống Render**. Ban đầu, thuộc tính `transform` vừa bị GSAP ghi đè 60 lần/giây, vừa bị ép phải chạy qua engine `transition-all duration-500` của CSS. 2 hệ thống đánh nhau giành quyền điều khiển gây ra lỗi nội suy (interpolation glitch). Đã giải quyết triệt để bằng kiến trúc **Wrapper-Visual Separation**: Tách con trỏ làm 2 lớp. Lớp Wrapper ngoài (không có CSS Transition) chỉ dùng để GSAP cập nhật tọa độ. Lớp Visual bên trong (chứa CSS Transition) chỉ dùng để đổi màu, co giãn kích thước (Tailwind). Kết quả: Mượt mà tuyệt đối 100%.
-    2. Chấm tròn ở giữa trước đây bị giật cục do bắt sự kiện trực tiếp từ `mousemove`. Đã gỡ bỏ hoàn toàn thuật toán Lerp gây trễ (Input Lag), cho phép chấm tròn **bám dính tức thì (0ms lag)** vào tọa độ chuột vật lý, NHƯNG vẫn được render bên trong vòng lặp `gsap.ticker` (V-Sync 144Hz). Đồng thời tăng kích thước chấm tròn từ 8px lên 12px.
-    3. Sửa lỗi "Teleport": Khi ngưng di chuột 2.5s (chế độ Idle), chấm tâm nhỏ từng bị lỗi *Dịch chuyển tức thời* (Teleport) thẳng vào tâm vòng tròn lớn. Đã cấp cho chấm nhỏ một gia tốc Lerp nhẹ để nó từ từ trôi vào tâm vòng lớn một cách mượt mà.
-    4. Sửa lỗi "Mất Phương Hướng": Vòng tròn ngoài bị lỗi bay ào ra giữa màn hình thay vì đuổi theo khối Cubi. Nguyên nhân do ID của khối Cubi đã bị đổi thành `cube-sprite-wrapper` (Task T016), khiến Cursor không tìm thấy mục tiêu. Đã update lại đúng ID.
-    5. Vòng tròn ngoài (Outer Circle) vi phạm "Hiến Pháp" (yêu cầu Ease-In-Out bồng bềnh). Đã thay thế hoàn toàn Lerp (Ease-Out) bằng thuật toán **Spring Physics** tự thiết kế: Tính toán gia tốc (Lực kéo `stiffness`) để tạo pha **Ease-In** và triệt tiêu động năng (Lực cản `damping`) để tạo pha **Ease-Out**. Kết quả là một quỹ đạo bám đuổi mượt mà, hữu cơ và chuẩn triển lãm.
-
-* **2026-07-27 (Giải phẫu kiến trúc Figma - Căn chỉnh Side Art hoàn hảo)**:
-  * **Tên tính năng/bugfix:** Giải quyết triệt để lỗi Crop mất Art trên màn hình dọc (Mobile).
-  * **File ảnh hưởng:** `components/ParallaxSides.tsx`
-  * **Lý do/Kết quả:** Mặc dù đã chia tỷ lệ chuẩn Figma, thuật toán `object-cover` mặc định (`object-center`) vẫn tự động xén đều 2 cạnh trái/phải trên màn hình dọc, vô tình chém bay phần hình khối nghệ thuật nằm ở rìa ảnh. Đã khắc phục bằng tổ hợp 3 kỹ thuật:
-    1. **Anchor Edge (`object-right`)**: Ép toàn bộ khung hình luôn bám sát vào rìa phải của ảnh gốc (nơi chứa Art), khiến trình duyệt chỉ được phép xén phần không gian trống bên trái.
-    2. **CSS Transform Flip**: Thay vì lật bằng class Tailwind dễ gây nhầm lẫn tọa độ, chuyển sang dùng biến `--sx`, `--sy` kết hợp `scaleX/scaleY` inline để lật chiều ảnh chuẩn xác cho từng góc (Foreground/Background, Trái/Phải). Kỹ thuật này giúp khối Art luôn bị hất ngược lại đúng vào phần màn hình hiển thị.
-    3. **Dynamic Mobile Scale**: Sử dụng `@media` CSS và `transformOrigin` bám sát mép màn hình (`left center` hoặc `right center`). Trên Mobile, khối Art tự động thu nhỏ lại 55% kích thước (`scale(0.55)`) để không bị "phóng to quá khổ" (do ảnh hưởng của object-cover chiều cao 100vh), trong khi vẫn dính chặt vào viền màn hình một cách hoàn hảo.
-
-* **2026-07-27 (Nâng cấp Pseudo-3D Engine: Zdog.js x Lenis Scroll - Bản Đặc Tả 002-zdog-lenis-integration)**:
-  * **Tên tính năng/bugfix:** Hủy bỏ hệ thống Parallax Ảnh Tĩnh, chuyển đổi sang Side Art 3D thời gian thực trên Canvas 2D.
-  * **File ảnh hưởng:** `package.json`, `components/ParallaxSides.tsx`
-  * **Lý do/Kết quả:** Triển khai theo đúng đặc tả kỹ thuật `002-zdog-lenis-integration`:
-    1. **Kiến trúc Canvas 2D Thuần & Niêm phong chuột (FR-001, FR-002, FR-003):** Thay thế toàn bộ thẻ `<img>` bằng 2 thẻ `<canvas>` 2D, vẽ khối nguyên thủy (Polygon, Hemisphere, Box, Cylinder) nét viền dày neon (`stroke: true`). Niêm phong hoàn toàn sự kiện xoay bằng chuột (`dragRotate: false`).
-    2. **Đồng bộ 1 RAF Duy Nhất & Squash & Stretch Physics (FR-004, FR-005, FR-006):** Kết nối nhịp Zdog vào `gsap.ticker.add()`, đọc trực tiếp `velocity` từ `useScrollStore.getState()`. Ánh xạ gia tốc cuộn vào tốc độ quay (`rotate`) và tỷ lệ biến dạng cơ học (`scale.y` ép dọc, `scale.x/z` bóp nghẹt ngang để bảo toàn thể tích).
-    3. **Tối ưu Retina & Debounce Resize (FR-007, FR-008):** Áp dụng `window.devicePixelRatio` cho độ phân giải sắc nét trên màn hình Retina, kết hợp Debounce 200ms cho sự kiện `resize` để bảo vệ hiệu năng CPU/GPU.
-
-* **2026-07-27 (Sửa lỗi Loading Overlay Bị Kẹt Tại 90%)**:
-  * **Tên tính năng/bugfix:** Fix logic chặn Click và lỗi xung đột GSAP Tween khi nạp Asset.
-  * **File ảnh hưởng:** `components/EnterOverlay.tsx`
-  * **Lý do/Kết quả:** 
-    1. Sự kiện `onComplete` của vòng tải 90% (2.5s) vô tình kích hoạt `setAssetsLoaded(true)` quá sớm. Đã di dời toàn bộ logic kích hoạt sự kiện bấm vào chính xác bên trong `Promise.all().then()`.
-    2. Khắc phục lỗi hiển thị "Vòng tròn kẹt ở một vạch nhỏ": Khi mạng tải nhanh, tween 100% (thời lượng 0.5s) hoàn tất trước nhưng tween 90% (thời lượng 2.5s) vẫn tiếp tục chạy ngầm, kéo lùi giá trị thanh tiến trình từ 100% về 90%. Đã bổ sung `gsap.killTweensOf(simulatedProgress)` để hủy bỏ triệt để tween 90% cũ trước khi kích hoạt tween 100%.
-
-* **2026-07-25 (Lưu tài liệu đặc tả tối ưu hoá hiệu năng)**:
-  * Đã tạo file `performance-optimization.md` trong thư mục `specs/001-exhibition-portfolio` lưu trữ chi tiết các kỹ thuật Tối ưu hoá CSS Object Model (Composite Layers, CSS Culling) và Bộ nhớ/Main Thread (Async Image Decoding, Font Display Swap, requestIdleCallback) nhằm đảm bảo mục tiêu 165 FPS.
-
-* **2026-07-25 (Khắc phục xung đột Port Localhost & Cấu hình mạng LAN)**:
-  * Đổi cấu hình script dev trong `package.json` sang `next dev -H 0.0.0.0 -p 3005`. Thiết lập `-H 0.0.0.0` cho phép thiết bị di động truy cập server qua mạng WiFi LAN nội bộ thay vì bị chặn ở Localhost.
-  * Việc đổi sang port `3005` giúp khắc phục triệt để lỗi `ERR_INVALID_HTTP_RESPONSE` do tiến trình hoặc trình duyệt Chrome bắt HTTPS đè lên port 3000 mặc định.
-
-* **2026-07-25 (Kiến trúc Nạp trước - Preload Engine & Tối ưu hóa FPS Image Sequence)**:
-  * Xây dựng cơ chế chốt chặn `Promise.all()` tại `EnterOverlay.tsx` để khóa toàn bộ quá trình tải cho tới khi 240 file ảnh tĩnh siêu lớn (.png) được đẩy 100% vào RAM.
-  * Tái cấu trúc `<SpriteAnimation />`: Gỡ bỏ `Canvas API` (do hàm `drawImage` 1080x1080 liên tục 144Hz làm nghẽn CPU), chuyển sang kiến trúc **DOM Image src Swap** (thay đổi `img.src` bằng mảng RAM Cache). Tận dụng GPU Compositing Layer với thuộc tính `mix-blend-plus-lighter` trên thẻ img để trả lại FPS mượt mà 165Hz.
-  * Tăng gấp đôi tỷ lệ hiển thị của khối Cubi (từ 20vw/200px lên 40vw/400px).
-
-* **2026-07-25 (Chế độ tự động Autonomous Goal: Tối ưu hóa Physics, Layout & GSAP Loop Sync)**:
-  * **Vòng 1 (Physics & Ease-in-out Smooth Transitions 3~6s)**:
-    - Điều chỉnh Lenis Scroll Engine trong `useExhibitionScroll.ts`: thiết lập `duration: 4.5s` (chuẩn khoảng 3~6s), sử dụng đường cong gia tốc `easeInOutCubic` (`(t) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2`).
-    - Giảm `touchMultiplier` xuống `0.6` và `wheelMultiplier: 0.8` để cảm giác vuốt trên di động cực kỳ đầm, nặng và không bị vèo vọt chóng mặt.
-    - Cập nhật bộ tự động Snap (`lenis.scrollTo`) kéo dài `5.0s` với gia tốc `easeInOutCubic` cho trải nghiệm chuyển cảnh êm ái.
-  * **Vòng 2 (Fix z-index & Responsive Parallax Layout)**:
-    - Phát hiện và sửa lỗi z-index tại `ParallaxSides.tsx`: Đưa `z-index` của layer tiền cảnh từ `z-[100]` về chuẩn `z-[50]` để không đè lên con trỏ chuột (`z-[100]`), `EnterOverlay` (`z-[90]`) và `SpriteAnimation` (`z-[60]`).
-    - Giới hạn chiều rộng linh hoạt `w-[45vw] md:w-auto` cho layer parallax tiền cảnh trên mobile để không làm ảnh đè lấn chiếm khu vực trung tâm bài viết.
-  * **Vòng 3 (Đồng bộ RAF & Tối ưu hóa FPS)**:
-    - Chuyển đổi vòng lặp `requestAnimationFrame` riêng biệt trong `CustomCursor.tsx` sang `gsap.ticker.add(renderLoop)` nhằm loại bỏ xung đột dual-RAF, đưa toàn bộ hệ thống animation về 1 ticker duy nhất.
-  * **Vòng 4 (Responsive Trajectory Math)**:
-    - Cập nhật toán học Lissajous trong `SpriteAnimation.tsx` tính toán `centerX` / `centerY` động theo kích thước khung hình realtime, chống hiện tượng lệch tâm khối 2D khi xoay dọc/ngang màn hình thiết bị di động.
-  * **Vòng 5 (Tối ưu Stacking Context & Fix Click Leakage)**:
-    - Bổ sung CSS utility `isolate` cho container `<MediaVideo />` để tạo stacking context độc lập, đảm bảo ảnh `poster` (z-index âm `-z-10`) hiển thị chuẩn phía sau video mà không bị trôi bên dưới background của section cha.
-    - Sửa triệt để bug rò rỉ sự kiện nhấp chuột tại `EnterOverlay.tsx`: Tự động ngắt `pointer-events: none` cho nút mở đầu sau khi hoàn tất hiệu ứng thu nhỏ, tránh che khuất hoặc nuốt mất sự kiện click của các phần tử ở đỉnh màn hình.
-  * **Vòng 6 (Fix Parallax Distance Gap & Gỡ bỏ Blurry Mask)**:
-    - Gỡ bỏ hoàn toàn CSS Gradient Mask (`maskImage`) và trả lại độ sắc nét `opacity-100` cho toàn bộ 4 layer Parallax Sides theo yêu cầu thiết kế.
-    - Khắc phục triệt để khoảng trống khoảng đen khổng lồ giữa các hình parallax trên mobile: Thay thế `object-contain` bằng `object-cover` chuẩn `100vh`, giúp các hình nối tiếp nhau liên tục mà không xuất hiện vệt đen đắt khoảng.
-    - Giới hạn chiều rộng khung cố định `w-[32vw]` ở rìa màn hình điện thoại để giữ art vừa vặn hai bên.
-  * **Vòng 7 (Tái thiết lập Anchor Point & Mở rộng Bleed Off-screen cho Gyro)**:
-    - Căn chỉnh điểm neo Anchor Point chuẩn thiết kế: Cột Parallax bên trái căn phải (`object-right` / `justify-end`), Cột Parallax bên phải căn trái (`object-left` / `justify-start`) để mép trong bài trí tác phẩm hoàn chỉnh, 100% không bị crop chém vào khối art 3D.
-    - Mở rộng container tràn viền ngoài màn hình (`left-[-22vw]`, `right-[-22vw]`, `w-[55vw]`) và bật `overflow-visible`: Đảm bảo khi nghiêng cảm biến Gyro (con quay hồi chuyển) dịch chuyển X/Y, mép ngoài bức ảnh vẫn có khoảng bù trừ dư thừa (bleed margin) giúp hình không bao giờ bị lộ vết hở hay cụt chân.
-  * **Vòng 8 (Tách biệt Responsive Breakpoints: Vạch vàng trên Mobile & Vạch xanh trên Desktop)**:
-    - Điện thoại (`< md`): Giữ nguyên vị trí chuẩn tại **Vạch Vàng** (`left-[-10vw] w-[50vw]`), đảm bảo art ôm sát khung hình đứng.
-    - Máy tính Desktop (`md:`): Đẩy mép ngoài (Khu vực gạch đỏ) giấu hẳn sang 2 bên lề ngoài màn hình (`md:left-[-22vw]`), thu gọn tỉ lệ (`md:w-[28vw]`). Mép trong của hình được neo chính xác tại vị trí **Vạch Xanh** theo đúng sơ đồ vẽ của bản thiết kế.
-  * **Vòng 9 (Audit hình ảnh thực tế qua Browser Subagent & Screenshot Verification)**:
-    - Sử dụng Subagent chụp ảnh màn hình thời gian thực ở cả 2 độ phân giải Desktop (1920x1080) và Mobile (390x844).
-    - **Kết quả Desktop**: Xử lý triệt để hiện tượng lơ lửng giữa màn hình. Khối Art 2D 2 bên dạt hẳn về 2 biên (khoảng cách 40-60px), các góc ngoài xé lề tràn viền đúng chuẩn **Vạch Xanh**.
-    - **Kết quả Mobile**: Giữ trọn vẹn điểm neo **Vạch Vàng**, đảm bảo không bị đè lên tiêu đề và khung media trung tâm. Tác phẩm 2D 100% không bị crop chém hình.
-  * **Vòng 10 (Điều chỉnh toạ độ Desktop lùi lại sát lề viền Vạch Xanh)**:
-    - Sửa sai số đẩy quá xa lề khiến hình ảnh bị biến mất ngoài khung hình: Điều chỉnh toạ độ Desktop từ `left-[-30vw]` về `md:left-[-8vw]` (Background) và `md:left-[-10vw]` (Foreground).
-    - Giữ vị trí mép trong của các khối 3D thò ra đúng ~4%-5% khung hình (~60px-80px), bám đúng **Vạch Xanh** trên hình vẽ minh hoạ của người dùng.
-  * **Vòng 11 (Chuẩn hoá chính xác tỉ lệ 1.5/10 chiều ngang Desktop theo chỉ thị)**:
-    - Cập nhật toạ độ Desktop theo đúng tỉ lệ định lượng 1.5/10 (15% chiều ngang màn hình): `md:left-[-13vw] md:w-[28vw]` (Background) và `md:left-[-15vw] md:w-[32vw]` (Foreground).
-    - Đo đạc thực tế qua Browser Subagent tại Viewport 1920x1080: Tác phẩm Art 2D 2 bên thò đúng **285px** mỗi bên (~15% chiều ngang), phần còn lại tràn viền lề ngoài. Màn hình Mobile hoàn toàn không bị ảnh hưởng.
-
-* **2026-07-25 (Pivoting Kỹ Thuật: Hủy bỏ WebGL Refraction)**:
-  * Ngừng sử dụng hệ thống `RefractionSprite.tsx` (R3F WebGL) do vắt kiệt GPU (chỉ đạt 18 FPS) và tốn VRAM quá lớn trên thiết bị di động.
-  * Quyết định khôi phục hệ thống 2D CSS Sprite (`SpriteAnimation.tsx`) với logic chuyển dịch `background-position` theo percentage. Việc thay đổi này đã giúp toàn bộ dự án trở lại mốc ổn định **144Hz–165Hz** siêu mượt trên mọi thiết bị.
-
-
-* **2026-07-23 (Hoàn thiện Phase 3: Curtains Transition & Production CDN)**:
-  * Triển khai hệ thống deep link: Phát hiện hash (ví dụ `/#work-a`), đẩy vào Zustand store `deepLinkTarget`.
-  * Xây dựng màn rèm `CurtainsTransition` (z-40): Tách đôi rèm sang 2 bên màn hình với easing `power4.inOut` trong vòng 5.0s tạo cảm giác mở màn cinematic.
-  * Tích hợp Logic: Trì hoãn mở rèm cho đến khi `Sprite Intro` (z-60) chạy xong (ưu tiên hiển thị). Scroll snap nhảy thẳng đến `#work-a` không delay.
-  * Đã chuyển toàn bộ URLs trong `data/sections.json` sang domain CDN Production (`https://cdn.namdeptrai.com/...`) để đảm bảo streaming tối ưu, giảm tải băng thông.
-
-* **2026-07-23 (Nâng cấp Kiến trúc Custom WebGL Cursor & Idle Magnet System)**:
-  * Triển khai cơ chế **Mobile Extermination**: Dùng Media Query `(pointer: fine)` hủy toàn bộ event listener và RAF loop trên thiết bị di động để tối ưu VRAM & pin.
-  * Xây dựng **Hệ thống Khiêu khích (Idle Magnet System)**: Khi người dùng dừng di chuột 2.5s, con trỏ tự động lơ lửng (breathe/float) và trôi dạt về tâm màn hình (nơi chứa cụm 3D Cubi) để thu hút thị giác.
-  * Tối ưu hóa 144Hz bằng GSAP `quickSetter` bypass React re-render cycle.
-
-* **2026-07-23 (Đồng bộ Repo & Khắc phục kiểu TypeScript)**:
-  * Đã thực hiện `git merge origin/main` đồng bộ 20 commits từ remote repo.
-  * Sửa lỗi TypeScript tại `useExhibitionScroll.ts` (loại bỏ thuộc tính `teleportCooldownActive` đã refactor trong `useScrollStore.ts`).
-  * Cập nhật toàn bộ Spec, Roadmap và tạo quy tắc làm việc tự động cho Agent tại [.agents/AGENTS.md](./.agents/AGENTS.md).
-
-* **2026-07-27 (Hoàn tất Đồng bộ Hoá Kiến trúc Kỹ thuật - Documentation Convergence & Bugfixes)**:
-  * Thực thi `/speckit-clarify` và `/speckit-plan`: Giải quyết dứt điểm các kịch bản hụt (Edge cases) liên quan đến CDN Video Fallback, Web Audio Context Recovery và Mobile Extermination Threshold cho Custom Cursor.
-  * Thực thi `/speckit-converge` và `/speckit-analyze`: Phân tích chéo (cross-artifact) toàn bộ dự án, bổ sung các Task T019 (CDN Fallback) và T020 (ResizeObserver) vào `tasks.md` để mapping trọn vẹn 100% với Codebase đã hoàn thiện. Sự đồng nhất giữa mã nguồn thực tế và tài liệu đạt mức tuyệt đối (✅ Converged).
-  * **Fix Bug CSS Mobile Parallax (`ParallaxSides.tsx`)**: Đổi thẻ `<img>` từ `w-auto max-w-none` sang `w-full h-full object-cover` và tinh chỉnh `object-[75%]` (trái) / `object-[25%]` (phải) để giữ nguyên Art Area nằm trọn vẹn trong `w-[50vw]` bounds, khắc phục triệt để lỗi mất Side Art khi lắc Gyro trên thiết bị di động.
-  * Thiết lập thành công kết nối **Figma MCP Server (Local SSE)** tại port `3845` vào file `mcp.json` giúp Agent truy xuất trực tiếp layer design từ màn hình Figma Desktop.
+* **2026-08-04 (Triển khai Harmonic Guitar String Engine Bậc Cao N = 6..14)**:
+  * **Tên tính năng/bugfix:** Tăng mật độ bước sóng gấp 6-14 lần và giảm Y-step xuống 3px để đường uốn lượn sắc nét.
+  * **File ảnh hưởng:** `components/KineticStringsCanvas.tsx`
+  * **Lý do/Kết quả:**
+    1. **High-Order Harmonics (N = 6, 8, 10, 12, 14)**: Áp dụng bậc họa âm cao hơn `harmonicOrder = (i + 3) * 2` giúp các sợi dây có **từ 6 đến 14 ngọn sóng nhấp nhô dày đặn**, dẻo quánh và giàu chi tiết trên màn hình.
+    2. **High-Resolution Curve**: Giảm bước lặp vẽ `y += 3` giúp các đỉnh sóng cong mịn mượt chuẩn 165Hz.
+    3. **Amplitude Scaling (150px -> 60px)**: Chiều cao sóng duy trì phồng to ấn tượng. Tụ chặt 2 điểm mút $Y=0$ và $Y=height$ 100%.
 
 ---
 
@@ -222,16 +94,17 @@ graph TD
 
 * 📜 **[Core Directives (CONSTITUTION)](./.specify/memory/constitution.md)**  
   *Các nguyên tắc triết lý: Zero-opacity transitions, physics-based momentum, continuous linear layout.*
-* ⚙️ **[Feature Specification (SPEC)](./specs/001-exhibition-portfolio/spec.md)**  
+* ⚙️ **[Feature Specification (SPEC 001)](./specs/001-exhibition-portfolio/spec.md)**  
   *Chi tiết kỹ thuật về Lenis Engine, State Machine, VRAM Flushing, Marquee Modulo và Mobile Physics.*
-* 📐 **[Architecture Plan (PLAN)](./specs/001-exhibition-portfolio/plan.md)**  
-  *Kế hoạch kiến trúc và thiết kế thành phần cho Phase 2 & Phase 3.*
-* 🎯 **[Operational Tasks (TASKS)](./specs/001-exhibition-portfolio/tasks.md)**  
-  *Danh sách tác vụ đang thực thi theo thứ tự phụ thuộc.*
+* ⚡ **[Feature Specification (SPEC 004 - Kinetic Neon Strings)](./specs/004-kinetic-neon-strings/spec.md)**  
+  *Đặc tả kỹ thuật Canvas 2D Side Art Engine: Trigonometric Sine Waves & Relative Speed Particles.*
+* 📐 **[Architecture Plan (PLAN 004)](./specs/004-kinetic-neon-strings/plan.md)**  
+  *Kế hoạch kiến trúc và thiết kế Canvas 2D Render Loop cho Feature 004.*
+* 🎯 **[Operational Tasks (TASKS 004)](./specs/004-kinetic-neon-strings/tasks.md)**  
+  *Danh sách 15 tác vụ thực thi chi tiết cho Feature 004 (Completed 15/15).*
 * 🤖 **[Agent Directives (AGENTS.md)](./.agents/AGENTS.md)**  
   *Chỉ dẫn bắt buộc dành cho AI Agent về việc đọc ngữ cảnh và cập nhật nhật ký phát triển.*
 
 ---
 
-*Status: Core Kinetic Engine, Phase 2 Immersion, Phase 3 Curtains Transition & Phase 4 3D Spatial Asset (Image Sequence) FULLY COMPLETED AND ACTIVE.*
-
+*Status: Project Cleaned Up & Audited. Feature 004 FULLY IMPLEMENTED & STABLE (100% Pass).*

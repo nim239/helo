@@ -1,15 +1,20 @@
 {
-  "version": "0.13.3",
+  "version": "0.15.2.dev0",
   "integration_state_schema": 1,
   "installed_integrations": [
-    "agy"
+    "gemini",
+    "claude"
   ],
   "integration_settings": {
-    "agy": {
+    "gemini": {
+      "script": "ps",
+      "invoke_separator": "."
+    },
+    "claude": {
       "script": "ps",
       "invoke_separator": "-"
     }
   },
-  "integration": "agy",
-  "default_integration": "agy"
+  "integration": "gemini",
+  "default_integration": "gemini"
 }

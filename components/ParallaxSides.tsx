@@ -6,18 +6,20 @@ import lottie, { AnimationItem } from 'lottie-web';
 import { useScrollStore } from '../lib/store/useScrollStore';
 
 export function ParallaxSides() {
-  // 4 Refs cho 2 bên (Trái & Phải) x 2 lớp (Sau: Sparkles, Trước: man running)
-  const leftBackRef = useRef<HTMLDivElement>(null);
-  const leftFrontRef = useRef<HTMLDivElement>(null);
-  const rightBackRef = useRef<HTMLDivElement>(null);
-  const rightFrontRef = useRef<HTMLDivElement>(null);
+  // Sparkles: Góc trên-trái và Góc trên-phải (Scale 20%)
+  const leftSparkleRef = useRef<HTMLDivElement>(null);
+  const rightSparkleRef = useRef<HTMLDivElement>(null);
+
+  // Gradient Glow: Dính sát 2 bên mép viền
+  const leftGlowRef = useRef<HTMLDivElement>(null);
+  const rightGlowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (
-      !leftBackRef.current ||
-      !leftFrontRef.current ||
-      !rightBackRef.current ||
-      !rightFrontRef.current
+      !leftSparkleRef.current ||
+      !rightSparkleRef.current ||
+      !leftGlowRef.current ||
+      !rightGlowRef.current
     ) {
       return;
     }
@@ -36,50 +38,39 @@ export function ParallaxSides() {
       },
     };
 
-    // ==============================================================
-    // 🎨 KHỞI TẠO 4 LOTTIE INSTANCES (FR-001, FR-002, FR-006)
-    // ==============================================================
-    // Bên Trái (Left Side Art)
-    const leftBack: AnimationItem = lottie.loadAnimation({
+    // Khởi tạo Lottie Sparkles ở 2 góc
+    const leftSparkle: AnimationItem = lottie.loadAnimation({
       ...commonConfig,
-      container: leftBackRef.current,
+      container: leftSparkleRef.current,
       path: '/lotie/Sparkles.json',
     });
 
-    const leftFront: AnimationItem = lottie.loadAnimation({
+    const rightSparkle: AnimationItem = lottie.loadAnimation({
       ...commonConfig,
-      container: leftFrontRef.current,
-      path: '/lotie/man running.json',
-    });
-
-    // Bên Phải (Right Side Art - duplicate 2 bên)
-    const rightBack: AnimationItem = lottie.loadAnimation({
-      ...commonConfig,
-      container: rightBackRef.current,
+      container: rightSparkleRef.current,
       path: '/lotie/Sparkles.json',
     });
 
-    const rightFront: AnimationItem = lottie.loadAnimation({
+    // Khởi tạo Lottie Gradient Glow 2 bên
+    const leftGlow: AnimationItem = lottie.loadAnimation({
       ...commonConfig,
-      container: rightFrontRef.current,
-      path: '/lotie/man running.json',
+      container: leftGlowRef.current,
+      path: '/lotie/gradient_glow.json',
     });
 
-    const instances = [leftBack, leftFront, rightBack, rightFront];
+    const rightGlow: AnimationItem = lottie.loadAnimation({
+      ...commonConfig,
+      container: rightGlowRef.current,
+      path: '/lotie/gradient_glow.json',
+    });
 
-    // ==============================================================
-    // ⚙️ SPEED ACCELERATION ONLY PHYSICS (FR-003, FR-004)
-    // ==============================================================
+    const instances = [leftSparkle, rightSparkle, leftGlow, rightGlow];
+
     const renderLoop = () => {
-      // 1. Trích xuất gia tốc cuộn thời gian thực từ Lenis Store
       const velocity = useScrollStore.getState().velocity || 0;
-
-      // 2. Tính tốc độ phát (Speed Acceleration Only):
-      // Idle ở 1.0x, khi cuộn nhanh tăng tốc độ phát lên tối đa 3.0x
       const absVelocity = Math.abs(velocity);
       const targetSpeed = Math.min(3.0, Math.max(1.0, 1.0 + absVelocity * 0.02));
 
-      // 3. Đồng bộ tốc độ phát cho cả 4 Lottie instances mà KHÔNG biến dạng hình học
       for (let i = 0; i < instances.length; i++) {
         const item = instances[i];
         if (item) {
@@ -88,12 +79,8 @@ export function ParallaxSides() {
       }
     };
 
-    // Đồng bộ nhịp vào bộ đếm nhịp GSAP Ticker của triển lãm
     gsap.ticker.add(renderLoop);
 
-    // ==============================================================
-    // 🧹 CLEANUP BỘ NHỚ KHI UNMOUNT (FR-005)
-    // ==============================================================
     return () => {
       gsap.ticker.remove(renderLoop);
       for (let i = 0; i < instances.length; i++) {
@@ -107,46 +94,25 @@ export function ParallaxSides() {
 
   return (
     <>
-      <style>{`
-        @media (max-width: 768px) {
-          .mobile-scale-wrapper {
-            transform: scale(0.6) !important;
-          }
-        }
-      `}</style>
-
-      {/* Left Art */}
-      <div className="fixed top-0 left-[-15vw] md:left-[-10vw] lg:left-[-5vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen w-[50vw] md:w-[40vw]">
-        <div className="w-full h-full origin-center mobile-scale-wrapper relative flex items-center justify-center">
-          {/* Layer Phía Sau - Sparkles.json */}
-          <div
-            ref={leftBackRef}
-            className="absolute inset-0 w-full h-full opacity-80 z-0 pointer-events-none"
-          />
-          {/* Layer Phía Trước - man running.json */}
-          <div
-            ref={leftFrontRef}
-            className="absolute inset-0 w-full h-full opacity-100 z-10 pointer-events-none scale-50 origin-center"
-          />
-        </div>
+      {/* 1. Sparkles Lottie ở 2 góc trên (Fixed, scale 20%) */}
+      <div className="fixed top-2 left-2 w-32 h-32 md:w-48 md:h-48 z-[45] pointer-events-none mix-blend-screen scale-20 origin-top-left">
+        <div ref={leftSparkleRef} className="w-full h-full opacity-80" />
       </div>
 
-      {/* Right Art */}
-      <div className="fixed top-0 right-[-15vw] md:right-[-10vw] lg:right-[-5vw] h-[100vh] z-[50] pointer-events-none overflow-visible mix-blend-screen w-[50vw] md:w-[40vw]">
-        <div className="w-full h-full origin-center mobile-scale-wrapper relative flex items-center justify-center">
-          <div className="w-full h-full absolute inset-0 -scale-x-100">
-            {/* Layer Phía Sau - Sparkles.json */}
-            <div
-              ref={rightBackRef}
-              className="absolute inset-0 w-full h-full opacity-80 z-0 pointer-events-none"
-            />
-            {/* Layer Phía Trước - man running.json */}
-            <div
-              ref={rightFrontRef}
-              className="absolute inset-0 w-full h-full opacity-100 z-10 pointer-events-none scale-50 origin-center"
-            />
-          </div>
-        </div>
+      <div className="fixed top-2 right-2 w-32 h-32 md:w-48 md:h-48 z-[45] pointer-events-none mix-blend-screen scale-20 origin-top-right">
+        <div ref={rightSparkleRef} className="w-full h-full opacity-80" />
+      </div>
+
+      {/* 2. Gradient Glow Lottie ép sát mép ngoài (Đẩy mạnh offset ra 2 mép) */}
+
+      {/* Mép TRÁI: Đẩy lùi sang trái -48vh để tơ glow áp sát dải dây */}
+      <div className="fixed top-1/2 left-0 h-[100vw] w-[100vh] z-[40] pointer-events-none mix-blend-screen -rotate-90 -translate-y-1/2 -translate-x-[48vh] origin-center">
+        <div ref={leftGlowRef} className="w-full h-full opacity-100 scale-x-150 scale-y-110" />
+      </div>
+
+      {/* Mép PHẢI: Đẩy lùi sang phải 48vh để tơ glow áp sát dải dây */}
+      <div className="fixed top-1/2 right-0 h-[100vw] w-[100vh] z-[40] pointer-events-none mix-blend-screen rotate-90 -translate-y-1/2 translate-x-[48vh] origin-center">
+        <div ref={rightGlowRef} className="w-full h-full opacity-100 scale-x-150 scale-y-110" />
       </div>
     </>
   );
