@@ -113,7 +113,6 @@ export function useExhibitionScroll() {
           if (!s.isIntroComplete) return;
           if (Math.abs(lenis.velocity) > 0.05) return;
           if (Math.abs(lenis.scroll - startScrollY) < 5) return;
-          if (direction === -1) return; // Forward-Only
 
           const scrollRatio = lenis.scroll / currentH;
           const safeRatio = Math.abs(scrollRatio - Math.round(scrollRatio)) < 0.02
