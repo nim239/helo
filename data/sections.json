@@ -1,7 +1,9 @@
 [
   {
     "id": "intro",
-    "title": "Welcome",
+    "title": "NimVFX",
+    "subtitle": "NimVFX — 2026",
+    "caption": "Motion Design / CGI / Direction",
     "layout": "fullscreen-video",
     "parallax": {
       "foreground": 1.2,
@@ -14,22 +16,62 @@
   {
     "id": "reel",
     "title": "Director's Reel",
+    "counter": "02 / 06",
     "layout": "fullscreen-video",
     "mediaType": "video",
     "src": "https://cdn.namdeptrai.com/videos/reel.webm",
-    "poster": "/videos/reel-poster.webp"
+    "poster": "/videos/reel-poster.webp",
+    "meta": {
+      "duration": "03:42",
+      "format": "4K UHD / PRORES 4444",
+      "codec": "H.265"
+    }
   },
   {
     "id": "work-a",
     "title": "CGI Showcase",
-    "layout": "fullscreen-video",
-    "mediaType": "video",
-    "src": "https://cdn.namdeptrai.com/videos/work-a.webm",
-    "poster": "/videos/work-a-poster.webp"
+    "counter": "03 / 06",
+    "layout": "cgi-bento-grid",
+    "bentoItems": [
+      {
+        "id": "cgi-01",
+        "label": "GLASS FLUID SIM — C4D",
+        "accent": "#00F2FF",
+        "rotation": -0.5,
+        "mediaType": "video",
+        "src": "https://cdn.namdeptrai.com/videos/work-a.webm",
+        "poster": "/videos/work-a-poster.webp"
+      },
+      {
+        "id": "cgi-02",
+        "label": "NEON GEOMETRY — OCTANE",
+        "accent": "#FF007F",
+        "rotation": 0.3
+      },
+      {
+        "id": "cgi-03",
+        "label": "PARTICLE STORM — HOUDINI",
+        "accent": "#00FF88",
+        "rotation": -0.4
+      },
+      {
+        "id": "cgi-04",
+        "label": "ABSTRACT ARCH — BLENDER",
+        "accent": "#0066FF",
+        "rotation": 0.2
+      },
+      {
+        "id": "cgi-05",
+        "label": "DATA VIZ — AE + WEBGL",
+        "accent": "#FF007F",
+        "rotation": -0.3
+      }
+    ]
   },
   {
     "id": "work-b",
     "title": "Motion Work",
+    "counter": "04 / 06",
     "layout": "horizontal-marquee",
     "marquee": {
       "direction": "left",
@@ -40,18 +82,24 @@
     "items": [
       {
         "id": "b-shot01",
+        "label": "BRAND IDENT — NIKE × NimVFX",
+        "accent": "#00F2FF",
         "mediaType": "video",
         "src": "https://cdn.namdeptrai.com/videos/work-b/01.webm",
         "poster": "/videos/work-b/01.webp"
       },
       {
         "id": "b-shot02",
+        "label": "TITLE SEQUENCE — NETFLIX",
+        "accent": "#FF007F",
         "mediaType": "video",
         "src": "https://cdn.namdeptrai.com/videos/work-b/02.webm",
         "poster": "/videos/work-b/02.webp"
       },
       {
         "id": "b-shot03",
+        "label": "LIVE EVENT — COACHELLA",
+        "accent": "#00FF88",
         "mediaType": "video",
         "src": "https://cdn.namdeptrai.com/videos/work-b/03.webm",
         "poster": "/videos/work-b/03.webp"
@@ -61,6 +109,7 @@
   {
     "id": "work-c",
     "title": "Commercials",
+    "counter": "05 / 06",
     "layout": "horizontal-marquee",
     "marquee": {
       "direction": "right",
@@ -71,18 +120,24 @@
     "items": [
       {
         "id": "c-shot01",
+        "label": "APPLE — SHOT ON IPHONE",
+        "accent": "#00FF88",
         "mediaType": "video",
         "src": "https://cdn.namdeptrai.com/videos/work-c/01.webm",
         "poster": "/videos/work-c/01.webp"
       },
       {
         "id": "c-shot02",
+        "label": "SAMSUNG — GALAXY AI",
+        "accent": "#0066FF",
         "mediaType": "video",
         "src": "https://cdn.namdeptrai.com/videos/work-c/02.webm",
         "poster": "/videos/work-c/02.webp"
       },
       {
         "id": "c-shot03",
+        "label": "ADIDAS — IMPOSSIBLE IS NOTHING",
+        "accent": "#FF007F",
         "mediaType": "video",
         "src": "https://cdn.namdeptrai.com/videos/work-c/03.webm",
         "poster": "/videos/work-c/03.webp"
@@ -92,6 +147,7 @@
   {
     "id": "contact",
     "title": "Contact",
+    "counter": "06 / 06",
     "layout": "interactive-scene"
   }
 ]

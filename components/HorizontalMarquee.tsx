@@ -6,8 +6,12 @@ import { useMarqueeStore } from '../lib/store/useMarqueeStore';
 import { MediaVideo } from './MediaVideo';
 import { useScrollStore } from '../lib/store/useScrollStore';
 
+import { NeonCard } from './NeonCard';
+
 interface MarqueeItem {
   id: string;
+  label?: string;
+  accent?: string;
   mediaType: string;
   src: string;
   poster: string;
@@ -23,8 +27,7 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
   const trackRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Clone items to ensure we fill the screen (minimum 3 copies of the array)
-  // In a real app, calculate based on item width and screen width, here we brute force 3 loops
+  // Clone items to ensure we fill the screen
   const repeatedItems = [...items, ...items, ...items];
 
   useLayoutEffect(() => {
@@ -35,13 +38,9 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
     
     // Resize Observer to keep Modulo Math accurate
     const observer = new ResizeObserver(() => {
-      // We calculate the width of ONE set of items. 
-      // Assuming all items have equal width, trackWidth = (total width) / 3
       trackWidth = track.scrollWidth / 3;
     });
     observer.observe(track);
-
-    const dirMultiplier = direction === 'left' ? -1 : 1;
 
     // RAF Loop
     const ticker = (time: number, deltaTime: number, frame: number) => {
@@ -51,18 +50,16 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
       if (trackWidth <= 0) return;
 
       const baseTimestamp = globalState.baseTimestamp;
-      
       const rawDistance = (now - baseTimestamp) * speed;
       const safeDistance = rawDistance % trackWidth;
       
       let xOffset = 0;
       if (direction === 'left') {
-        xOffset = -safeDistance; // 0 to -trackWidth
+        xOffset = -safeDistance;
       } else {
-        xOffset = -trackWidth + safeDistance; // -trackWidth to 0
+        xOffset = -trackWidth + safeDistance;
       }
       
-      // Direct DOM mutation for max FPS, bypassing React
       track.style.transform = `translate3d(${xOffset}px, 0, 0)`;
     };
 
@@ -78,19 +75,23 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
     <div ref={containerRef} className="w-full h-full overflow-hidden flex items-center pointer-events-none">
       <div 
         ref={trackRef} 
-        className="flex flex-row flex-nowrap items-center h-[50vh] gap-8 px-4"
+        className="flex flex-row flex-nowrap items-center h-[280px] gap-6 px-4"
         style={{ width: 'max-content' }}
       >
         {repeatedItems.map((item, idx) => (
           <div 
             key={`${item.id}-${idx}`}
-            className="w-[60vw] md:w-[40vw] h-full shrink-0 bg-white/5 flex items-center justify-center relative overflow-hidden"
+            className="w-[420px] h-[280px] shrink-0 pointer-events-auto"
           >
-            {item.mediaType === 'video' ? (
-              <MediaVideo id={item.id} src={item.src} poster={item.poster} />
-            ) : (
-              <span className="text-white/20 text-xs text-center px-4">Unsupported Media</span>
-            )}
+            <NeonCard
+              label={item.label || item.id}
+              accent={item.accent || (direction === 'left' ? '#00F2FF' : '#FF007F')}
+              index={idx}
+              width="100%"
+              height="100%"
+              src={item.src}
+              poster={item.poster}
+            />
           </div>
         ))}
       </div>
