@@ -17,9 +17,21 @@ export function VideoBackground({
 }: VideoBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isLiteMode, setIsLiteMode] = useState(false);
 
   useEffect(() => {
     if (disabled || !containerRef.current) return;
+
+    // Aggressive performance fallback for Mobile & Weak PCs
+    const isMobile = window.matchMedia("(any-pointer: coarse)").matches;
+    const isWeakPC = typeof navigator !== 'undefined' && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4;
+    
+    if (isMobile || isWeakPC) {
+      setIsLiteMode(true);
+      // If lite mode is enabled, we don't need to mount the IntersectionObserver for the iframe
+      // We just show the high-res thumbnail statically.
+      return;
+    }
 
     // Viewport Intersection Observer: Only load iframe when visible
     const observer = new IntersectionObserver(
@@ -70,8 +82,8 @@ export function VideoBackground({
         }`}
       />
 
-      {/* Scaled iFrame Container — ONLY mounted when in viewport */}
-      {isVisible && !disabled && (
+      {/* Scaled iFrame Container — ONLY mounted when in viewport AND device is powerful enough */}
+      {isVisible && !disabled && !isLiteMode && (
         <div className="absolute -top-[12.5%] -left-[12.5%] w-[125%] h-[125%] pointer-events-none">
           <iframe
             src={embedUrl}
