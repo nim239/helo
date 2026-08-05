@@ -21,6 +21,9 @@ export function CustomCursor() {
   const vel = useRef({ x: 0, y: 0 }); // Spring velocity for outer circle
   const dotPos = useRef({ x: -100, y: -100 }); // High-speed inertia position (inner dot)
 
+  const fpsCircleRef = useRef<SVGCircleElement>(null);
+  const fpsTextRef = useRef<HTMLSpanElement>(null);
+
   useEffect(() => {
     // -------------------------------------------------------------
     // 1. MOBILE EXTERMINATION (Pointer Fine Check)
@@ -28,13 +31,13 @@ export function CustomCursor() {
     const finePointerQuery = window.matchMedia("(pointer: fine)");
     if (!finePointerQuery.matches) {
       setIsFinePointer(false);
-      return; // Tiêu diệt toàn bộ event listener & RAF loop trên thiết bị cảm ứng
+      return;
     }
 
     setIsFinePointer(true);
     document.body.style.cursor = 'none';
 
-    // GSAP quickSetters để update DOM trực tiếp (Bypass React Re-render)
+    // GSAP quickSetters
     const xSet = gsap.quickSetter(cursorRef.current, 'x', 'px');
     const ySet = gsap.quickSetter(cursorRef.current, 'y', 'px');
     const xDotSet = gsap.quickSetter(dotRef.current, 'x', 'px');
@@ -47,7 +50,7 @@ export function CustomCursor() {
     // 2. IDLE MAGNET SYSTEM (Idle/Provocation Timer)
     // -------------------------------------------------------------
     let idleTimeout: NodeJS.Timeout;
-    const IDLE_DELAY_MS = 500; // 2.5s không di chuột sẽ rơi vào chế độ lơ lửng khiêu khích
+    const IDLE_DELAY_MS = 500;
 
     const resetIdleTimer = () => {
       clearTimeout(idleTimeout);
@@ -61,11 +64,10 @@ export function CustomCursor() {
       }, IDLE_DELAY_MS);
     };
 
-    // Khởi tạo timer ban đầu
     resetIdleTimer();
 
     // -------------------------------------------------------------
-    // 3. EVENT LISTENERS (Mouse Movements & Magnet Detection)
+    // 3. EVENT LISTENERS
     // -------------------------------------------------------------
     const handleMouseMove = (e: MouseEvent) => {
       mouse.current.x = e.clientX;
@@ -110,15 +112,44 @@ export function CustomCursor() {
     window.addEventListener('mouseout', handleMouseOut);
 
     // -------------------------------------------------------------
-    // 4. INERTIA & OPTICAL RENDER LOOP (144Hz Smoothness)
+    // 4. REAL-TIME FPS & INERTIA RENDER LOOP
     // -------------------------------------------------------------
     let idleAngle = 0;
+    let lastFrameTime = performance.now();
+    let smoothedFps = 60;
+
+    const CIRCUMFERENCE = 2 * Math.PI * 26; // ~163.36px for r=26
 
     const renderLoop = () => {
+      const now = performance.now();
+      const deltaMs = now - lastFrameTime;
+      lastFrameTime = now;
+
+      // ── Real-Time FPS Calculation ──
+      if (deltaMs > 0) {
+        const instantFps = 1000 / deltaMs;
+        smoothedFps += (instantFps - smoothedFps) * 0.08; // Damping smooth
+      }
+
+      // Clamp FPS at 100 max (100 FPS = 100% full circle)
+      const clampedFps = Math.min(100, Math.max(0, smoothedFps));
+      const fpsRatio = clampedFps / 100;
+      const strokeOffset = CIRCUMFERENCE * (1 - fpsRatio);
+
+      // Update FPS SVG Ring DOM directly
+      if (fpsCircleRef.current) {
+        fpsCircleRef.current.style.strokeDashoffset = `${strokeOffset}px`;
+      }
+
+      // Update FPS HUD Text DOM directly
+      if (fpsTextRef.current) {
+        fpsTextRef.current.textContent = `${Math.round(smoothedFps)}`;
+      }
+
+      // ── Pointer Inertia & Magnet Physics ──
       let targetX = mouse.current.x;
       let targetY = mouse.current.y;
 
-      // Magnet Active Mode
       if (magnetTarget && stateRef.current.isHovering) {
         const rect = magnetTarget.getBoundingClientRect();
         magnetPos = {
@@ -127,9 +158,7 @@ export function CustomCursor() {
         };
         targetX = magnetPos.x;
         targetY = magnetPos.y;
-      }
-      // Idle / Provocation Mode: Tự động lơ lửng & trôi về tâm sprite (chỉ khi đã qua intro)
-      else if (stateRef.current.isIdle && useScrollStore.getState().isIntroComplete) {
+      } else if (stateRef.current.isIdle && useScrollStore.getState().isIntroComplete) {
         let spriteX = window.innerWidth / 2;
         let spriteY = window.innerHeight / 2;
         const spriteEl = document.getElementById('cube-sprite-wrapper');
@@ -144,52 +173,41 @@ export function CustomCursor() {
         const breatheX = Math.cos(idleAngle) * 20;
         const breatheY = Math.sin(idleAngle * 1.5) * 15;
 
-        // Điểm đích là vị trí của cube cộng dao động
         targetX = spriteX + breatheX;
         targetY = spriteY + breatheY;
       }
 
-      // Thay thế Lerp (Ease-Out) bằng Spring Physics (Ease-In-Out hữu cơ chuẩn Hiến Pháp)
       const dt = gsap.ticker.deltaRatio();
-      const stiffness = stateRef.current.isIdle ? 0.002 : 0.25; // Lực kéo về đích
-      const damping = stateRef.current.isIdle ? 0.95 : 0.45;    // Ma sát (chống overshoot)
+      const stiffness = stateRef.current.isIdle ? 0.002 : 0.25;
+      const damping = stateRef.current.isIdle ? 0.95 : 0.45;
 
-      // Gia tốc tăng dần (Ease-in)
       vel.current.x += (targetX - pos.current.x) * stiffness * dt;
       vel.current.y += (targetY - pos.current.y) * stiffness * dt;
 
-      // Ma sát giảm dần (Ease-out)
       vel.current.x *= Math.pow(damping, dt);
       vel.current.y *= Math.pow(damping, dt);
 
-      // Cập nhật vị trí
       pos.current.x += vel.current.x * dt;
       pos.current.y += vel.current.y * dt;
 
       xSet(pos.current.x);
       ySet(pos.current.y);
 
-      // Inner Dot Physics: 
       if (stateRef.current.isIdle) {
-        // Nội suy mượt mà (Lerp) để từ từ trôi về tâm vòng ngoài, tránh bị giật cục (Teleport)
         const idleDotDt = 1.0 - Math.pow(1.0 - 0.1, gsap.ticker.deltaRatio());
         dotPos.current.x += (pos.current.x - dotPos.current.x) * idleDotDt;
         dotPos.current.y += (pos.current.y - dotPos.current.y) * idleDotDt;
       } else {
-        // Bắt dính tức thì (0 lag) nhưng render trong RAF để đảm bảo mượt 144Hz V-Sync, không bị rách hình.
         dotPos.current.x = mouse.current.x;
         dotPos.current.y = mouse.current.y;
       }
 
       xDotSet(dotPos.current.x);
       yDotSet(dotPos.current.y);
-
-      // Render via GSAP ticker
     };
 
     gsap.ticker.add(renderLoop);
 
-    // Cleanup
     return () => {
       document.body.style.cursor = '';
       clearTimeout(idleTimeout);
@@ -206,9 +224,9 @@ export function CustomCursor() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden mix-blend-difference hidden md:block">
-      {/* Outer Circle Wrapper (GSAP Translate ONLY, NO CSS TRANSITIONS) */}
+      {/* Outer Circle Wrapper */}
       <div ref={cursorRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
-        {/* Visual Outer Circle (Tailwind Size/Scale/Color, WITH CSS TRANSITIONS) */}
+        {/* Visual Outer Circle */}
         <div
           className={`absolute rounded-full border border-white transition-all duration-500 ease-out flex items-center justify-center
             ${isHovering ? 'w-16 h-16 bg-white/20 scale-150 border-white/80' : 'w-12 h-12'}
@@ -216,11 +234,43 @@ export function CustomCursor() {
             ${isIdle ? 'w-16 h-16 bg-white/10 animate-pulse scale-125 border-dashed border-white/60' : ''}
           `}
         />
+
+        {/* Real-Time FPS SVG Progress Ring (Clamped at 100 FPS = 100% full circle) */}
+        <svg className="absolute w-16 h-16 pointer-events-none -rotate-90" viewBox="0 0 64 64">
+          {/* Subtle background track */}
+          <circle
+            cx="32"
+            cy="32"
+            r="26"
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.15)"
+            strokeWidth="1.5"
+            strokeDasharray="3 3"
+          />
+          {/* Real-time FPS progress ring */}
+          <circle
+            ref={fpsCircleRef}
+            cx="32"
+            cy="32"
+            r="26"
+            fill="none"
+            stroke="#00F2FF"
+            strokeWidth="2"
+            strokeDasharray="163.36"
+            strokeDashoffset="0"
+            strokeLinecap="round"
+          />
+        </svg>
+
+        {/* FPS Counter Numeric HUD Tag */}
+        <div className="absolute left-7 top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-[#00F2FF] bg-black/60 px-1.5 py-0.5 rounded border border-[#00F2FF]/40 pointer-events-none">
+          <span ref={fpsTextRef}>60</span>
+          <span className="text-[7px] text-white/50">FPS</span>
+        </div>
       </div>
 
-      {/* Inner Dot Wrapper (GSAP Translate ONLY, NO CSS TRANSITIONS) */}
+      {/* Inner Dot Wrapper */}
       <div ref={dotRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
-        {/* Visual Inner Dot (Tailwind Size/Scale/Color, WITH CSS TRANSITIONS) */}
         <div
           className={`absolute w-3 h-3 bg-white rounded-full transition-all duration-200
             ${isHovering ? 'scale-[0.5]' : 'scale-100'}
