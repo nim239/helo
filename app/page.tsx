@@ -50,8 +50,9 @@ function SectionContent({ section }: { section: any }) {
             {section.caption || "Motion Design / CGI / Direction"}
           </div>
           <h1 
+            ref={kineticTypography.ref}
             style={kineticTypography.style} 
-            className="text-6xl md:text-9xl font-black tracking-[-0.04em] leading-[0.9] text-white mb-2"
+            className="text-6xl md:text-9xl font-black tracking-[-0.04em] leading-[0.9] text-white mb-2 text-center"
           >
             Nim<span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">VFX</span>
           </h1>
@@ -72,7 +73,7 @@ function SectionContent({ section }: { section: any }) {
         {/* Top left counter & title */}
         <div className="absolute top-10 left-10 md:left-14 z-10">
           <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-2 uppercase">{section.counter || "02 / 06"}</div>
-          <h2 style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white">
+          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white text-center">
             Director&apos;s<br />Reel
           </h2>
         </div>
@@ -118,7 +119,7 @@ function SectionContent({ section }: { section: any }) {
       <div className="w-full h-full flex flex-col justify-center px-10 md:px-14 relative z-10">
         <div className="absolute top-10 left-10 md:left-14 z-10">
           <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-2 uppercase">{section.counter || "03 / 06"}</div>
-          <h2 style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white">
+          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white text-center">
             CGI<br />Showcase
           </h2>
         </div>
@@ -150,7 +151,7 @@ function SectionContent({ section }: { section: any }) {
       <div className="w-full h-full flex flex-col justify-center relative">
         <div className="absolute top-10 md:top-14 left-10 md:left-14 z-20 pointer-events-none mix-blend-difference">
           <div className="font-mono text-[11px] text-white/40 tracking-[0.4em] mb-1 uppercase">{section.counter}</div>
-          <h2 style={kineticTypography.style} className="text-3xl md:text-6xl font-black tracking-tighter text-white">
+          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-3xl md:text-6xl font-black tracking-tighter text-white text-center">
             {section.title}
           </h2>
         </div>
@@ -194,7 +195,7 @@ function SectionContent({ section }: { section: any }) {
             <div className="font-mono text-xs tracking-[0.5em] text-white/30 uppercase mb-4">
               Available for work — 2026
             </div>
-            <h2 style={kineticTypography.style} className="font-sans font-black text-5xl md:text-9xl leading-[0.9] tracking-tight text-white">
+            <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="font-sans font-black text-5xl md:text-9xl leading-[0.9] tracking-tight text-white text-center">
               Let&apos;s<br />
               <span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">
                 connect.
