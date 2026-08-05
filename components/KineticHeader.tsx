@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from 'react';
 import { useScrollStore } from '../lib/store/useScrollStore';
+import gsap from 'gsap';
 
 // Math lerp function
 const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + amt * end;
@@ -20,19 +21,18 @@ export function KineticHeader({ text1 = "CGI", text2 = "SHOWCASE", gradientOn = 
   const smoothV = useRef(0);
 
   useEffect(() => {
-    let animationFrameId: number;
-
-    const updateLoop = () => {
+    // Use GSAP ticker instead of raw rAF
+    // This runs in the SAME ticker as Lenis, so it never conflicts with snap
+    const ticker = () => {
       if (!word1Ref.current || !word2Ref.current) return;
 
       const state = useScrollStore.getState();
-      
-      // Raw velocity (noisy, jumpy)
-      const rawV = Math.min(Math.abs(state.velocity) * 0.15, 1.0); 
 
-      // DAMPING MAGIC
-      // smoothV chases rawV by 10% each frame (0.1)
-      smoothV.current = lerp(smoothV.current, rawV, 0.1); 
+      // Raw velocity (noisy, jumpy)
+      const rawV = Math.min(Math.abs(state.velocity) * 0.15, 1.0);
+
+      // DAMPING MAGIC — smoothV chases rawV by 10% each frame
+      smoothV.current = lerp(smoothV.current, rawV, 0.1);
 
       const vNorm = smoothV.current;
 
@@ -47,37 +47,32 @@ export function KineticHeader({ text1 = "CGI", text2 = "SHOWCASE", gradientOn = 
       // Inject directly into DOM bypassing React render overhead
       word1Ref.current.style.fontVariationSettings = `"wght" ${w1Weight}, "wdth" ${w1Stretch}`;
       word2Ref.current.style.fontVariationSettings = `"wght" ${w2Weight}, "wdth" ${w2Stretch}`;
-
-      animationFrameId = requestAnimationFrame(updateLoop);
     };
 
-    updateLoop();
+    gsap.ticker.add(ticker);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      gsap.ticker.remove(ticker);
     };
   }, []);
 
   const getGradientClass = (wordNumber: 1 | 2) => {
-    return gradientOn === wordNumber || gradientOn === 'both' 
+    return gradientOn === wordNumber || gradientOn === 'both'
       ? "bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent"
       : "text-white";
   };
 
   return (
-    // BÍ KÍP 3: THÊM CSS CHỐNG GIẬT LAYOUT
-    // - whitespace-nowrap: prevents wrapping when expanding
-    // - backface-hidden & transform-gpu: forces hardware acceleration layer
     <div className="flex w-full justify-between items-center overflow-hidden">
-      <h2 
-        ref={word1Ref} 
+      <h2
+        ref={word1Ref}
         className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu origin-left ${getGradientClass(1)}`}
         style={{ fontVariationSettings: '"wght" 400, "wdth" 100' }}
       >
         {text1}
       </h2>
-      <h2 
-        ref={word2Ref} 
+      <h2
+        ref={word2Ref}
         className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu origin-right text-right ${getGradientClass(2)}`}
         style={{ fontVariationSettings: '"wght" 400, "wdth" 100' }}
       >
