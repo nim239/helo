@@ -15,18 +15,19 @@ This specification defines the migration of rich UI layouts, section decorations
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Decorated Hero & Intro Section (Priority: P1)
+### User Story 1 - Decorated Hero & Intro Section with Kinetic NimVFX Headline (Priority: P1)
 
-As a visitor loading the exhibition site, I want the Intro section to display a high-impact kinetic hero layout featuring gradient typography ("N2 ANTIGRAVITY"), technical metadata tags ("N2 ANTIGRAVITY — 2026", "MOTION DESIGN / CGI / DIRECTION"), a scroll indicator, and animated 3D CSS Glass Cubes floating in space, so that I am immediately immersed in a high-end cyberpunk aesthetic.
+As a visitor loading the exhibition site, I want the Intro section to display a high-impact kinetic hero layout featuring the brand headline "NimVFX" (where "VFX" is bold with a 3-color gradient `#00F2FF` → `#FF007F` → `#0066FF`), technical metadata tags ("NimVFX — 2026", "MOTION DESIGN / CGI / DIRECTION"), a scroll indicator, and animated 3D CSS Glass Cubes floating in space, so that I am immediately immersed in a high-end cyberpunk aesthetic. Furthermore, all section titles MUST feature dynamic weight expansion / distortion driven by scroll velocity.
 
-**Why this priority**: The Intro section is the primary entry point and sets the visual benchmark for the entire exhibition experience.
+**Why this priority**: The Intro section is the primary entry point and sets the brand identity and kinetic typography benchmark for the entire exhibition experience.
 
-**Independent Test**: Can be tested by loading the home screen after completing the preloader and verifying that the Intro section renders the gradient "ANTI" headline, 3D rotating glass cube, metadata overlays, and scroll line indicator without layout shifting.
+**Independent Test**: Can be tested by loading the home screen after completing the preloader and verifying that the Intro section renders the gradient "VFX" headline, kinetic scroll velocity weight distortion, 3D rotating glass cube, metadata overlays, and scroll line indicator without layout shifting.
 
 **Acceptance Scenarios**:
-1. **Given** the preloader has finished, **When** viewing Section 1 (Intro), **Then** the primary headline "N2 ANTIGRAVITY" renders with gradient accent on "ANTI" (`#00F2FF` → `#FF007F` → `#0066FF`).
-2. **Given** Section 1 is active, **When** inspecting the right side of the screen, **Then** a 3D rotating glass cube with glassmorphism gradients and inset cyan glows renders floating smoothly.
-3. **Given** Section 1 is active, **When** inspecting top-left and bottom-center, **Then** metadata tag "N2 ANTIGRAVITY — 2026" and vertical animated scroll bar render properly.
+1. **Given** the preloader has finished, **When** viewing Section 1 (Intro), **Then** the primary headline "NimVFX" renders with gradient accent on bold "VFX" (`#00F2FF` → `#FF007F` → `#0066FF`).
+2. **Given** any section title on the page, **When** the user scrolls rapidly, **Then** typography dynamically expands/thickens in weight and horizontal scale proportional to absolute scroll velocity (`useScrollStore.getState().velocity`).
+3. **Given** Section 1 is active, **When** inspecting the right side of the screen, **Then** a 3D rotating glass cube with glassmorphism gradients and inset cyan glows renders floating smoothly.
+4. **Given** Section 1 is active, **When** inspecting top-left and bottom-center, **Then** metadata tag "NimVFX — 2026" and vertical animated scroll bar render properly.
 
 ---
 
@@ -53,30 +54,32 @@ As a site visitor, I want Section 4 ("Motion Work") and Section 5 ("Commercials"
 **Independent Test**: Can be tested by scrolling to Section 4 and 5 and verifying continuous leftward and rightward marquee motion with populated cards.
 
 **Acceptance Scenarios**:
-1. **Given** Section 4 ("Motion Work"), **When** rendered, **Then** cards scroll leftward continuously with neon accent cards for Nike x N2, Netflix, and Coachella.
+1. **Given** Section 4 ("Motion Work"), **When** rendered, **Then** cards scroll leftward continuously with neon accent cards for Nike x NimVFX, Netflix, and Coachella.
 2. **Given** Section 5 ("Commercials"), **When** rendered, **Then** cards scroll rightward continuously with neon accent cards for Apple, Samsung, and Adidas.
-3. **Given** both marquee sections, **When** text overlays are viewed over passing cards, **Then** section titles use `mix-blend-difference` to maintain contrast.
+3. **Given** both marquee sections, **When** text overlays are viewed over passing cards, **Then** section titles use `mix-blend-difference` to maintain contrast and apply velocity-based weight expansion during scrolling.
 
 ---
 
-### User Story 4 - Interactive Terminal Contact Section (Priority: P3)
+### User Story 4 - Interactive Contact Section with Particle Canvas & Magnetic Button (Priority: P3)
 
-As a potential client wanting to get in touch, I want Section 6 ("Contact") to display a high-tech terminal panel ("N2-ANTIGRAVITY TERMINAL v2.6.0") with interactive hoverable link prompts (Email, Vimeo, Instagram, LinkedIn), a blinking cursor, and availability indicator.
+As a potential client wanting to get in touch, I want Section 6 ("Contact") to incorporate the full standalone design from `contact/src/ContactPage.tsx`, featuring a 3-color gradient headline "Let's connect.", an interactive magnetic button with rotating inner rings and cursor glow, an ambient 60-particle canvas field with distance line connections, a mouse-following 600px radial glow, a massive stroked background letterform "NIM", and top/bottom HUD bars with a live GMT+7 clock.
 
-**Why this priority**: Converts visitor interest into contact actions.
+**Why this priority**: Delivers a memorable, interactive finale that converts visitor interest into contact actions.
 
-**Independent Test**: Can be tested by navigating to Section 6, hovering over contact links, and verifying color highlights and cursor animations.
+**Independent Test**: Can be tested by navigating to Section 6, moving the mouse over the canvas and magnetic button, and verifying particle connections, magnetic button attraction, and live clock updates.
 
 **Acceptance Scenarios**:
-1. **Given** Section 6 ("Contact"), **When** rendered, **Then** a terminal window displays title "N2-ANTIGRAVITY TERMINAL v2.6.0", interactive contact prompts with accent colors (`#00F2FF`, `#FF007F`, `#00FF88`, `#0066FF`), and a blinking terminal prompt cursor.
-2. **Given** a user hovers over any contact link, **When** hovered, **Then** the link smoothly transitions color to match its designated accent color.
+1. **Given** Section 6 ("Contact"), **When** rendered, **Then** an interactive `MagneticButton` floats in the center with 2 concentric rotating inner rings and cursor-tracking spring physics.
+2. **Given** Section 6 is active, **When** the cursor moves across the viewport, **Then** an ambient 60-particle canvas field draws connecting light segments between nearby particles (< 120px) and a 600px radial follow-glow moves with the mouse.
+3. **Given** Section 6 is active, **When** inspecting the background, **Then** a massive stroked background letterform "NIM" (`clamp(320px, 40vw, 560px)`) renders with 1px white outline opacity (`0.04`).
+4. **Given** Section 6 is active, **When** inspecting top and bottom HUD bars, **Then** a real-time GMT+7 clock updates every second alongside copyright and metadata strings.
 
 ---
 
 ### Edge Cases
 
 - **Small Viewport / Mobile Screens**: How does the asymmetric 6-card CGI bento grid handle narrow widths? (MUST collapse into a single-column or scrollable stack on viewports < 768px).
-- **Reduced Motion Settings**: How does the 3D Glass Cube behave if CSS animations are disabled? (Should remain gracefully static without breaking layout).
+- **Reduced Motion Settings**: How does the 3D Glass Cube and Particle Field behave if CSS animations are disabled? (Should remain gracefully static without breaking layout).
 - **Missing Asset / Video Failures**: How do card placeholders behave if media fails to load? (Falls back smoothly to procedural noise + chromatic aberration SVG filter card).
 
 ---
@@ -85,14 +88,15 @@ As a potential client wanting to get in touch, I want Section 6 ("Contact") to d
 
 ### Functional Requirements
 
-- **FR-001**: System MUST integrate the Section 1 (Intro) visual layout into `components/Section.tsx` or dedicated sub-components, including headline gradient styling, metadata tags, and float indicators.
-- **FR-002**: System MUST port the 3D CSS `GlassCube` component into a reusable Next.js component (`components/GlassCube.tsx`) with zero external 3D engine overhead.
-- **FR-003**: System MUST implement a reusable `CGIPlaceholder` / `NeonCard` component (`components/NeonCard.tsx`) featuring SVG noise filters, chromatic aberration line overlays, scanlines, glow orbs, and corner brackets.
-- **FR-004**: System MUST update Section 2 ("Director's Reel") to embed the 16:9 cinematic container with bottom metadata row and play overlay.
-- **FR-005**: System MUST update Section 3 ("CGI Showcase") to render the 5-item asymmetric bento grid layout with subtle rotational transforms and technical label tags.
-- **FR-006**: System MUST update Section 4 ("Motion Work") and Section 5 ("Commercials") marquee cards in `data/sections.json` and `HorizontalMarquee.tsx` to render rich `NeonCard` items with client badges.
-- **FR-007**: System MUST update Section 6 ("Contact") to render the interactive terminal UI panel with hoverable contact prompts, blinking prompt cursor, and background orbital cube element.
-- **FR-008**: System MUST preserve all existing Lenis scroll snapping, infinite loop buffer clones, Kinetic Strings Canvas background, and HackerMode HUD triggers.
+- **FR-001**: System MUST update Section 1 (Intro) hero headline to "NimVFX" with bold gradient styling on "VFX" (`#00F2FF` → `#FF007F` → `#0066FF`).
+- **FR-002**: System MUST implement a scroll-velocity hook/utility that applies dynamic font weight expansion and horizontal scale distortion (`font-variation-settings` / `transform: scaleX(...)`) to all section headlines based on `useScrollStore.getState().velocity`.
+- **FR-003**: System MUST port the 3D CSS `GlassCube` component into a reusable Next.js component (`components/GlassCube.tsx`) with zero external 3D engine overhead.
+- **FR-004**: System MUST implement a reusable `CGIPlaceholder` / `NeonCard` component (`components/NeonCard.tsx`) featuring SVG noise filters, chromatic aberration line overlays, scanlines, glow orbs, and corner brackets.
+- **FR-005**: System MUST update Section 2 ("Director's Reel") to embed the 16:9 cinematic container with bottom metadata row and play overlay.
+- **FR-006**: System MUST update Section 3 ("CGI Showcase") to render the 5-item asymmetric bento grid layout with subtle rotational transforms and technical label tags.
+- **FR-007**: System MUST update Section 4 ("Motion Work") and Section 5 ("Commercials") marquee cards in `data/sections.json` and `HorizontalMarquee.tsx` to render rich `NeonCard` items with client badges.
+- **FR-008**: System MUST integrate the full `ContactPage.tsx` experience into Section 6 ("Contact"), including `MagneticButton`, `ParticleField` canvas, mouse follow-glow, stroked "NIM" background letterform, and GMT+7 live clock top/bottom bars.
+- **FR-009**: System MUST preserve all existing Lenis scroll snapping, infinite loop buffer clones, Kinetic Strings Canvas background, and HackerMode HUD triggers.
 
 ---
 
@@ -100,6 +104,7 @@ As a potential client wanting to get in touch, I want Section 6 ("Contact") to d
 
 - **Section Layout Configuration**: Extended JSON data model in `data/sections.json` supporting metadata tags, bento item arrays, client badges, and accent color definitions.
 - **Neon Card Props**: Data structure containing label, accent color (`#00F2FF`, `#FF007F`, `#0066FF`, `#00FF88`), media src/poster, and rotation angle.
+- **Kinetic Typography State**: Scroll velocity metric (`Math.abs(velocity)`) controlling font-weight/scale distortion factors.
 
 ---
 
@@ -107,9 +112,9 @@ As a potential client wanting to get in touch, I want Section 6 ("Contact") to d
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of visual section decorations from `layout_figmamakeAI` (Intro hero text, 3D Glass Cube, Reel cinematic frame, CGI Bento grid, Marquee cards, Contact Terminal) are fully integrated into the primary application.
+- **SC-001**: 100% of visual section decorations from `layout_figmamakeAI` and `contact/src/ContactPage.tsx` (NimVFX headline, velocity typography stretch, 3D Glass Cube, Reel frame, CGI Bento grid, Marquee cards, Magnetic Contact Button, Particle Canvas) are fully integrated into the primary application.
 - **SC-002**: Application maintains a consistent **60+ FPS** rendering speed during scrolling with zero layout jank or re-render stutters.
-- **SC-003**: All interactive elements (play button, terminal links, hover effects) are responsive to touch and pointer input within < 50ms.
+- **SC-003**: All interactive elements (magnetic button, play icon, terminal/contact links, hover effects) respond to touch and pointer input within < 50ms.
 - **SC-004**: Layout seamlessly adapts across screen sizes from 360px mobile viewports up to 4K desktop displays.
 
 ---
