@@ -97,6 +97,7 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
               src={item.src}
               poster={item.poster}
               youtubeId={item.youtubeId}
+              disableYoutubeIframe={true}
               isNDA={item.isNDA}
               frameId={item.frameId}
               artist={item.artist}

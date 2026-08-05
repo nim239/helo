@@ -1,18 +1,41 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface VideoBackgroundProps {
   youtubeId: string;
   overlayOpacity?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function VideoBackground({
   youtubeId,
   overlayOpacity = "bg-black/60",
   className = "",
+  disabled = false,
 }: VideoBackgroundProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (disabled || !containerRef.current) return;
+
+    // Viewport Intersection Observer: Only load iframe when visible
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [disabled]);
+
   if (!youtubeId) return null;
 
   // Embed query params to neutralize YouTube UI
@@ -31,20 +54,33 @@ export function VideoBackground({
   }).toString();
 
   const embedUrl = `https://www.youtube.com/embed/${youtubeId}?${embedParams}`;
+  const thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
 
   return (
     <div
+      ref={containerRef}
       className={`relative w-full h-full overflow-hidden pointer-events-none select-none ${className}`}
     >
-      {/* Scaled iFrame Container (125% scale to crop YouTube watermark & controls) */}
-      <div className="absolute -top-[12.5%] -left-[12.5%] w-[125%] h-[125%] pointer-events-none">
-        <iframe
-          src={embedUrl}
-          title="Exhibition Video Stream"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          className="w-full h-full border-0 pointer-events-none scale-125 object-cover"
-        />
-      </div>
+      {/* High-res Thumbnail Fallback (Lightweight GPU cost) */}
+      <img
+        src={thumbnailUrl}
+        alt="Video Stream Thumbnail"
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+          isVisible && !disabled ? "opacity-30" : "opacity-80"
+        }`}
+      />
+
+      {/* Scaled iFrame Container — ONLY mounted when in viewport */}
+      {isVisible && !disabled && (
+        <div className="absolute -top-[12.5%] -left-[12.5%] w-[125%] h-[125%] pointer-events-none">
+          <iframe
+            src={embedUrl}
+            title="Exhibition Video Stream"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            className="w-full h-full border-0 pointer-events-none scale-125 object-cover opacity-90 transition-opacity duration-500"
+          />
+        </div>
+      )}
 
       {/* Dark Overlay with Multiply Blend Mode to hide compression artifacts */}
       <div

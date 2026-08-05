@@ -13,6 +13,7 @@ export interface NeonCardProps {
   src?: string;
   poster?: string;
   youtubeId?: string;
+  disableYoutubeIframe?: boolean;
   isNDA?: boolean;
   frameId?: number;
   artist?: string;
@@ -29,6 +30,7 @@ export function NeonCard({
   src,
   poster,
   youtubeId,
+  disableYoutubeIframe = false,
   isNDA = false,
   frameId,
   artist,
@@ -67,7 +69,7 @@ export function NeonCard({
     >
       {/* YouTube Background Stream */}
       {youtubeId ? (
-        <VideoBackground youtubeId={youtubeId} />
+        <VideoBackground youtubeId={youtubeId} disabled={disableYoutubeIframe} />
       ) : src ? (
         <video
           src={src}
