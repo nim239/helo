@@ -147,10 +147,11 @@ export function CustomCursor() {
         } else {
           fpsCircleRef.current.style.stroke = "url(#cursorFpsGradient)"; // Brand gradient
         }
-        // Update FPS HUD Text DOM directly
-        if (fpsTextRef.current) {
-          fpsTextRef.current.textContent = `${Math.round(smoothedFps)}`;
-        }
+      }
+
+      // Update FPS HUD Text DOM directly
+      if (fpsTextRef.current) {
+        fpsTextRef.current.textContent = `${Math.round(smoothedFps)}`;
       }
 
       // ── Pointer Inertia & Magnet Physics ──
@@ -165,23 +166,6 @@ export function CustomCursor() {
         };
         targetX = magnetPos.x;
         targetY = magnetPos.y;
-      } else if (stateRef.current.isIdle && useScrollStore.getState().isIntroComplete) {
-        let spriteX = window.innerWidth / 2;
-        let spriteY = window.innerHeight / 2;
-        const spriteEl = document.getElementById('cube-sprite-wrapper');
-
-        if (spriteEl) {
-          const rect = spriteEl.getBoundingClientRect();
-          spriteX = rect.left + rect.width / 2;
-          spriteY = rect.top + rect.height / 2;
-        }
-
-        idleAngle += 0.02;
-        const breatheX = Math.cos(idleAngle) * 20;
-        const breatheY = Math.sin(idleAngle * 1.5) * 15;
-
-        targetX = spriteX + breatheX;
-        targetY = spriteY + breatheY;
       }
 
       const dt = gsap.ticker.deltaRatio();
@@ -230,7 +214,7 @@ export function CustomCursor() {
   if (!isFinePointer) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden mix-blend-difference hidden md:block">
+    <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden hidden md:block">
       {/* Outer Cursor Wrapper - Replaced 2nd ring with unified FPS Dash Ring */}
       <div ref={cursorRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
         {/* Real-Time FPS SVG Progress Ring (Single primary outer cursor ring) */}

@@ -97,7 +97,7 @@ export function MediaVideo({ id, src, poster, className = "" }: MediaVideoProps)
       />
       
       {/* Text overlay for demonstration purposes */}
-      <div className="absolute bottom-4 left-4 z-10 pointer-events-none mix-blend-difference">
+      <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
         <span className="text-white/30 text-xs font-mono uppercase tracking-widest">{id}</span>
       </div>
     </div>

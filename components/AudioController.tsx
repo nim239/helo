@@ -123,47 +123,43 @@ export function AudioController() {
   useEffect(() => {
     if (!audioEnabled) return;
 
+    let frameCount = 0;
+
     const ticker = () => {
       const ctx = ctxRef.current;
       const oscs = oscillatorsRef.current;
       const gains = gainNodesRef.current;
       if (!ctx || oscs.length === 0) return;
 
-      // Time-based progress through the illusion cycle (0 → 1, loops)
-      const elapsed = ctx.currentTime - startTimeRef.current;
-      const cycleProgress = (elapsed % CYCLE_DURATION) / CYCLE_DURATION; // 0 → 1
-
-      // Scroll velocity → filter and gain modulation
+      // Throttle voice freq mutations when idle: only update every 2nd frame (≈ 80Hz on 165Hz display)
       const state = useScrollStore.getState();
       const rawV = Math.min(Math.abs(state.velocity) * 0.1, 1.0);
       smoothVRef.current = lerp(smoothVRef.current, rawV, DAMPING);
       const vNorm = smoothVRef.current;
 
-      // Modulate filter cutoff: idle = dark (200Hz), fast scroll = bright (2400Hz)
+      frameCount++;
+      const isIdle = vNorm < 0.02;
+
+      // Always modulate filter & master gain (cheap AudioParam set)
       if (filterRef.current) {
         filterRef.current.frequency.value = lerp(200, 2400, vNorm);
       }
-
-      // Modulate master volume: idle = whisper, scroll = full presence
       if (masterGainRef.current) {
         masterGainRef.current.gain.value = lerp(0.12, 0.75, vNorm);
       }
 
-      // ── SHEPARD ILLUSION: SHIFT ALL VOICE FREQUENCIES ──
-      // Each voice pitches up smoothly within its octave window.
-      // As it exits the top of its octave, the bell-curve gain fades it
-      // to silence while the next lower voice fades back in — creating
-      // the perception of infinite ascent.
-      for (let i = 0; i < oscs.length; i++) {
-        // Each voice has a phase offset equal to its octave position
-        const voicePhase = (cycleProgress + i / NUM_VOICES) % 1.0;
+      // Skip voice pitch recalc on idle every other frame (saves 8× Math.pow calls)
+      if (isIdle && frameCount % 2 !== 0) return;
 
-        // Frequency: rises from BASE_FREQ*2^i to BASE_FREQ*2^(i+1) over one cycle
+      // Time-based progress through the illusion cycle (0 → 1, loops)
+      const elapsed = ctx.currentTime - startTimeRef.current;
+      const cycleProgress = (elapsed % CYCLE_DURATION) / CYCLE_DURATION;
+
+      for (let i = 0; i < oscs.length; i++) {
+        const voicePhase = (cycleProgress + i / NUM_VOICES) % 1.0;
         const freq = BASE_FREQ * Math.pow(2, i + voicePhase);
         oscs[i].frequency.value = freq;
 
-        // Bell-curve amplitude re-applied at real-time phase:
-        // Fades out at top and bottom of each voice's range
         const bellAmp = Math.exp(-Math.pow((voicePhase - 0.5) * 3.2, 2));
         gains[i].gain.value = bellAmp * 0.14;
       }

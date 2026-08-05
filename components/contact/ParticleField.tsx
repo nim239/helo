@@ -21,7 +21,7 @@ export function ParticleField() {
     };
     window.addEventListener("resize", onResize);
 
-    const count = 50;
+    const count = 35; // Optimized particle count for 165FPS
     const particles = Array.from({ length: count }, () => ({
       x: Math.random() * W,
       y: Math.random() * H,
@@ -32,8 +32,12 @@ export function ParticleField() {
       alpha: Math.random() * 0.5 + 0.2,
     }));
 
-    let rafId: number;
+    let rafId: number | null = null;
+    let isVisible = false;
+
     const draw = () => {
+      if (!isVisible) return;
+
       ctx.clearRect(0, 0, W, H);
 
       for (const p of particles) {
@@ -58,12 +62,12 @@ export function ParticleField() {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 110) {
+          if (dist < 100) {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
             ctx.strokeStyle = particles[i].color;
-            ctx.globalAlpha = (1 - dist / 110) * 0.1;
+            ctx.globalAlpha = (1 - dist / 100) * 0.1;
             ctx.lineWidth = 0.6;
             ctx.stroke();
           }
@@ -73,10 +77,31 @@ export function ParticleField() {
       rafId = requestAnimationFrame(draw);
     };
 
-    draw();
+    // Viewport Intersection Observer: Only run rAF when section is visible
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) {
+          if (!rafId) {
+            rafId = requestAnimationFrame(draw);
+          }
+        } else {
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    observer.observe(canvas);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      observer.disconnect();
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
       window.removeEventListener("resize", onResize);
     };
   }, []);

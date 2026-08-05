@@ -11,6 +11,7 @@ export interface NeonCardProps {
   height?: string | number;
   rotation?: number;
   src?: string;
+  imageSrc?: string;
   poster?: string;
   youtubeId?: string;
   disableYoutubeIframe?: boolean;
@@ -28,6 +29,7 @@ export function NeonCard({
   height = "100%",
   rotation = 0,
   src,
+  imageSrc,
   poster,
   youtubeId,
   disableYoutubeIframe = false,
@@ -50,6 +52,9 @@ export function NeonCard({
     );
   }
 
+  const isImage = imageSrc || (src && /\.(webp|jpg|jpeg|png|gif|svg)(\?.*)?$/i.test(src));
+  const activeImageSrc = imageSrc || (isImage ? src : undefined);
+
   const gradients = [
     `radial-gradient(ellipse at 30% 40%, ${accent}22 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, #FF007F18 0%, transparent 60%)`,
     `radial-gradient(ellipse at 60% 30%, #FF007F22 0%, transparent 60%), radial-gradient(ellipse at 40% 70%, #00FF8818 0%, transparent 60%)`,
@@ -67,9 +72,17 @@ export function NeonCard({
         boxShadow: `0 0 20px ${accent}15`,
       }}
     >
-      {/* YouTube Background Stream */}
-      {youtubeId ? (
-        <VideoBackground youtubeId={youtubeId} disabled={disableYoutubeIframe} />
+      {/* 1. High-Performance Static WebP/Image Render (0ms GPU Video Decoder Load) */}
+      {activeImageSrc ? (
+        <img
+          src={activeImageSrc}
+          alt={label || "Portfolio artwork"}
+          className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+          loading="eager"
+          decoding="async"
+        />
+      ) : youtubeId ? (
+        <VideoBackground youtubeId={youtubeId} disabled={disableYoutubeIframe} className="absolute inset-0" />
       ) : src ? (
         <video
           src={src}
@@ -94,11 +107,13 @@ export function NeonCard({
         <div className="absolute top-[60%] left-0 right-0 h-[1px] bg-[#00F2FF] blur-[1px] translate-x-[1px]" />
       </div>
 
-      {/* Glow Center Orb */}
+      {/* Hardware-Accelerated Glow Center Orb */}
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full blur-[14px] animate-pulse pointer-events-none"
         style={{
           background: `radial-gradient(circle, ${accent}40 0%, transparent 70%)`,
+          willChange: "opacity, transform",
+          transform: "translate(-50%, -50%) translateZ(0)",
         }}
       />
 

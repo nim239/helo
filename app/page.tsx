@@ -6,15 +6,16 @@ import catalogData from '../data/catalog.json';
 import { Section } from '../components/Section';
 import { SpriteAnimation } from '../components/SpriteAnimation';
 import { HorizontalMarquee } from '../components/HorizontalMarquee';
-import { ParallaxSides } from '../components/ParallaxSides';
 import { BackgroundGrid } from '../components/BackgroundGrid';
 import { EnterOverlay } from '../components/EnterOverlay';
 import { AudioController } from '../components/AudioController';
 import { CustomCursor } from '../components/CustomCursor';
 import { CurtainsTransition } from '../components/CurtainsTransition';
 import { NeonCard } from '../components/NeonCard';
+import { VideoBackground } from '../components/VideoBackground';
 import { KineticHeader } from '../components/KineticHeader';
 import { MagneticButton } from '../components/contact/MagneticButton';
+import { MobileFpsOverlay } from '../components/MobileFpsOverlay';
 import { ParticleField } from '../components/contact/ParticleField';
 import { useKineticTypography } from '../lib/hooks/useKineticTypography';
 import { useExhibitionScroll } from '../lib/hooks/useExhibitionScroll';
@@ -66,32 +67,24 @@ function SectionContent({ section }: { section: any }) {
 
   if (section.id === 'reel') {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center relative px-8 z-10">
+      <div className="w-full h-full flex flex-col items-center justify-center relative z-10 overflow-hidden">
+        {/* 100vh Background Video (100% opacity) */}
+        <VideoBackground
+          youtubeId="_HZT8r1d7OU"
+          disabled={false}
+          className="absolute inset-0 w-full h-full opacity-100 z-0 pointer-events-none"
+        />
+
         {/* Top center counter & title */}
         <div className="absolute top-10 left-0 flex flex-col items-center z-10 w-full pointer-events-none px-10 md:px-14">
           <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-4 uppercase">{section.counter || "02 / 06"}</div>
           <KineticHeader text1="DIRECTOR'S" text2="REEL" />
         </div>
 
-        {/* 16:9 Cinematic Frame with YouTube Background Stream */}
-        <div className="w-[85vw] max-w-4xl aspectRatio-[16/9] relative z-10 my-auto">
-          <NeonCard 
-            width="100%" 
-            height="100%" 
-            accent="#00F2FF" 
-            label="FRAME 01 — TUNG CÁNH — HOÀNG ROB" 
-            youtubeId="k4LPUgM94U8"
-          />
-          {/* Play Overlay */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-[#00F2FF]/60 flex items-center justify-center cursor-pointer bg-black/60 backdrop-blur-sm shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-transform duration-300 hover:scale-110 pointer-events-auto z-20">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M6 4L16 10L6 16V4Z" fill="#00F2FF" />
-            </svg>
-          </div>
-        </div>
+
 
         {/* Bottom meta row */}
-        <div className="absolute bottom-10 left-10 md:left-14 right-10 md:right-14 flex justify-between font-mono text-[11px] text-white/30 tracking-widest uppercase">
+        <div className="absolute bottom-10 left-10 md:left-14 right-10 md:right-14 flex justify-between font-mono text-[11px] text-white/30 tracking-widest uppercase z-10">
           <span>DURATION: {section.meta?.duration || "03:42"}</span>
           <span>FORMAT: {section.meta?.format || "4K UHD / PRORES 4444"}</span>
           <span>CODEC: {section.meta?.codec || "H.265"}</span>
@@ -116,18 +109,18 @@ function SectionContent({ section }: { section: any }) {
           <KineticHeader text1="CGI" text2="SHOWCASE" />
         </div>
 
-        {/* Bento Grid with YouTube Embeds and NDA Placeholders */}
-        <div className="grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-4 h-[55dvh] max-w-6xl w-full mx-auto mt-24">
-          <div className="md:row-span-2">
+        {/* Bento Grid: 2 Square Cards per row on Mobile, 3 cols 2 rows on Desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-3 md:grid-rows-2 gap-3 sm:gap-4 max-w-6xl w-full mx-auto mt-20 md:mt-24">
+          <div className="col-span-2 md:col-span-1 md:row-span-2 aspect-video md:aspect-auto md:h-full">
             <NeonCard 
               label="FRAME 01 — TUNG CÁNH" 
               accent="#00F2FF" 
               rotation={-0.5} 
-              youtubeId="k4LPUgM94U8" 
+              imageSrc="/WEBP/OOH-LED-VISUAL (6).webp" 
               index={0} 
             />
           </div>
-          <div>
+          <div className="aspect-square md:aspect-auto md:h-full">
             <NeonCard 
               isNDA={true}
               frameId={2}
@@ -139,35 +132,35 @@ function SectionContent({ section }: { section: any }) {
               index={1} 
             />
           </div>
-          <div>
+          <div className="aspect-square md:aspect-auto md:h-full">
             <NeonCard 
               label="FRAME 03 — TVC DƯỢC HOA LINH" 
               techTag="TVC AI Material Generative Render"
               accent="#00FF88" 
               rotation={-0.4} 
-              youtubeId="ZkR-JyxodD0"
+              imageSrc="/WEBP/VFX-CGI (4).webp"
               index={2} 
             />
           </div>
-          <div>
+          <div className="aspect-square md:aspect-auto md:h-full">
             <NeonCard 
               label="FRAME 04 — TỰ NGUYỆN" 
               techTag="Volumetric Laser Mapping"
               accent="#0066FF" 
               rotation={0.2} 
-              youtubeId="iFN6DvXk04Y"
+              imageSrc="/WEBP/VFX-CGI (5).webp"
               index={3} 
             />
           </div>
-          <div>
+          <div className="aspect-square md:aspect-auto md:h-full col-span-2 md:col-span-1">
             <NeonCard 
-              isNDA={true}
-              frameId={16}
+              isNDA={false}
               label="CORPORATE YEAR END PARTY 2025"
-              artist="NDA Confidential"
+              artist="NamVFX Studio"
               techTag="Unreal Engine 5 Stage Craft"
               accent="#FF007F" 
               rotation={-0.3} 
+              imageSrc="/WEBP/3D (5).webp"
               index={4} 
             />
           </div>
@@ -179,7 +172,7 @@ function SectionContent({ section }: { section: any }) {
   if (section.layout === 'horizontal-marquee') {
     return (
       <div className="w-full h-full flex flex-col justify-center relative">
-        <div className="absolute top-10 md:top-14 left-0 flex flex-col items-center z-20 pointer-events-none mix-blend-difference w-full px-10 md:px-14">
+        <div className="absolute top-10 md:top-14 left-0 flex flex-col items-center z-20 pointer-events-none w-full px-10 md:px-14">
           <div className="font-mono text-[11px] text-white/40 tracking-[0.4em] mb-4 uppercase">{section.counter}</div>
           <KineticHeader 
             text1={section.title === 'Motion Work' ? 'MOTION' : 'COMMER'} 
@@ -293,11 +286,11 @@ export default function Exhibition() {
     <main className="relative w-full bg-black text-white selection:bg-white/20 overflow-hidden">
       <BackgroundGrid />
       <CustomCursor />
+      <MobileFpsOverlay />
       <CurtainsTransition />
       <AudioController />
 
       <EnterOverlay />
-      <ParallaxSides />
       <SpriteAnimation startIntro={hasEntered} />
       
       {exhibitionBuffer.map((section) => (

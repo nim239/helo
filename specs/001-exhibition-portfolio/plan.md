@@ -54,7 +54,7 @@ This plan outlines the architecture and implementation details for the 5 Phase 2
 - Full-screen pointer-events-none layer powered by DOM `div` elements and GSAP `quickSetter`.
 - Renders outer inertia ring and inner instant dot.
 - Implements Mobile Extermination (aborts execution on touch devices).
-- Implements Idle Magnet System: drifts toward screen center (3D Cubi) when inactive for 2.5s.
+- Implements Idle Magnet System: cursor breathes/floats in place when inactive for 2.5s.
 
 ### [NEW] `components/CurtainsTransition.tsx`
 - Renders dual-leaf curtain elements that split open over 5.0s (`power4.inOut`) when navigating via deep links.

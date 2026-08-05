@@ -38,33 +38,36 @@
         "label": "GLASS FLUID SIM — C4D",
         "accent": "#00F2FF",
         "rotation": -0.5,
-        "mediaType": "video",
-        "src": "https://cdn.namdeptrai.com/videos/work-a.webm",
-        "poster": "/videos/work-a-poster.webp"
+        "imageSrc": "/WEBP/3D (1).webp"
       },
       {
         "id": "cgi-02",
         "label": "NEON GEOMETRY — OCTANE",
         "accent": "#FF007F",
-        "rotation": 0.3
+        "rotation": 0.3,
+        "isNDA": true,
+        "frameId": 2
       },
       {
         "id": "cgi-03",
         "label": "PARTICLE STORM — HOUDINI",
         "accent": "#00FF88",
-        "rotation": -0.4
+        "rotation": -0.4,
+        "imageSrc": "/WEBP/VFX-CGI (1).webp"
       },
       {
         "id": "cgi-04",
         "label": "ABSTRACT ARCH — BLENDER",
         "accent": "#0066FF",
-        "rotation": 0.2
+        "rotation": 0.2,
+        "imageSrc": "/WEBP/VFX-CGI (2).webp"
       },
       {
         "id": "cgi-05",
         "label": "DATA VIZ — AE + WEBGL",
         "accent": "#FF007F",
-        "rotation": -0.3
+        "rotation": -0.3,
+        "imageSrc": "/WEBP/3D (2).webp"
       }
     ]
   },
@@ -85,7 +88,7 @@
         "frameId": 5,
         "label": "FRAME 05 — I WILL CALL IT LOVE — HÀ LÊ",
         "accent": "#00F2FF",
-        "youtubeId": "HBBrgEnOBUc",
+        "imageSrc": "/WEBP/OOH-LED-VISUAL (1).webp",
         "techTag": "Spatial Surround DMX Sync"
       },
       {
@@ -93,15 +96,16 @@
         "frameId": 6,
         "label": "FRAME 06 — WALK WALK — HỒ NGỌC HÀ",
         "accent": "#FF007F",
-        "youtubeId": "I-oFwhqgHCI",
+        "imageSrc": "/WEBP/OOH-LED-VISUAL (2).webp",
         "techTag": "60FPS Render Master Core"
       },
       {
         "id": "frame-17",
         "frameId": 17,
-        "isNDA": true,
+        "isNDA": false,
         "label": "VIETNAM BRAND ACTIVATION",
-        "artist": "NDA Confidential",
+        "artist": "NamVFX Studio",
+        "imageSrc": "/WEBP/2D (1).webp",
         "techTag": "HDR10+ Black Precision OLED",
         "accent": "#00FF88"
       },
@@ -110,15 +114,16 @@
         "frameId": 7,
         "label": "FRAME 07 — CÔ ĐƠN TRÊN SOFA — HỒ NGỌC HÀ",
         "accent": "#0066FF",
-        "youtubeId": "TRdQ4xATCRs",
+        "imageSrc": "/WEBP/OOH-LED-VISUAL (3).webp",
         "techTag": "Kinetic DMX Motor Array"
       },
       {
         "id": "frame-18",
         "frameId": 18,
-        "isNDA": true,
+        "isNDA": false,
         "label": "LOCAL EDM FESTIVAL",
-        "artist": "NDA Confidential",
+        "artist": "NamVFX Studio",
+        "imageSrc": "/WEBP/2D (2).webp",
         "techTag": "Volumetric Fog & Light Rig",
         "accent": "#FF007F"
       }
@@ -141,7 +146,7 @@
         "frameId": 8,
         "label": "FRAME 08 — NẤU ĂN CHO EM — ĐEN VÂU",
         "accent": "#00FF88",
-        "youtubeId": "Usx6j7Ap1kE",
+        "imageSrc": "/WEBP/OOH-LED-VISUAL (4).webp",
         "techTag": "Realtime Particle Shader"
       },
       {
@@ -149,7 +154,7 @@
         "frameId": 9,
         "label": "FRAME 09 — 1 2 STEPS — AI MOTION LAB",
         "accent": "#0066FF",
-        "youtubeId": "Qev2pw4tL_U",
+        "imageSrc": "/WEBP/3D (3).webp",
         "techTag": "Sử dụng AI Material Shader"
       },
       {
@@ -166,15 +171,16 @@
         "frameId": 10,
         "label": "FRAME 10 — MOON CHASER — AI MOTION LAB",
         "accent": "#00F2FF",
-        "youtubeId": "fbc2FHHZqIc",
+        "imageSrc": "/WEBP/3D (4).webp",
         "techTag": "60FPS AI Material Render"
       },
       {
         "id": "frame-20",
         "frameId": 20,
-        "isNDA": true,
+        "isNDA": false,
         "label": "LỄ TRAO GIẢI DOANH NHÂN",
-        "artist": "NDA Confidential",
+        "artist": "NamVFX Studio",
+        "imageSrc": "/WEBP/VFX-CGI (3).webp",
         "techTag": "3D Kinetic Rigging Core",
         "accent": "#00FF88"
       }

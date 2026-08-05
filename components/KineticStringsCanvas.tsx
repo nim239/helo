@@ -11,17 +11,103 @@ interface Particle {
   stringIndex: number;
 }
 
+const SCALE = 0.25;
+
 export function KineticStringsCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // T012: OffscreenCanvas detection
+    const supportsOffscreen =
+      typeof OffscreenCanvas !== "undefined" &&
+      "transferControlToOffscreen" in HTMLCanvasElement.prototype;
+
+    if (supportsOffscreen) {
+      console.log("[KineticStrings] OffscreenCanvas Worker active");
+      let worker: Worker;
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+
+      try {
+        worker = new Worker(
+          new URL("../lib/workers/kinetic-strings.worker.ts", import.meta.url),
+          { type: "module" }
+        );
+
+        const offscreenCanvas = canvas.transferControlToOffscreen();
+        
+        // Init
+        worker.postMessage(
+          { type: "INIT", canvas: offscreenCanvas, width, height },
+          [offscreenCanvas]
+        );
+
+        // Relay velocity every GSAP tick
+        const velocityRelay = () => {
+          const velocity = useScrollStore.getState().velocity;
+          worker.postMessage({ type: "FRAME", velocity });
+        };
+        gsap.ticker.add(velocityRelay);
+
+        // Resize
+        let resizeRafId: number | null = null;
+        const handleResize = () => {
+          if (resizeRafId !== null) return;
+          resizeRafId = requestAnimationFrame(() => {
+            resizeRafId = null;
+            width = window.innerWidth;
+            height = window.innerHeight;
+            worker.postMessage({ type: "RESIZE", width, height });
+          });
+        };
+        window.addEventListener("resize", handleResize, { passive: true });
+
+        // Visibility
+        const handleVisibility = () => {
+          worker.postMessage({ type: "VISIBILITY", visible: !document.hidden });
+        };
+        document.addEventListener("visibilitychange", handleVisibility, { passive: true });
+
+        // Cleanup
+        return () => {
+          gsap.ticker.remove(velocityRelay);
+          window.removeEventListener("resize", handleResize);
+          document.removeEventListener("visibilitychange", handleVisibility);
+          if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
+          worker.terminate();
+        };
+      } catch (err) {
+        console.warn("[KineticStrings] Worker init failed, falling back to main thread:", err);
+        // Fallback continues below if we had a setup for it, but since transferControlToOffscreen
+        // neuters the canvas, we can't easily fallback if it fails AFTER transfer.
+        // Usually `new Worker` fails immediately before transfer if unsupported.
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // FALLBACK PATH: MAIN THREAD (US3)
+    // ------------------------------------------------------------------
+    if (!supportsOffscreen) {
+      console.log("[KineticStrings] Fallback to Main Thread render");
+    }
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Offscreen Buffer Canvas (0.25x RAM Canvas for Glow Rasterization)
+    const offscreenCanvas = document.createElement("canvas");
+    const offscreenCtx = offscreenCanvas.getContext("2d");
+
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
+
+    if (offscreenCtx) {
+      offscreenCanvas.width = Math.ceil(width * SCALE);
+      offscreenCanvas.height = Math.ceil(height * SCALE);
+    }
 
     const getMargins = () => {
       const isMobile = window.innerWidth < 768;
@@ -30,44 +116,47 @@ export function KineticStringsCanvas() {
     };
     let margins = getMargins();
 
+    // Debounced resize to avoid thrashing
+    let resizeRafId: number | null = null;
     const handleResize = () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-      margins = getMargins();
+      if (resizeRafId !== null) return;
+      resizeRafId = requestAnimationFrame(() => {
+        resizeRafId = null;
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        if (offscreenCtx) {
+          offscreenCanvas.width = Math.ceil(width * SCALE);
+          offscreenCanvas.height = Math.ceil(height * SCALE);
+        }
+        margins = getMargins();
+        // Rebuild stringDefs with new height
+        for (let i = 0; i < STRING_COUNT; i++) {
+          const harmonicOrder = i + 1;
+          stringDefs[i].spatialFrequency = (Math.PI * harmonicOrder) / height;
+        }
+      });
     };
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize, { passive: true });
 
-    // ------------------------------------------------------------------
-    // VẬT LÝ DÂY ĐÀN HARMONIC N = 1, 2, 3, 4, 5 (Vừa vặn, tinh tế):
-    // 1. Cấp họa âm Harmonic Order N = 1, 2, 3, 4, 5 (Vừa đủ 1 - 5 bụng sóng).
-    // 2. Chiều cao sóng Amplitude (60px -> 20px).
-    // 3. Tụ chặt 2 điểm mút tại Y=0 và Y=height 100%.
-    // ------------------------------------------------------------------
     const STRING_COUNT = 3;
     const stringDefs = Array.from({ length: STRING_COUNT }).map((_, i) => {
-      const harmonicOrder = i + 1; // N = 1, 2, 3 chuẩn đét
+      const harmonicOrder = i + 1;
       return {
         harmonicOrder,
-        amplitude: 65 - i * 14,                            // Chiều cao sóng vừa vặn (65px -> 37px)
-        spatialFrequency: (Math.PI * harmonicOrder) / height, // Tần số Harmonic N = 1..3
-        temporalSpeed: 1 + i * 0.4,                         // Tốc độ nhịp rung âm thanh mượt
+        amplitude: 65 - i * 14,
+        spatialFrequency: (Math.PI * harmonicOrder) / height,
+        temporalSpeed: 1 + i * 0.4,
         phaseOffset: (i * Math.PI) / 3,
-        xOffset: (i - 1) * 14,                              // Đối xứng quanh tâm (i=0 -> -14, i=1 -> 0, i=2 -> +14)
+        xOffset: (i - 1) * 14,
       };
     });
 
-    // ------------------------------------------------------------------
-    // LERP STATE
-    // ------------------------------------------------------------------
     let ampLerp = 1;
     let collapseX = 0;
     let glowLerp = 1;
     const LERP_IN = 0.05;
     const LERP_OUT = 0.02;
 
-    // ------------------------------------------------------------------
-    // PARTICLES (100% Trắng tinh)
-    // ------------------------------------------------------------------
     const MAX_PER_CLUSTER = 5;
     const particles: Particle[] = [];
     for (const cluster of ["left", "right"] as const) {
@@ -83,9 +172,6 @@ export function KineticStringsCanvas() {
 
     let time = 0;
 
-    // ------------------------------------------------------------------
-    // HÀM TÍNH TOÁN X DÂY ĐÀN HARMONIC N = 1..5
-    // ------------------------------------------------------------------
     const getStringX = (
       baseX: number,
       idx: number,
@@ -96,17 +182,13 @@ export function KineticStringsCanvas() {
       isLeft: boolean = true
     ): number => {
       const def = stringDefs[idx];
-
       const clampedY = Math.max(0, Math.min(height, y));
-      // Bóp nút dây đàn tại 2 đầu (Fixed End Conditions): sin((Y/H)*PI) luôn = 0 tại Y=0 và Y=H
       const fixedEndEnvelope = Math.sin((clampedY / height) * Math.PI);
 
-      // 2 cụm trái phải dao động hoàn toàn riêng biệt và lệch pha nhau
       const clusterFreqMult = isLeft ? 1.0 : 1.25;
       const clusterSpeedMult = isLeft ? 1.0 : 0.82;
       const clusterPhase = isLeft ? 0 : Math.PI * 0.9;
 
-      // Dao động sóng dây đàn N = 1..3
       const wave = Math.sin(
         clampedY * def.spatialFrequency * clusterFreqMult +
           t * def.temporalSpeed * clusterSpeedMult +
@@ -120,141 +202,103 @@ export function KineticStringsCanvas() {
       return baseX + effectiveXOffset + wave * effectiveAmp;
     };
 
-    // ------------------------------------------------------------------
-    // BẢNG MÀU CHROMA SEPARATION (SIÊU RỰC RỠ CHUẨN ẢNH 2 - NEON ECLIPSE)
-    // ------------------------------------------------------------------
     const CHROMA_PAIRS = [
-      { left: { r: 0, g: 242, b: 255 }, right: { r: 255, g: 0, b: 127 } },   // Electric Cyan <-> Neon Magenta
-      { left: { r: 0, g: 102, b: 255 }, right: { r: 178, g: 0, b: 255 } },   // Laser Blue <-> Royal Violet
-      { left: { r: 0, g: 255, b: 136 }, right: { r: 255, g: 0, b: 85 } },    // Emerald Mint <-> Hot Crimson Pink
-      { left: { r: 0, g: 191, b: 255 }, right: { r: 255, g: 60, b: 0 } },    // Sky Blue <-> Neon Orange Red
-      { left: { r: 0, g: 242, b: 255 }, right: { r: 210, g: 0, b: 255 } },   // Cyan <-> Electric Purple
+      { left: { r: 0, g: 242, b: 255 }, right: { r: 255, g: 0, b: 127 } },
+      { left: { r: 0, g: 102, b: 255 }, right: { r: 178, g: 0, b: 255 } },
+      { left: { r: 0, g: 255, b: 136 }, right: { r: 255, g: 0, b: 85 } },
+      { left: { r: 0, g: 191, b: 255 }, right: { r: 255, g: 60, b: 0 } },
+      { left: { r: 0, g: 242, b: 255 }, right: { r: 210, g: 0, b: 255 } },
     ];
 
-    // ------------------------------------------------------------------
-    // RENDER SỢI DÂY ĐÀN VỚI TAPERED SPINDLE GRADIENT (60+ FPS)
-    // ------------------------------------------------------------------
-    const drawNeonString = (
+    const maxPoints = Math.ceil(window.innerHeight / 10) + 2;
+    const pointsCache: { x: number; y: number }[] = Array.from({ length: maxPoints }, () => ({ x: 0, y: 0 }));
+
+    const drawWavePathBezier = (
+      targetCtx: CanvasRenderingContext2D,
       baseX: number,
       idx: number,
       t: number,
       amp: number,
       collapse: number,
-      glowMultiplier: number,
-      isLeft: boolean = true
+      isLeft: boolean,
+      offsetX: number,
+      scale: number = 1.0
     ) => {
-      // 2 bên cụm Trái - Phải dùng cặp màu Neon khác nhau để riêng biệt
-      const chroma = CHROMA_PAIRS[(idx + (isLeft ? 0 : 2)) % CHROMA_PAIRS.length];
+      targetCtx.beginPath();
+      const Y_STEP = 10;
+      let pointCount = 0;
 
-      // Hàm phụ trợ vẽ đường sóng với offset theo trục X (Chroma Shift)
-      const drawWavePath = (offsetX: number) => {
-        ctx.beginPath();
-        for (let y = 0; y <= height; y += 4) {
-          const x = getStringX(baseX, idx, y, t, amp, collapse, isLeft) + offsetX;
-          if (y === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-      };
-
-      // Tạo Linear Gradient Tapered Spindle: Căng mọng ở giữa, vuốt nhọn hoắt 2 đầu (0% hình viên thuốc!)
-      const createSpindleGradient = (
-        r: number,
-        g: number,
-        b: number,
-        maxAlpha: number,
-        phaseOffset: number
-      ) => {
-        const grad = ctx.createLinearGradient(0, 0, 0, height);
-        const stops = 16; // 16 điểm dừng dọc màn hình
-        const speed = (0.12 + idx * 0.025) * (isLeft ? 1.0 : 0.76); // Cụm Phải dash chạy nhịp riêng
-        const clusterDashPhase = isLeft ? 0 : 0.55; // Lệch vị trí xuất hiện dash giữa 2 cụm
-
-        for (let s = 0; s <= stops; s++) {
-          const u = s / stops;
-          // Math.PI * 2.0 -> Chỉ đúng 1 chùm chớp dash duy nhất trên toàn bộ dây
-          const phase = (u - t * speed + phaseOffset + clusterDashPhase) * Math.PI * 2.0;
-          const wave = Math.max(0, Math.sin(phase));
-          // pow(3.5) bóp nhọn 2 đuôi sóng: tâm căng mọng (1.0), 2 đầu vuốt sắc lẹm về 0 (tuột mất dáng viên thuốc)
-          const taper = Math.pow(wave, 3.5);
-          grad.addColorStop(u, `rgba(${r}, ${g}, ${b}, ${maxAlpha * taper})`);
-        }
-        return grad;
-      };
-
-      // ── HÀO QUANG TAPERED SPINDLES DI CHUYỂN DỌC DÂY (0% TRẮNG - 100% NEON SATURATED - 60+ FPS) ──
-      if (glowMultiplier > 0.02) {
-        ctx.save();
-        // Dùng 'source-over' để màu Neon giữ trọn 100% độ bão hòa, tuyệt đối KHÔNG bị ngả trắng/bợt màu
-        ctx.globalCompositeOperation = "source-over";
-
-        const gradLeft1 = createSpindleGradient(chroma.left.r, chroma.left.g, chroma.left.b, 0.95 * glowMultiplier, 0);
-        const gradRight1 = createSpindleGradient(chroma.right.r, chroma.right.g, chroma.right.b, 0.95 * glowMultiplier, 0.35); // So le nhịp Trái - Phải
-
-        // ── LỚP 1: Deep Chroma Corona (Blur 16px - Offset -2.2px / +2.2px - Siêu mảnh) ──
-        ctx.filter = `blur(${Math.round(16 * glowMultiplier)}px)`;
-
-        drawWavePath(-2.2);
-        ctx.strokeStyle = gradLeft1;
-        ctx.lineWidth = 2.8;
-        ctx.stroke();
-
-        drawWavePath(2.2);
-        ctx.strokeStyle = gradRight1;
-        ctx.lineWidth = 2.8;
-        ctx.stroke();
-
-        // ── LỚP 2: Medium Chroma Halo (Blur 7px - Offset -1.3px / +1.3px - Siêu mảnh) ──
-        const gradLeft2 = createSpindleGradient(chroma.left.r, chroma.left.g, chroma.left.b, 1.0 * glowMultiplier, 0);
-        const gradRight2 = createSpindleGradient(chroma.right.r, chroma.right.g, chroma.right.b, 1.0 * glowMultiplier, 0.35);
-
-        ctx.filter = `blur(${Math.round(7 * glowMultiplier)}px)`;
-
-        drawWavePath(-1.3);
-        ctx.strokeStyle = gradLeft2;
-        ctx.lineWidth = 1.6;
-        ctx.stroke();
-
-        drawWavePath(1.3);
-        ctx.strokeStyle = gradRight2;
-        ctx.lineWidth = 1.6;
-        ctx.stroke();
-
-        // ── LỚP 3: Intense Chroma Core Glow (Blur 2.5px - Offset -0.6px / +0.6px - Siêu mảnh) ──
-        const gradLeft3 = createSpindleGradient(chroma.left.r, chroma.left.g, chroma.left.b, 1.0 * glowMultiplier, 0);
-        const gradRight3 = createSpindleGradient(chroma.right.r, chroma.right.g, chroma.right.b, 1.0 * glowMultiplier, 0.35);
-
-        ctx.filter = `blur(${Math.round(2.5 * glowMultiplier)}px)`;
-
-        drawWavePath(-0.6);
-        ctx.strokeStyle = gradLeft3;
-        ctx.lineWidth = 1.0;
-        ctx.stroke();
-
-        drawWavePath(0.6);
-        ctx.strokeStyle = gradRight3;
-        ctx.lineWidth = 1.0;
-        ctx.stroke();
-
-        ctx.restore();
+      for (let y = 0; y <= height; y += Y_STEP) {
+        const x = getStringX(baseX, idx, y, t, amp, collapse, isLeft) + offsetX;
+        pointsCache[pointCount].x = x * scale;
+        pointsCache[pointCount].y = y * scale;
+        pointCount++;
+      }
+      if (height % Y_STEP !== 0) {
+        const x = getStringX(baseX, idx, height, t, amp, collapse, isLeft) + offsetX;
+        pointsCache[pointCount].x = x * scale;
+        pointsCache[pointCount].y = height * scale;
+        pointCount++;
       }
 
-      // ── LỚP 4: CORE DÂY TRẮNG SIÊU MẢNH SẮC LẸM (0.8px - Filter = none) ──
-      ctx.save();
-      ctx.globalCompositeOperation = "source-over";
-      ctx.filter = "none";
-      drawWavePath(0);
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.98)";
-      ctx.lineWidth = 0.8; // Nét mảnh nhỏ nhất có thể như tơ sợi lăng kính
-      ctx.stroke();
-      ctx.restore();
+      if (pointCount === 0) return;
+
+      targetCtx.moveTo(pointsCache[0].x, pointsCache[0].y);
+
+      for (let i = 1; i < pointCount - 1; i++) {
+        const xc = (pointsCache[i].x + pointsCache[i + 1].x) / 2;
+        const yc = (pointsCache[i].y + pointsCache[i + 1].y) / 2;
+        targetCtx.quadraticCurveTo(pointsCache[i].x, pointsCache[i].y, xc, yc);
+      }
+
+      if (pointCount > 1) {
+        const last = pointsCache[pointCount - 1];
+        targetCtx.lineTo(last.x, last.y);
+      }
     };
 
-    // ------------------------------------------------------------------
-    // RENDER LOOP
-    // ------------------------------------------------------------------
+    const createSpindleGradient = (
+      targetCtx: CanvasRenderingContext2D,
+      gradHeight: number,
+      idx: number,
+      isLeft: boolean,
+      r: number,
+      g: number,
+      b: number,
+      maxAlpha: number,
+      phaseOffset: number
+    ) => {
+      const grad = targetCtx.createLinearGradient(0, 0, 0, gradHeight);
+      const stops = 16;
+      const speed = (0.12 + idx * 0.025) * (isLeft ? 1.0 : 0.76);
+      const clusterDashPhase = isLeft ? 0 : 0.55;
+
+      for (let s = 0; s <= stops; s++) {
+        const u = s / stops;
+        const phase = (u - time * speed + phaseOffset + clusterDashPhase) * Math.PI * 2.0;
+        const wave = Math.max(0, Math.sin(phase));
+        const taper = Math.pow(wave, 3.5);
+        grad.addColorStop(u, `rgba(${r}, ${g}, ${b}, ${maxAlpha * taper})`);
+      }
+      return grad;
+    };
+
+    let isPageVisible = !document.hidden;
+    const handleVisibility = () => {
+      isPageVisible = !document.hidden;
+    };
+    document.addEventListener("visibilitychange", handleVisibility, { passive: true });
+
     const render = () => {
+      if (!isPageVisible) return;
+
       time += 0.007;
+
       ctx.clearRect(0, 0, width, height);
+
+      if (offscreenCtx) {
+        offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+      }
 
       const velocity = useScrollStore.getState().velocity;
       const absVel = Math.abs(velocity);
@@ -271,15 +315,88 @@ export function KineticStringsCanvas() {
       collapseX = Math.max(0, Math.min(1, collapseX));
       glowLerp = Math.max(0, Math.min(1, glowLerp));
 
+      const IS_GLOW_ENABLED = false;
+      if (offscreenCtx && IS_GLOW_ENABLED && glowLerp > 0.02) {
+        offscreenCtx.save();
+        offscreenCtx.globalCompositeOperation = "source-over";
+
+        for (const cluster of ["left", "right"] as const) {
+          const baseX = cluster === "left" ? margins.left : margins.right;
+          const isLeft = cluster === "left";
+
+          for (let i = STRING_COUNT - 1; i >= 0; i--) {
+            const chroma = CHROMA_PAIRS[(i + (isLeft ? 0 : 2)) % CHROMA_PAIRS.length];
+            const targetH = offscreenCanvas.height;
+
+            const gradLeft1 = createSpindleGradient(offscreenCtx, targetH, i, isLeft, chroma.left.r, chroma.left.g, chroma.left.b, 0.95 * glowLerp, 0);
+            const gradRight1 = createSpindleGradient(offscreenCtx, targetH, i, isLeft, chroma.right.r, chroma.right.g, chroma.right.b, 0.95 * glowLerp, 0.35);
+
+            offscreenCtx.filter = `blur(${Math.round(16 * glowLerp * SCALE)}px)`;
+
+            drawWavePathBezier(offscreenCtx, baseX, i, time, ampLerp, collapseX, isLeft, -2.2, SCALE);
+            offscreenCtx.strokeStyle = gradLeft1;
+            offscreenCtx.lineWidth = 2.5;
+            offscreenCtx.stroke();
+
+            drawWavePathBezier(offscreenCtx, baseX, i, time, ampLerp, collapseX, isLeft, 2.2, SCALE);
+            offscreenCtx.strokeStyle = gradRight1;
+            offscreenCtx.lineWidth = 2.5;
+            offscreenCtx.stroke();
+
+            const gradLeft2 = createSpindleGradient(offscreenCtx, targetH, i, isLeft, chroma.left.r, chroma.left.g, chroma.left.b, 1.0 * glowLerp, 0);
+            const gradRight2 = createSpindleGradient(offscreenCtx, targetH, i, isLeft, chroma.right.r, chroma.right.g, chroma.right.b, 1.0 * glowLerp, 0.35);
+
+            offscreenCtx.filter = `blur(${Math.round(7 * glowLerp * SCALE)}px)`;
+
+            drawWavePathBezier(offscreenCtx, baseX, i, time, ampLerp, collapseX, isLeft, -1.3, SCALE);
+            offscreenCtx.strokeStyle = gradLeft2;
+            offscreenCtx.lineWidth = 1.6;
+            offscreenCtx.stroke();
+
+            drawWavePathBezier(offscreenCtx, baseX, i, time, ampLerp, collapseX, isLeft, 1.3, SCALE);
+            offscreenCtx.strokeStyle = gradRight2;
+            offscreenCtx.lineWidth = 1.6;
+            offscreenCtx.stroke();
+
+            const gradLeft3 = createSpindleGradient(offscreenCtx, targetH, i, isLeft, chroma.left.r, chroma.left.g, chroma.left.b, 1.0 * glowLerp, 0);
+            const gradRight3 = createSpindleGradient(offscreenCtx, targetH, i, isLeft, chroma.right.r, chroma.right.g, chroma.right.b, 1.0 * glowLerp, 0.35);
+
+            offscreenCtx.filter = `blur(${Math.round(2.5 * glowLerp * SCALE)}px)`;
+
+            drawWavePathBezier(offscreenCtx, baseX, i, time, ampLerp, collapseX, isLeft, -0.6, SCALE);
+            offscreenCtx.strokeStyle = gradLeft3;
+            offscreenCtx.lineWidth = 1.0;
+            offscreenCtx.stroke();
+
+            drawWavePathBezier(offscreenCtx, baseX, i, time, ampLerp, collapseX, isLeft, 0.6, SCALE);
+            offscreenCtx.strokeStyle = gradRight3;
+            offscreenCtx.lineWidth = 1.0;
+            offscreenCtx.stroke();
+          }
+        }
+        offscreenCtx.restore();
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(offscreenCanvas, 0, 0, width, height);
+      }
+
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over";
+      ctx.filter = "none";
+
       for (const cluster of ["left", "right"] as const) {
         const baseX = cluster === "left" ? margins.left : margins.right;
         const isLeft = cluster === "left";
+
         for (let i = STRING_COUNT - 1; i >= 0; i--) {
-          drawNeonString(baseX, i, time, ampLerp, collapseX, glowLerp, isLeft);
+          drawWavePathBezier(ctx, baseX, i, time, ampLerp, collapseX, isLeft, 0, 1.0);
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.98)";
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
         }
       }
+      ctx.restore();
 
-      // ── PARTICLES (100% sắc độ neon, không bị ngả trắng) ──
       const M = 1.8;
       for (const p of particles) {
         const isLeft = p.cluster === "left";
@@ -290,33 +407,11 @@ export function KineticStringsCanvas() {
         else if (p.y > height) p.y = 0;
 
         const px = getStringX(baseX, p.stringIndex, p.y, time, ampLerp, collapseX, isLeft);
-        const dotAlpha = glowLerp * 0.8 + 0.2;
-        const chroma = CHROMA_PAIRS[(p.stringIndex + (isLeft ? 0 : 2)) % CHROMA_PAIRS.length];
 
         ctx.save();
         ctx.globalCompositeOperation = "source-over";
-
-        // Lớp Glow xa Trái - Phải (-2px / +2px)
-        ctx.filter = `blur(${Math.round(14 * dotAlpha)}px)`;
-        ctx.beginPath();
-        ctx.arc(px - 2.0, p.y, 4.0, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${chroma.left.r}, ${chroma.left.g}, ${chroma.left.b}, ${dotAlpha * 0.85})`;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(px + 2.0, p.y, 4.0, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${chroma.right.r}, ${chroma.right.g}, ${chroma.right.b}, ${dotAlpha * 0.85})`;
-        ctx.fill();
-
-        // Lớp Glow sát hạt (tuyệt đối không dùng trắng, dùng sắc màu neon bão hòa)
-        ctx.filter = `blur(${Math.round(5 * dotAlpha)}px)`;
-        ctx.beginPath();
-        ctx.arc(px, p.y, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${chroma.left.r}, ${chroma.left.g}, ${chroma.left.b}, ${dotAlpha * 1.0})`;
-        ctx.fill();
-
-        // Core chấm trắng nét căng
         ctx.filter = "none";
+
         ctx.beginPath();
         ctx.arc(px, p.y, 3.0, 0, Math.PI * 2);
         ctx.fillStyle = "rgba(255, 255, 255, 1)";
@@ -329,6 +424,8 @@ export function KineticStringsCanvas() {
     gsap.ticker.add(render);
     return () => {
       window.removeEventListener("resize", handleResize);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
       gsap.ticker.remove(render);
     };
   }, []);
@@ -340,9 +437,8 @@ export function KineticStringsCanvas() {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 10,
-        filter:
-          "drop-shadow(0 0 16px rgba(0, 242, 255, 0.4)) drop-shadow(0 0 38px rgba(255, 0, 127, 0.35))",
+        zIndex: 1,
+        filter: "none",
       }}
     />
   );

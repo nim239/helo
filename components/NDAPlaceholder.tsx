@@ -19,7 +19,7 @@ export function NDAPlaceholder({
 }: NDAPlaceholderProps) {
   return (
     <div
-      className={`relative w-full h-full min-h-[260px] flex flex-col items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/80 backdrop-blur-md p-6 select-none ${className}`}
+      className={`relative w-full h-full min-h-[260px] flex flex-col items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#0A0A12]/95 p-6 select-none ${className}`}
     >
       {/* Static SVG Noise — references global #noise-nda defined once in layout.tsx (zero CPU / zero rAF) */}
       <svg className="absolute inset-0 w-full h-full opacity-25 pointer-events-none" aria-hidden>
@@ -32,10 +32,10 @@ export function NDAPlaceholder({
       {/* Red/Cyan Security Border Glow */}
       <div className="absolute inset-0 rounded-xl border border-[#FF007F]/30 shadow-[inset_0_0_30px_rgba(255,0,127,0.1)] pointer-events-none" />
 
-      {/* Center Glassmorphism Badge */}
-      <div className="relative z-10 flex flex-col items-center text-center max-w-sm px-6 py-4 rounded-lg border border-white/15 bg-white/5 backdrop-blur-xl shadow-2xl">
+      {/* Center Cyberpunk Badge (Zero backdrop-blur overhead) */}
+      <div className="relative z-10 flex flex-col items-center text-center max-w-sm px-6 py-4 rounded-lg border border-white/15 bg-black/90 shadow-2xl">
         <div className="flex items-center gap-2 mb-3">
-          <span className="w-2 h-2 rounded-full bg-[#FF007F] animate-ping" />
+          <span className="w-2 h-2 rounded-full bg-[#FF007F]" style={{ animation: 'ping 1.5s cubic-bezier(0,0,0.2,1) infinite' }} />
           <span className="font-mono text-[10px] tracking-[0.3em] text-[#FF007F] uppercase font-bold">
             RESTRICTED ACCESS
           </span>

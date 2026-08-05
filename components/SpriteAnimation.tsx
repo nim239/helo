@@ -15,77 +15,154 @@ interface SpriteAnimationProps {
 
 export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const fallbackCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const baseImagesRef = useRef<HTMLImageElement[]>([]);
+  const glowImagesRef = useRef<HTMLImageElement[]>([]);
+  const stateRef = useRef({ frame: 0 });
+  const scrollTriggerInstRef = useRef<ScrollTrigger | null>(null);
 
   const completeIntro = useScrollStore((state) => state.completeIntro);
   const isIntroComplete = useScrollStore((state) => state.isIntroComplete);
 
+  // ============================================================================
+  // HOOK 1: KHỞI TẠO CANVAS & WORKER (CHỈ CHẠY 1 LẦN KHI MOUNT ĐỂ PRELOAD ẢNH)
+  // ============================================================================
   useEffect(() => {
     const wrapperEl = wrapperRef.current;
-    const canvasEl = canvasRef.current;
-    if (!wrapperEl || !canvasEl) return;
+    if (!wrapperEl) return;
+
+    // --- DYNAMIC CANVAS CREATION (FIX STRICT MODE) ---
+    const canvasEl = document.createElement("canvas");
+    canvasEl.width = 600;
+    canvasEl.height = 600;
+    canvasEl.className = "absolute top-0 left-0 w-full h-full object-contain pointer-events-none";
+    wrapperEl.appendChild(canvasEl);
+
+    // --- INIT WORKER ---
+    const supportsOffscreen =
+      typeof OffscreenCanvas !== "undefined" &&
+      "transferControlToOffscreen" in HTMLCanvasElement.prototype;
+
+    let worker: Worker | null = null;
+    let fallbackCtx: CanvasRenderingContext2D | null = null;
+
+    if (supportsOffscreen) {
+      try {
+        worker = new Worker(
+          new URL("../lib/workers/sprite-animation.worker.ts", import.meta.url),
+          { type: "module" }
+        );
+        workerRef.current = worker;
+        const offscreenCanvas = canvasEl.transferControlToOffscreen();
+        worker.postMessage(
+          { type: "INIT", canvas: offscreenCanvas, width: 600, height: 600 },
+          [offscreenCanvas]
+        );
+      } catch (e) {
+        console.warn("[SpriteWorker] Init failed, fallback to main thread", e);
+        worker = null;
+        workerRef.current = null;
+      }
+    }
+
+    if (!worker) {
+      console.log("[SpriteWorker] Fallback to Main Thread render");
+      try {
+        fallbackCtx = canvasEl.getContext('2d', { alpha: true });
+      } catch (e) {
+        wrapperEl.removeChild(canvasEl);
+        const newCanvasEl = document.createElement("canvas");
+        newCanvasEl.width = 600;
+        newCanvasEl.height = 600;
+        newCanvasEl.className = "absolute top-0 left-0 w-full h-full object-contain pointer-events-none";
+        wrapperEl.appendChild(newCanvasEl);
+        fallbackCtx = newCanvasEl.getContext('2d', { alpha: true });
+      }
+      fallbackCtxRef.current = fallbackCtx;
+
+      for (let i = 0; i < FRAME_COUNT; i++) {
+        const idx = i.toString().padStart(5, '0');
+        const bImg = new Image();
+        bImg.decoding = 'async';
+        bImg.src = `/sprite_cubi/cubi/cubi_${idx}.webp`;
+        baseImagesRef.current.push(bImg);
+
+        const gImg = new Image();
+        gImg.decoding = 'async';
+        gImg.src = `/sprite_cubi/cubi_glow/cubi_glow_${idx}.webp`;
+        glowImagesRef.current.push(gImg);
+      }
+    }
+
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
+      if (canvasEl && wrapperEl.contains(canvasEl)) {
+        wrapperEl.removeChild(canvasEl);
+      }
+      baseImagesRef.current.forEach(img => { img.onload = null; img.src = ""; });
+      glowImagesRef.current.forEach(img => { img.onload = null; img.src = ""; });
+      baseImagesRef.current = [];
+      glowImagesRef.current = [];
+    };
+  }, []); // CHỈ CHẠY 1 LẦN!
+
+  // ============================================================================
+  // HOOK 2: XỬ LÝ GSAP ANIMATION & SCROLL KHI startIntro THAY ĐỔI
+  // ============================================================================
+  useEffect(() => {
+    const wrapperEl = wrapperRef.current;
+    if (!wrapperEl) return;
 
     if (!startIntro) {
       gsap.set(wrapperEl, { opacity: 0 });
       return;
     }
 
-    const ctx = canvasEl.getContext('2d', { alpha: true });
-    if (!ctx) return;
+    let lastRenderedFrame = -1;
 
-    // --- GIAI ĐOẠN 3: TÍCH HỢP CANVAS RENDER ENGINE ---
-    // Loại bỏ CSS Render, khởi tạo Image object trực tiếp trong RAM.
-    const baseImages: HTMLImageElement[] = [];
-    const glowImages: HTMLImageElement[] = [];
-
-    for (let i = 0; i < FRAME_COUNT; i++) {
-      const idx = i.toString().padStart(5, '0');
-
-      const bImg = new Image();
-      bImg.src = `/sprite_cubi/cubi/cubi_${idx}.webp`;
-      baseImages.push(bImg);
-
-      const gImg = new Image();
-      gImg.src = `/sprite_cubi/cubi_glow/cubi_glow_${idx}.webp`;
-      glowImages.push(gImg);
-    }
-
-    let scrollTriggerInst: ScrollTrigger | null = null;
-    const state = { frame: 0 };
-    let lastFrame = -1;
-
-    // Vòng lặp Render (Render Loop)
     const renderFrame = () => {
+      const state = stateRef.current;
+      const worker = workerRef.current;
+      const fallbackCtx = fallbackCtxRef.current;
+      const baseImages = baseImagesRef.current;
+      const glowImages = glowImagesRef.current;
+
       const frameIndex = Math.floor(state.frame) % FRAME_COUNT;
+      if (frameIndex === lastRenderedFrame) return;
 
-      if (frameIndex !== lastFrame) {
-        // Clear canvas
-        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      if (worker) {
+        worker.postMessage({ type: "FRAME", frame: state.frame });
+        lastRenderedFrame = frameIndex;
+        return;
+      }
 
-        // Vẽ Base (Layer 1)
-        ctx.globalCompositeOperation = 'source-over';
-        const bImg = baseImages[frameIndex];
+      // --- FALLBACK RENDER ---
+      if (fallbackCtx && baseImages.length > 0) {
+        let bImg = baseImages[frameIndex];
+        let validIdx = frameIndex;
+        while (validIdx > 0 && (!bImg || !bImg.complete || bImg.naturalWidth === 0)) {
+          validIdx--;
+          bImg = baseImages[validIdx];
+        }
+
         if (bImg && bImg.complete && bImg.naturalWidth !== 0) {
-          ctx.drawImage(bImg, 0, 0, canvasEl.width, canvasEl.height);
-        }
+          fallbackCtx.clearRect(0, 0, 600, 600);
+          fallbackCtx.globalCompositeOperation = 'source-over';
+          fallbackCtx.drawImage(bImg, 0, 0, 600, 600);
 
-        // Vẽ Glow (Layer 2) - Kỹ thuật Additive Blending
-        ctx.globalCompositeOperation = 'lighter';
-        const gImg = glowImages[frameIndex];
-        if (gImg && gImg.complete && gImg.naturalWidth !== 0) {
-          ctx.drawImage(gImg, 0, 0, canvasEl.width, canvasEl.height);
+          const gImg = glowImages[validIdx];
+          if (gImg && gImg.complete && gImg.naturalWidth !== 0) {
+            fallbackCtx.globalCompositeOperation = 'lighter';
+            fallbackCtx.drawImage(gImg, 0, 0, 600, 600);
+          }
+          lastRenderedFrame = frameIndex;
         }
-
-        lastFrame = frameIndex;
       }
     };
-
-    // Đảm bảo render frame đầu tiên ngay khi ảnh đầu tiên load xong
-    if (baseImages[0].complete && glowImages[0].complete) {
-      renderFrame();
-    } else {
-      baseImages[0].onload = renderFrame;
-    }
 
     const getTrajectory = (scrollY: number) => {
       const currentW = wrapperEl.offsetWidth || 400;
@@ -97,33 +174,37 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       const progressCycle = scrollY / cycleLength;
 
       const moveX = Math.sin(progressCycle * Math.PI * 2 * 3) * (window.innerWidth * 0.35);
-      // Phase offset (-PI/2) starts Cubi at 25% vh (1/4 height) at scrollY=0,
-      // then lets Cubi roam smoothly across the ENTIRE screen (25% to 75% vh) without flying off-screen.
       const moveY = Math.sin(progressCycle * Math.PI * 2 * 4 - Math.PI / 2) * (window.innerHeight * 0.25);
 
-      const spriteP = (progressCycle * 36) % 1; // tốc độ quay 
+      const spriteP = (progressCycle * 36) % 1;
       const frame = spriteP * (FRAME_COUNT - 1);
 
-      return { x: cX + moveX, y: cY + moveY, frame };
+      const margin = 20;
+      const clampedX = Math.max(margin, Math.min(window.innerWidth - currentW - margin, cX + moveX));
+      const clampedY = Math.max(margin, Math.min(window.innerHeight - currentH - margin, cY + moveY));
+
+      return { x: clampedX, y: clampedY, frame };
     };
 
     const getCenterPos = () => {
       const currentW = wrapperEl.offsetWidth || 400;
       const currentH = wrapperEl.offsetHeight || 400;
+      const margin = 20;
+      const x = window.innerWidth / 2 - currentW / 2;
+      const y = window.innerHeight * 0.25 - currentH / 2;
       return {
-        x: window.innerWidth / 2 - currentW / 2,
-        y: window.innerHeight * 0.25 - currentH / 2,
+        x: Math.max(margin, Math.min(window.innerWidth - currentW - margin, x)),
+        y: Math.max(margin, Math.min(window.innerHeight - currentH - margin, y)),
       };
     };
 
-    const initialScrollY = 0;
-    const START_POINT_SPRITE = getTrajectory(initialScrollY);
+    const START_POINT_SPRITE = getTrajectory(0);
     const centerPos = getCenterPos();
 
     gsap.set(wrapperEl, {
       x: centerPos.x,
       y: centerPos.y,
-      scale: 2.5,
+      scale: 2.0,
       opacity: 1,
     });
 
@@ -135,7 +216,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
         }
       });
 
-      tl.to(state, {
+      tl.to(stateRef.current, {
         frame: FRAME_COUNT * 2 - 1,
         duration: 2.2,
         ease: 'power2.inOut',
@@ -143,19 +224,19 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       }, 0);
 
       tl.to(wrapperEl, {
-        scale: 1,
+        scale: 0.8,
         x: START_POINT_SPRITE.x,
         y: START_POINT_SPRITE.y,
         duration: 2.2,
         ease: 'power3.inOut',
       }, 0);
     } else {
-      gsap.set(wrapperEl, { scale: 1, x: START_POINT_SPRITE.x, y: START_POINT_SPRITE.y, opacity: 1 });
+      gsap.set(wrapperEl, { scale: 0.8, x: START_POINT_SPRITE.x, y: START_POINT_SPRITE.y, opacity: 1 });
       initScrollJourney();
     }
 
     function initScrollJourney() {
-      scrollTriggerInst = ScrollTrigger.create({
+      scrollTriggerInstRef.current = ScrollTrigger.create({
         start: 0,
         end: 'max',
         scrub: 0,
@@ -163,7 +244,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
           const scrollY = self.scroll();
           const stateData = getTrajectory(scrollY);
 
-          state.frame = stateData.frame;
+          stateRef.current.frame = stateData.frame;
           renderFrame();
 
           gsap.set(wrapperEl, { x: stateData.x, y: stateData.y });
@@ -171,25 +252,13 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       });
     }
 
-    // --- GIAI ĐOẠN 4: ĐO LƯỜNG & DỌN DẸP MEMORY LEAK ---
     return () => {
-      if (scrollTriggerInst) {
-        scrollTriggerInst.kill();
+      if (scrollTriggerInstRef.current) {
+        scrollTriggerInstRef.current.kill();
+        scrollTriggerInstRef.current = null;
       }
-      gsap.killTweensOf(state);
+      gsap.killTweensOf(stateRef.current);
       gsap.killTweensOf(wrapperEl);
-
-      // Garbage Collection Cleanup
-      baseImages.forEach(img => {
-        img.onload = null;
-        img.src = "";
-      });
-      glowImages.forEach(img => {
-        img.onload = null;
-        img.src = "";
-      });
-      baseImages.length = 0;
-      glowImages.length = 0;
     };
   }, [startIntro, completeIntro, isIntroComplete]);
 
@@ -197,15 +266,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
     <div
       id="cube-sprite-wrapper"
       ref={wrapperRef}
-      className="fixed top-0 left-0 w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] z-[60] pointer-events-none"
-    >
-      <canvas
-        ref={canvasRef}
-        width={1080}
-        height={1080}
-        className="w-full h-full object-contain pointer-events-none"
-      />
-    </div>
+      className="fixed top-0 left-0 w-[32vw] h-[32vw] max-w-[320px] max-h-[320px] z-[60] pointer-events-none opacity-0"
+    />
   );
 }
-

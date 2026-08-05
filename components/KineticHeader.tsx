@@ -36,6 +36,11 @@ function _globalTicker() {
   const rawV = Math.min(Math.abs(state.velocity) * 0.45, 1.0);
 
   for (const entry of _registry) {
+    // Skip DOM mutations if idle and smoothV has settled
+    if (rawV < 0.001 && entry.smoothV.current < 0.001) {
+      continue;
+    }
+
     // Independent damped smoothV per header
     entry.smoothV.current = lerp(entry.smoothV.current, rawV, 0.18);
     const v = entry.smoothV.current;

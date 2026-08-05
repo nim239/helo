@@ -1,11 +1,8 @@
 "use client";
 
-import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import gsap from 'gsap';
 import { useMarqueeStore } from '../lib/store/useMarqueeStore';
-import { MediaVideo } from './MediaVideo';
-import { useScrollStore } from '../lib/store/useScrollStore';
-
 import { NeonCard } from './NeonCard';
 
 interface MarqueeItem {
@@ -14,6 +11,7 @@ interface MarqueeItem {
   accent?: string;
   mediaType?: string;
   src?: string;
+  imageSrc?: string;
   poster?: string;
   youtubeId?: string;
   isNDA?: boolean;
@@ -37,10 +35,13 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
 
   useLayoutEffect(() => {
     const track = trackRef.current;
-    if (!track) return;
+    const container = containerRef.current;
+    if (!track || !container) return;
 
     let trackWidth = 0;
-    
+    let isVisible = false;
+    let tickerActive = false;
+
     // Resize Observer to keep Modulo Math accurate
     const observer = new ResizeObserver(() => {
       trackWidth = track.scrollWidth / 3;
@@ -48,12 +49,11 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
     observer.observe(track);
 
     // RAF Loop
-    const ticker = (time: number, deltaTime: number, frame: number) => {
+    const ticker = () => {
+      if (!isVisible || trackWidth <= 0) return;
+
       const globalState = useMarqueeStore.getState();
       const now = performance.now();
-
-      if (trackWidth <= 0) return;
-
       const baseTimestamp = globalState.baseTimestamp;
       const rawDistance = (now - baseTimestamp) * speed;
       const safeDistance = rawDistance % trackWidth;
@@ -68,25 +68,42 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
       track.style.transform = `translate3d(${xOffset}px, 0, 0)`;
     };
 
-    gsap.ticker.add(ticker);
+    // IntersectionObserver to pause GSAP ticker when Marquee is offscreen
+    const io = new IntersectionObserver((entries) => {
+      const entry = entries[0];
+      isVisible = entry.isIntersecting;
+
+      if (isVisible && !tickerActive) {
+        gsap.ticker.add(ticker);
+        tickerActive = true;
+      } else if (!isVisible && tickerActive) {
+        gsap.ticker.remove(ticker);
+        tickerActive = false;
+      }
+    }, { threshold: 0.01 });
+
+    io.observe(container);
 
     return () => {
       observer.disconnect();
-      gsap.ticker.remove(ticker);
+      io.disconnect();
+      if (tickerActive) {
+        gsap.ticker.remove(ticker);
+      }
     };
   }, [direction, speed]);
 
   return (
-    <div ref={containerRef} className="w-full h-full overflow-hidden flex items-center pointer-events-none">
+    <div ref={containerRef} className="relative z-10 w-full h-full overflow-hidden flex items-center pointer-events-none">
       <div 
         ref={trackRef} 
-        className="flex flex-row flex-nowrap items-center h-[280px] gap-6 px-4"
-        style={{ width: 'max-content' }}
+        className="flex flex-row flex-nowrap items-center h-[80vw] md:h-[280px] gap-4 md:gap-6 px-4"
+        style={{ width: 'max-content', willChange: 'transform' }}
       >
         {repeatedItems.map((item, idx) => (
           <div 
             key={`${item.id}-${idx}`}
-            className="w-[420px] h-[280px] shrink-0 pointer-events-auto"
+            className="w-[80vw] h-[80vw] md:w-[420px] md:h-[280px] shrink-0 pointer-events-auto"
           >
             <NeonCard
               label={item.label || item.id}
@@ -95,6 +112,7 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
               width="100%"
               height="100%"
               src={item.src}
+              imageSrc={item.imageSrc}
               poster={item.poster}
               youtubeId={item.youtubeId}
               disableYoutubeIframe={true}

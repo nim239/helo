@@ -14,7 +14,7 @@ export function EnterOverlay() {
   const bgCircleRef = useRef<SVGCircleElement>(null);
   const lottieContainerRef = useRef<HTMLDivElement>(null);
   const lottieInstRef = useRef<AnimationItem | null>(null);
-  
+
   const [isEntering, setIsEntering] = useState(false);
 
   useEffect(() => {
@@ -33,16 +33,14 @@ export function EnterOverlay() {
     }
 
     let simulatedProgress = { val: 0 };
-    
+
     // Trim path animation
-    const tl = gsap.timeline({
-      onUpdate: () => {
-        if (pathRef.current) {
-          const len = pathRef.current.getTotalLength();
-          pathRef.current.style.strokeDashoffset = (len - (len * simulatedProgress.val) / 100).toString();
-        }
+    const updatePath = () => {
+      if (pathRef.current) {
+        const len = pathRef.current.getTotalLength();
+        pathRef.current.style.strokeDashoffset = (len - (len * simulatedProgress.val) / 100).toString();
       }
-    });
+    };
 
     if (pathRef.current) {
       const len = pathRef.current.getTotalLength();
@@ -50,73 +48,51 @@ export function EnterOverlay() {
       pathRef.current.style.strokeDashoffset = len.toString();
     }
 
-    // Start Preloading Engine
+    // Start Preloading Engine in background
     const assetsToLoad: string[] = [];
     for (let i = 0; i < 120; i++) {
       const idx = i.toString().padStart(5, '0');
       assetsToLoad.push(`/sprite_cubi/cubi/cubi_${idx}.webp`);
       assetsToLoad.push(`/sprite_cubi/cubi_glow/cubi_glow_${idx}.webp`);
     }
-    
-    // We animate progress to at least 90% while waiting for network
-    tl.to(simulatedProgress, {
-      val: 90,
-      duration: 2.5,
-      ease: 'power2.out'
-    });
 
-    const loadPromises = assetsToLoad.map(src => {
-      return new Promise<void>((resolve) => {
-        const img = new Image();
-        img.src = src;
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-      });
-    });
+    let isCompleted = false;
 
-    Promise.all(loadPromises).then(() => {
-      // Kill the 90% fallback tween so it doesn't fight the 100% tween
+    const finishLoading = () => {
+      if (isCompleted) return;
+      isCompleted = true;
+
       gsap.killTweensOf(simulatedProgress);
 
-      // Once 100% loaded in RAM, push timeline to 100% immediately
       gsap.to(simulatedProgress, {
         val: 100,
-        duration: 0.5,
+        duration: 0.3,
         ease: 'power2.inOut',
-        onUpdate: () => {
-          if (pathRef.current) {
-            const len = pathRef.current.getTotalLength();
-            pathRef.current.style.strokeDashoffset = (len - (len * simulatedProgress.val) / 100).toString();
-          }
-        },
+        onUpdate: updatePath,
         onComplete: () => {
           setAssetsLoaded(true);
-          // Expand circle to 90vmin
           if (circleRef.current) {
-            // Remove dasharray to prevent dash gaps when using non-scaling-stroke
             if (pathRef.current) {
               pathRef.current.style.strokeDasharray = 'none';
               pathRef.current.style.strokeDashoffset = '0';
             }
 
-            // Transition stroke to 1px and 10% opacity
             gsap.to([pathRef.current, bgCircleRef.current], {
               strokeWidth: 1,
               stroke: 'rgba(255,255,255,0.1)',
-              duration: 1.5,
+              duration: 1.2,
               ease: 'power3.inOut'
             });
 
             gsap.to(circleRef.current, {
               width: '90vmin',
               height: '90vmin',
-              duration: 1.5,
+              duration: 1.2,
               ease: 'power3.inOut',
             });
-            
-            // Fade in Lottie and play Idle segment (frames 119 to 199)
+
             if (lottieContainerRef.current) {
-              gsap.to(lottieContainerRef.current, { opacity: 1, duration: 1, delay: 0.5 });
+              gsap.to(lottieContainerRef.current, { opacity: 1, duration: 0.8, delay: 0.2 });
             }
             if (lottieInstRef.current) {
               lottieInstRef.current.loop = true;
@@ -125,9 +101,50 @@ export function EnterOverlay() {
           }
         }
       });
+    };
+
+    // Smooth loading progress tween (Guaranteed smooth 100% completion in 1.8s max)
+    gsap.to(simulatedProgress, {
+      val: 100,
+      duration: 1.8,
+      ease: 'power2.out',
+      onUpdate: updatePath,
+      onComplete: finishLoading
     });
 
+    // Non-blocking batched preloader (INP < 50ms)
+    let completedCount = 0;
+    const totalAssets = assetsToLoad.length;
+    let batchIndex = 0;
+    const BATCH_SIZE = 12;
+
+    const loadNextBatch = () => {
+      const end = Math.min(batchIndex + BATCH_SIZE, totalAssets);
+      for (; batchIndex < end; batchIndex++) {
+        const img = new Image();
+        img.src = assetsToLoad[batchIndex];
+        const onDone = () => {
+          completedCount++;
+          if (completedCount >= totalAssets) {
+            finishLoading();
+          }
+        };
+        img.onload = onDone;
+        img.onerror = onDone;
+      }
+      if (batchIndex < totalAssets) {
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(loadNextBatch);
+        } else {
+          setTimeout(loadNextBatch, 16);
+        }
+      }
+    };
+
+    loadNextBatch();
+
     return () => {
+      gsap.killTweensOf(simulatedProgress);
       if (lottieInstRef.current) {
         lottieInstRef.current.destroy();
         lottieInstRef.current = null;
@@ -217,9 +234,9 @@ export function EnterOverlay() {
 
   return (
     <div ref={containerRef} className="fixed inset-0 z-[90] flex items-center justify-center bg-black text-white pointer-events-none">
-      
+
       {/* Circle Button */}
-      <button 
+      <button
         ref={circleRef}
         onClick={handleEnter}
         data-magnet="true"
@@ -231,19 +248,19 @@ export function EnterOverlay() {
         <div ref={lottieContainerRef} className="absolute w-[50vmin] h-[50vmin] opacity-0 pointer-events-none" />
 
         <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 100 100">
-          <circle 
+          <circle
             ref={bgCircleRef}
-            cx="50" cy="50" r="48" 
-            fill="none" 
-            stroke="rgba(255,255,255,0.1)" 
+            cx="50" cy="50" r="48"
+            fill="none"
+            stroke="rgba(255,255,255,0.1)"
             strokeWidth="2"
             vectorEffect="non-scaling-stroke"
           />
-          <circle 
+          <circle
             ref={pathRef}
-            cx="50" cy="50" r="48" 
-            fill="none" 
-            stroke="rgba(255,255,255,0.8)" 
+            cx="50" cy="50" r="48"
+            fill="none"
+            stroke="rgba(255,255,255,0.8)"
             strokeWidth="2"
             strokeLinecap="round"
             vectorEffect="non-scaling-stroke"
@@ -252,7 +269,7 @@ export function EnterOverlay() {
       </button>
 
       {/* Placeholder Logo that appears at the top */}
-      <div 
+      <div
         ref={logoRef}
         className="absolute top-8 left-1/2 -translate-x-1/2 opacity-0 text-2xl font-bold tracking-widest text-white z-[70] pointer-events-none"
       >
