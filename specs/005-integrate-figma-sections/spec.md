@@ -92,7 +92,7 @@ As a potential client wanting to get in touch, I want Section 6 ("Contact") to i
 - **FR-005**: System MUST update Section 3 ("CGI Showcase") to render the 5-item asymmetric bento grid layout with subtle rotational transforms and technical label tags.
 - **FR-006**: System MUST update Section 4 ("Motion Work") and Section 5 ("Commercials") marquee cards in `data/sections.json` and `HorizontalMarquee.tsx` to render rich `NeonCard` items with client badges.
 - **FR-007**: System MUST integrate the full `ContactPage.tsx` experience into Section 6 ("Contact"), including `MagneticButton`, `ParticleField` canvas, mouse follow-glow, stroked "NIM" background letterform, and GMT+7 live clock top/bottom bars.
-- **FR-008**: System MUST preserve all existing Lenis scroll snapping, infinite loop buffer clones, Kinetic Strings Canvas background, 3D Cubi SpriteAnimation, and HackerMode HUD triggers.
+- **FR-008**: System MUST preserve all existing Lenis scroll snapping, infinite loop buffer clones, Kinetic Strings Canvas background, and 3D Cubi SpriteAnimation.
 
 ---
 

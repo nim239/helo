@@ -60,7 +60,6 @@ graph TD
 - [x] **Dynamic Audio Reactive Canvas (`AudioController.tsx`)**: Trình tổng hợp âm thanh Web Audio Synthesizer (0KB asset), biến thiên pitch/volume realtime theo vận tốc `lenis.velocity`.
 - [x] **Custom Inertia WebGL Cursor (`CustomCursor.tsx`)**: Con trỏ chuột với hiệu ứng chất lỏng / quang học và hiệu ứng hút nam châm (Magnet Effect) vào các khung media.
 - [x] **2.5D Gyroscope Depth Motion**: Phản hồi độ nghiêng thiết bị di động, tự động fallback mượt về Touch Scroll Parallax nếu người dùng từ chối cấp quyền.
-- [x] **Console DevTools "Hacker Mode" (`HackerMode.tsx`)**: Tự động in ASCII Logo và bảng thông số thời gian thực (Teleport Math, VRAM Flushed Count, FPS) khi mở F12 Console.
 
 ### ✅ Phase 3: Curtains Deep Link & Spatial Polish (Hoàn thành 100%)
 - [x] **Seamless Hash Deep Linking**: Hỗ trợ truy cập thẳng URL chứa hash (ví dụ: `/#work-a`).

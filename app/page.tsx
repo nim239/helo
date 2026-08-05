@@ -9,7 +9,6 @@ import { HorizontalMarquee } from '../components/HorizontalMarquee';
 import { ParallaxSides } from '../components/ParallaxSides';
 import { BackgroundGrid } from '../components/BackgroundGrid';
 import { EnterOverlay } from '../components/EnterOverlay';
-import { HackerMode } from '../components/HackerMode';
 import { AudioController } from '../components/AudioController';
 import { CustomCursor } from '../components/CustomCursor';
 import { CurtainsTransition } from '../components/CurtainsTransition';
@@ -296,7 +295,7 @@ export default function Exhibition() {
       <CustomCursor />
       <CurtainsTransition />
       <AudioController />
-      <HackerMode />
+
       <EnterOverlay />
       <ParallaxSides />
       <SpriteAnimation startIntro={hasEntered} />

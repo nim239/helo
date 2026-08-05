@@ -17,7 +17,6 @@ This specification is generated exactly from the current live codebase (`src/app
   - Sky Blue: `rgb(0, 191, 255)`
   - Neon Orange Red: `rgb(255, 60, 0)`
   - Electric Purple: `rgb(210, 0, 255)`
-- **HackerMode HUD**: `#22c55e` (Tailwind `green-500`) and `#4ade80` (Tailwind `green-400`)
 
 ### Typography (Global CSS)
 - **Sans-serif Base**: `--font-sans` (`var(--font-geist-sans)`)
@@ -40,15 +39,7 @@ This specification is generated exactly from the current live codebase (`src/app
 - **Lottie Element**: Inside the circle, plays `/lotie/hitmebabyonemoretime.json` using SVG renderer.
 - **Placeholder Logo**: Displays "**N**" at `top-8` center (`text-2xl`, `font-bold`, `tracking-widest`).
 
-### Hacker Mode HUD (`HackerMode.tsx`)
-- **Trigger**: `Shift + H`
-- **Positioning**: Fixed overlay spanning the entire viewport (`inset-0`), content aligned bottom-left (`flex-col justify-end p-8`).
-- **Typography & Color**: `font-mono`, `text-green-500` (`#22c55e`), pulsating ASCII text in `text-green-400` (`#4ade80`).
-- **Live Text Strings**:
-  - `SYSTEM: ONLINE`
-  - `SCROLL ENGINE: [currentPhase]`
-  - `VIRTUAL PROGRESS: [0.00% - 100.00%]`
-  - `RAF FPS: [e.g., 60]`
+
 
 ### Background Grid (`BackgroundGrid.tsx`)
 - **Visual**: Linear gradient intersecting lines rendering at `7vw` tile sizes (`rgba(255, 255, 255, 0.04)`). Scroll-driven parallax with `speed = 0.2`.

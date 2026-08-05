@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React from "react";
 
 interface NDAPlaceholderProps {
   id?: number;
@@ -17,52 +17,18 @@ export function NDAPlaceholder({
   techTag = "🔒 Real-Time Notch FX Engine",
   className = "",
 }: NDAPlaceholderProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // Render ambient procedural noise background
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let width = (canvas.width = canvas.parentElement?.clientWidth || 400);
-    let height = (canvas.height = canvas.parentElement?.clientHeight || 300);
-
-    let animId: number;
-
-    const renderNoise = () => {
-      const imgData = ctx.createImageData(width, height);
-      const data = imgData.data;
-
-      for (let i = 0; i < data.length; i += 4) {
-        const noise = Math.random() * 25;
-        data[i] = noise * 0.2;     // R
-        data[i + 1] = noise * 0.8; // G (Cyan accent)
-        data[i + 2] = noise * 1.0; // B
-        data[i + 3] = 40;          // Alpha
-      }
-
-      ctx.putImageData(imgData, 0, 0);
-      animId = requestAnimationFrame(renderNoise);
-    };
-
-    renderNoise();
-
-    return () => {
-      cancelAnimationFrame(animId);
-    };
-  }, []);
-
   return (
     <div
       className={`relative w-full h-full min-h-[260px] flex flex-col items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/80 backdrop-blur-md p-6 select-none ${className}`}
     >
-      {/* Background procedural noise canvas */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full opacity-40 pointer-events-none"
-      />
+      {/* Static SVG Noise (zero CPU / zero rAF — just a CSS filter) */}
+      <svg className="absolute inset-0 w-full h-full opacity-25 pointer-events-none" aria-hidden>
+        <filter id={`ndaNoise-${id}`}>
+          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter={`url(#ndaNoise-${id})`} />
+      </svg>
 
       {/* Cyberpunk Grid Overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#00f2ff08_1px,transparent_1px),linear-gradient(to_bottom,#00f2ff08_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
