@@ -91,34 +91,28 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       const currentW = wrapperEl.offsetWidth || 400;
       const currentH = wrapperEl.offsetHeight || 400;
       const cX = window.innerWidth / 2 - currentW / 2;
-      const cY = window.innerHeight * 0.3 - currentH / 2;
+      const cY = window.innerHeight / 2 - currentH / 2;
 
       const cycleLength = window.innerHeight * 6;
       const progressCycle = scrollY / cycleLength;
 
-      const moveX = Math.sin(progressCycle * Math.PI * 2 * 3) * (window.innerWidth * 0.25);
-      const moveY = Math.sin(progressCycle * Math.PI * 2 * 4) * (window.innerHeight * 0.15);
+      const moveX = Math.sin(progressCycle * Math.PI * 2 * 3) * (window.innerWidth * 0.35);
+      // Phase offset (-PI/2) starts Cubi at 25% vh (1/4 height) at scrollY=0,
+      // then lets Cubi roam smoothly across the ENTIRE screen (25% to 75% vh) without flying off-screen.
+      const moveY = Math.sin(progressCycle * Math.PI * 2 * 4 - Math.PI / 2) * (window.innerHeight * 0.25);
 
       const spriteP = (progressCycle * 36) % 1; // tốc độ quay 
       const frame = spriteP * (FRAME_COUNT - 1);
 
-      // Clamp coordinates to strictly stay inside the visible viewport
-      const margin = 20;
-      const clampedX = Math.max(margin, Math.min(window.innerWidth - currentW - margin, cX + moveX));
-      const clampedY = Math.max(margin, Math.min(window.innerHeight - currentH - margin, cY + moveY));
-
-      return { x: clampedX, y: clampedY, frame };
+      return { x: cX + moveX, y: cY + moveY, frame };
     };
 
     const getCenterPos = () => {
       const currentW = wrapperEl.offsetWidth || 400;
       const currentH = wrapperEl.offsetHeight || 400;
-      const margin = 20;
-      const x = window.innerWidth / 2 - currentW / 2;
-      const y = window.innerHeight * 0.3 - currentH / 2;
       return {
-        x: Math.max(margin, Math.min(window.innerWidth - currentW - margin, x)),
-        y: Math.max(margin, Math.min(window.innerHeight - currentH - margin, y)),
+        x: window.innerWidth / 2 - currentW / 2,
+        y: window.innerHeight * 0.25 - currentH / 2,
       };
     };
 
