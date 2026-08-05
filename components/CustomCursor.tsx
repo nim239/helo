@@ -136,14 +136,17 @@ export function CustomCursor() {
       const fpsRatio = clampedFps / 100;
       const strokeOffset = CIRCUMFERENCE * (1 - fpsRatio);
 
-      // Update FPS SVG Ring DOM directly
+      // Update FPS SVG Ring DOM & Dynamic Color directly
       if (fpsCircleRef.current) {
         fpsCircleRef.current.style.strokeDashoffset = `${strokeOffset}px`;
-      }
 
-      // Update FPS HUD Text DOM directly
-      if (fpsTextRef.current) {
-        fpsTextRef.current.textContent = `${Math.round(smoothedFps)}`;
+        if (smoothedFps < 30) {
+          fpsCircleRef.current.style.stroke = "#FEF08A"; // Soft light yellow
+        } else if (smoothedFps < 60) {
+          fpsCircleRef.current.style.stroke = "#86EFAC"; // Soft light green
+        } else {
+          fpsCircleRef.current.style.stroke = "url(#cursorFpsGradient)"; // Brand gradient
+        }
       }
 
       // ── Pointer Inertia & Magnet Physics ──
@@ -224,26 +227,32 @@ export function CustomCursor() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden mix-blend-difference hidden md:block">
-      {/* Outer Circle Wrapper */}
+      {/* Outer Cursor Wrapper - Replaced 2nd ring with unified FPS Dash Ring */}
       <div ref={cursorRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
-        {/* Visual Outer Circle */}
-        <div
-          className={`absolute rounded-full border border-white transition-all duration-500 ease-out flex items-center justify-center
-            ${isHovering ? 'w-16 h-16 bg-white/20 scale-150 border-white/80' : 'w-12 h-12'}
-            ${isClicking ? 'scale-90 bg-white/40' : ''}
-            ${isIdle ? 'w-16 h-16 bg-white/10 animate-pulse scale-125 border-dashed border-white/60' : ''}
+        {/* Real-Time FPS SVG Progress Ring (Single primary outer cursor ring) */}
+        <svg
+          className={`absolute w-16 h-16 pointer-events-none -rotate-90 transition-transform duration-300 ease-out
+            ${isHovering ? 'scale-150' : 'scale-100'}
+            ${isClicking ? 'scale-90' : ''}
+            ${isIdle ? 'scale-125' : ''}
           `}
-        />
+          viewBox="0 0 64 64"
+        >
+          <defs>
+            <linearGradient id="cursorFpsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#00F2FF" />
+              <stop offset="50%" stopColor="#FF007F" />
+              <stop offset="100%" stopColor="#0066FF" />
+            </linearGradient>
+          </defs>
 
-        {/* Real-Time FPS SVG Progress Ring (Clamped at 100 FPS = 100% full circle) */}
-        <svg className="absolute w-16 h-16 pointer-events-none -rotate-90" viewBox="0 0 64 64">
           {/* Subtle background track */}
           <circle
             cx="32"
             cy="32"
             r="26"
             fill="none"
-            stroke="rgba(255, 255, 255, 0.15)"
+            stroke="rgba(255, 255, 255, 0.12)"
             strokeWidth="1.5"
             strokeDasharray="3 3"
           />
@@ -254,19 +263,13 @@ export function CustomCursor() {
             cy="32"
             r="26"
             fill="none"
-            stroke="#00F2FF"
-            strokeWidth="2"
+            stroke="url(#cursorFpsGradient)"
+            strokeWidth="2.5"
             strokeDasharray="163.36"
             strokeDashoffset="0"
             strokeLinecap="round"
           />
         </svg>
-
-        {/* FPS Counter Numeric HUD Tag */}
-        <div className="absolute left-7 top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-[#00F2FF] bg-black/60 px-1.5 py-0.5 rounded border border-[#00F2FF]/40 pointer-events-none">
-          <span ref={fpsTextRef}>60</span>
-          <span className="text-[7px] text-white/50">FPS</span>
-        </div>
       </div>
 
       {/* Inner Dot Wrapper */}
