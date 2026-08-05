@@ -14,13 +14,13 @@ Lenis updates `velocity` on every animation frame. By mapping `Math.abs(velocity
 
 ---
 
-## 2. Zero-Overhead 3D Glass Cube (`GlassCube.tsx`)
+## 2. 3D Character Element (`SpriteAnimation.tsx`)
 
 ### Decision
-Port the CSS 3D `GlassCube` component directly from `layout_figmamakeAI/src/App.tsx` using native CSS `transform-style: preserve-3d` and keyframe CSS animations (`rotateSlow`).
+Reuse the pre-existing 120-frame WebP sprite animation system (`SpriteAnimation.tsx` + `/sprite_cubi/cubi/` & `/sprite_cubi/cubi_glow/`) for all 3D character elements instead of creating a redundant CSS GlassCube.
 
 ### Rationale
-Runs at native 60+ FPS on GPU compositor without importing Three.js, React Three Fiber, or heavy WebGL bundles (~0KB bundle footprint).
+The Cubi character sprite engine is already optimized for Lenis scroll scrubbing, frame preloading, and high-performance WebGL/canvas rendering without adding new component overhead.
 
 ---
 

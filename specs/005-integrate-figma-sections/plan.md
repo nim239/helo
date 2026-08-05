@@ -54,12 +54,12 @@ helo/
 │   ├── layout.tsx               # Root layout (KineticStringsCanvas background)
 │   └── page.tsx                 # Main Exhibition view
 ├── components/
-│   ├── GlassCube.tsx            # [NEW] 3D CSS Glassmorphism Cube
 │   ├── NeonCard.tsx             # [NEW] CGI placeholder card with noise & chromatic aberration
 │   ├── MagneticButton.tsx       # [NEW] Round magnetic contact button with cursor tracking
 │   ├── ContactParticleCanvas.tsx # [NEW] 60-particle proximity line canvas
 │   ├── Section.tsx              # Updated section container with velocity typography hook
 │   ├── HorizontalMarquee.tsx    # Updated marquee track with rich NeonCards
+│   ├── SpriteAnimation.tsx      # 3D Cubi character sprite animation engine
 │   ├── KineticStringsCanvas.tsx # Laser strings background
 │   └── HackerMode.tsx           # Dev HUD overlay
 ├── data/
