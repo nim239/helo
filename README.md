@@ -72,6 +72,15 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+* **2026-08-05 (165FPS Performance & Mobile Optimization)**:
+  * **Tên tính năng/bugfix:** Giải quyết triệt để tình trạng 1fps giật lag trên Mobile và PC yếu (HardwareConcurrency <= 4).
+  * **File ảnh hưởng:** `VideoBackground.tsx`, `KineticHeader.tsx`, `layout.tsx`, `NeonCard.tsx`, `ParallaxSides.tsx`, `NDAPlaceholder.tsx`
+  * **Lý do/Kết quả:**
+    1. **Lite Mode Fallback**: Phát hiện thiết bị di động (`any-pointer: coarse`) hoặc PC yếu để chặn load `iframe` YouTube, thay bằng ảnh `hqdefault.jpg` tăng tốc GPU.
+    2. **Ticker Consolidation**: Gộp 5 vòng lặp GSAP ticker độc lập của `KineticHeader` thành 1 Global Ticker duy nhất qua `Set` registry.
+    3. **SVG Filter Deduplication**: Đưa `<filter>` nhiễu (noise) của `NeonCard` và `NDAPlaceholder` lên `<defs>` dùng chung tại `layout.tsx`, giảm từ 90+ instance xuống còn 2.
+    4. **Throttling Lottie**: Giới hạn DPR của `ParallaxSides` ở mức 1.5 và thêm delta gate (bỏ qua 3/4 frame) để tránh gọi `setSpeed()` liên tục dư thừa.
+
 * **2026-08-04 (Chuẩn Hóa Mật Độ Sóng Dây Đàn N = 1, 2, 3, 4, 5)**:
   * **Tên tính năng/bugfix:** Đưa hệ họa âm dây đàn trở về $N = 1, 2, 3, 4, 5$ vừa vặn, tinh tế theo yêu cầu.
   * **File ảnh hưởng:** `components/KineticStringsCanvas.tsx`
