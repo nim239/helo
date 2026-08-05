@@ -51,7 +51,7 @@ function SectionContent({ section }: { section: any }) {
             {section.caption || "Motion Design / CGI / Direction"}
           </div>
           <div className="w-full px-10 md:px-14 mb-2">
-            <KineticHeader text1="NIM" text2="VFX" gradientOn={2} />
+            <KineticHeader text1="NIM" text2="VFX" gradientOn={2} w1WeightRange={[100, 300]} w2WeightRange={[900, 700]} />
           </div>
         </div>
 
