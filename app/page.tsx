@@ -50,13 +50,9 @@ function SectionContent({ section }: { section: any }) {
           <div className="font-mono text-xs tracking-[0.5em] text-[#00F2FF] mb-4 uppercase opacity-90">
             {section.caption || "Motion Design / CGI / Direction"}
           </div>
-          <h1 
-            ref={kineticTypography.ref}
-            style={kineticTypography.style} 
-            className="text-6xl md:text-9xl font-black tracking-[-0.04em] leading-[0.9] text-white mb-2 text-center"
-          >
-            Nim<span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">VFX</span>
-          </h1>
+          <div className="w-full px-10 md:px-14 mb-2">
+            <KineticHeader text1="NIM" text2="VFX" gradientOn={2} />
+          </div>
         </div>
 
         {/* Bottom scroll indicator */}
@@ -144,23 +140,15 @@ function SectionContent({ section }: { section: any }) {
   }
 
   if (section.layout === 'horizontal-marquee') {
-    const renderMarqueeTitle = (title: string) => {
-      if (title === 'Motion Work') {
-        return <><span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">Motion</span> Work</>;
-      }
-      if (title === 'Commercials') {
-        return <span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">Commercials</span>;
-      }
-      return title;
-    };
-
     return (
       <div className="w-full h-full flex flex-col justify-center relative">
-        <div className="absolute top-10 md:top-14 left-1/2 -translate-x-1/2 flex flex-col items-center z-20 pointer-events-none mix-blend-difference w-full">
-          <div className="font-mono text-[11px] text-white/40 tracking-[0.4em] mb-1 uppercase">{section.counter}</div>
-          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-3xl md:text-6xl font-black tracking-tighter text-white text-center whitespace-nowrap">
-            {renderMarqueeTitle(section.title)}
-          </h2>
+        <div className="absolute top-10 md:top-14 left-0 flex flex-col items-center z-20 pointer-events-none mix-blend-difference w-full px-10 md:px-14">
+          <div className="font-mono text-[11px] text-white/40 tracking-[0.4em] mb-4 uppercase">{section.counter}</div>
+          <KineticHeader 
+            text1={section.title === 'Motion Work' ? 'MOTION' : 'COMMER'} 
+            text2={section.title === 'Motion Work' ? 'WORK' : 'CIALS'} 
+            gradientOn={1} 
+          />
         </div>
 
         <HorizontalMarquee 
@@ -202,12 +190,9 @@ function SectionContent({ section }: { section: any }) {
             <div className="font-mono text-xs tracking-[0.5em] text-white/30 uppercase mb-4">
               Available for work — 2026
             </div>
-            <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="font-sans font-black text-5xl md:text-9xl leading-[0.9] tracking-tight text-white text-center">
-              Let&apos;s<br />
-              <span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">
-                connect.
-              </span>
-            </h2>
+            <div className="w-[85vw] max-w-6xl mx-auto px-4">
+              <KineticHeader text1="LET'S" text2="CONNECT." gradientOn={2} />
+            </div>
           </div>
 
           <MagneticButton label="CONTACT" email="hello@n2antigravity.com" />

@@ -9,9 +9,10 @@ const lerp = (start: number, end: number, amt: number) => (1 - amt) * start + am
 interface KineticHeaderProps {
   text1: string;
   text2: string;
+  gradientOn?: 1 | 2 | 'both';
 }
 
-export function KineticHeader({ text1 = "CGI", text2 = "SHOWCASE" }: KineticHeaderProps) {
+export function KineticHeader({ text1 = "CGI", text2 = "SHOWCASE", gradientOn = 1 }: KineticHeaderProps) {
   const word1Ref = useRef<HTMLHeadingElement>(null);
   const word2Ref = useRef<HTMLHeadingElement>(null);
 
@@ -57,6 +58,12 @@ export function KineticHeader({ text1 = "CGI", text2 = "SHOWCASE" }: KineticHead
     };
   }, []);
 
+  const getGradientClass = (wordNumber: 1 | 2) => {
+    return gradientOn === wordNumber || gradientOn === 'both' 
+      ? "bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent"
+      : "text-white";
+  };
+
   return (
     // BÍ KÍP 3: THÊM CSS CHỐNG GIẬT LAYOUT
     // - whitespace-nowrap: prevents wrapping when expanding
@@ -64,16 +71,14 @@ export function KineticHeader({ text1 = "CGI", text2 = "SHOWCASE" }: KineticHead
     <div className="flex w-full justify-between items-center overflow-hidden">
       <h2 
         ref={word1Ref} 
-        className="text-[12vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu origin-left"
+        className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu origin-left ${getGradientClass(1)}`}
         style={{ fontVariationSettings: '"wght" 400, "wdth" 100' }}
       >
-        <span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">
-          {text1}
-        </span>
+        {text1}
       </h2>
       <h2 
         ref={word2Ref} 
-        className="text-[12vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu origin-right text-right text-white"
+        className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu origin-right text-right ${getGradientClass(2)}`}
         style={{ fontVariationSettings: '"wght" 400, "wdth" 100' }}
       >
         {text2}
