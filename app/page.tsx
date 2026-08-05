@@ -70,11 +70,11 @@ function SectionContent({ section }: { section: any }) {
   if (section.id === 'reel') {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center relative px-8 z-10">
-        {/* Top left counter & title */}
-        <div className="absolute top-10 left-10 md:left-14 z-10">
+        {/* Top center counter & title */}
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center z-10 w-full pointer-events-none">
           <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-2 uppercase">{section.counter || "02 / 06"}</div>
-          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white text-center">
-            Director&apos;s<br />Reel
+          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white text-center whitespace-nowrap">
+            Director&apos;s Reel
           </h2>
         </div>
 
@@ -117,10 +117,10 @@ function SectionContent({ section }: { section: any }) {
 
     return (
       <div className="w-full h-full flex flex-col justify-center px-10 md:px-14 relative z-10">
-        <div className="absolute top-10 left-10 md:left-14 z-10">
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center z-10 w-full pointer-events-none">
           <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-2 uppercase">{section.counter || "03 / 06"}</div>
-          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white text-center">
-            CGI<br />Showcase
+          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white text-center whitespace-nowrap">
+            <span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">CGI</span> Showcase
           </h2>
         </div>
 
@@ -147,12 +147,22 @@ function SectionContent({ section }: { section: any }) {
   }
 
   if (section.layout === 'horizontal-marquee') {
+    const renderMarqueeTitle = (title: string) => {
+      if (title === 'Motion Work') {
+        return <><span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">Motion</span> Work</>;
+      }
+      if (title === 'Commercials') {
+        return <span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">Commercials</span>;
+      }
+      return title;
+    };
+
     return (
       <div className="w-full h-full flex flex-col justify-center relative">
-        <div className="absolute top-10 md:top-14 left-10 md:left-14 z-20 pointer-events-none mix-blend-difference">
+        <div className="absolute top-10 md:top-14 left-1/2 -translate-x-1/2 flex flex-col items-center z-20 pointer-events-none mix-blend-difference w-full">
           <div className="font-mono text-[11px] text-white/40 tracking-[0.4em] mb-1 uppercase">{section.counter}</div>
-          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-3xl md:text-6xl font-black tracking-tighter text-white text-center">
-            {section.title}
+          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-3xl md:text-6xl font-black tracking-tighter text-white text-center whitespace-nowrap">
+            {renderMarqueeTitle(section.title)}
           </h2>
         </div>
 
