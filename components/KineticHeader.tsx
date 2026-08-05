@@ -109,17 +109,17 @@ export function KineticHeader({
   };
 
   return (
-    <div className="w-full flex items-baseline gap-[0.25em] overflow-hidden">
+    <div className="w-full flex items-baseline justify-center gap-[0.25em] overflow-hidden">
       <h2
         ref={word1Ref}
-        className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu ${getGradientClass(1)}`}
+        className={`text-[7.2vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu ${getGradientClass(1)}`}
         style={{ fontVariationSettings: `"wght" ${w1WeightRange[0]}, "wdth" 100` }}
       >
         {text1}
       </h2>
       <h2
         ref={word2Ref}
-        className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu ${getGradientClass(2)}`}
+        className={`text-[7.2vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu ${getGradientClass(2)}`}
         style={{ fontVariationSettings: `"wght" ${w2WeightRange[0]}, "wdth" 100` }}
       >
         {text2}

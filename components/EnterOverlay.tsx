@@ -18,20 +18,6 @@ export function EnterOverlay() {
   const [isEntering, setIsEntering] = useState(false);
 
   useEffect(() => {
-    // Initialize Lottie
-    if (lottieContainerRef.current && !lottieInstRef.current) {
-      lottieInstRef.current = lottie.loadAnimation({
-        container: lottieContainerRef.current,
-        renderer: 'svg',
-        loop: false,
-        autoplay: false,
-        path: '/lotie/hitmebabyonemoretime.json',
-        rendererSettings: {
-          preserveAspectRatio: 'xMidYMid meet',
-        }
-      });
-    }
-
     let simulatedProgress = { val: 0 };
 
     // Trim path animation

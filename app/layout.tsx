@@ -35,7 +35,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col antigravity-scroll-lock">
         {/* Global SVG Defs — noise filter shared by all NeonCards (1 definition instead of ~90 duplicates) */}
         <svg className="absolute w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true">
           <defs>

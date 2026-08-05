@@ -6,8 +6,6 @@ import lottie, { AnimationItem } from 'lottie-web';
 import { useScrollStore } from '../lib/store/useScrollStore';
 
 export function ParallaxSides() {
-  // Temporarily hidden for performance testing
-  return null;
   const leftSparkleRef = useRef<HTMLDivElement>(null);
   const rightSparkleRef = useRef<HTMLDivElement>(null);
 

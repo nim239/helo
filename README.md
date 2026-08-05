@@ -72,6 +72,9 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+*   **[2026-08-06] KineticHeader Centering & Size Adjustment (+20%)**: Khắc phục triệt để lỗi tiêu đề section không căn giữa. Thêm `justify-center` vào container và tăng font-size từ `6vw` lên `7.2vw` (+20%) chuẩn theo chỉ thị của Công tử.
+*   **[2026-08-06] Repository Code & Asset Clean Up**: Tiến hành quét và dọn dẹp toàn bộ mã nguồn cùng tài nguyên dư thừa.
+    *   *Result*: Đã xóa bỏ file debug tạm `components/MobileDebug.tsx`. Khôi phục hiệu ứng side sparkles trong `components/ParallaxSides.tsx` bằng cách dọn dẹp dead code. Thanh trừng 4 file Lottie dư thừa trong `public/lotie/` giúp nhẹ dung lượng repository. Build sản phẩm thành công rực rỡ.
 *   **[2026-08-05] Feature 009: OffscreenCanvas Worker Migration**: Di chuyển toàn bộ tính toán và render của `KineticStringsCanvas` sang Web Worker thông qua `OffscreenCanvas` API. Tách rời physics simulation và rasterization khỏi Main Thread.
     *   *Result*: Triệt tiêu hoàn toàn Main Thread jank do canvas rendering (giảm từ 4ms/frame xuống 0ms).
     *   *Result*: Input delay (INP) giảm từ mức chặn (363ms) xuống < 100ms. Đạt độ mượt 165 FPS trên mobile và màn hình tần số quét cao. Hỗ trợ graceful fallback về Main Thread cho các trình duyệt không tương thích.
