@@ -36,21 +36,21 @@ export function KineticHeader({
 
       const state = useScrollStore.getState();
 
-      // Raw velocity (noisy, jumpy)
-      const rawV = Math.min(Math.abs(state.velocity) * 0.15, 1.0);
+      // Raw velocity - boosted multiplier for higher scroll sensitivity
+      const rawV = Math.min(Math.abs(state.velocity) * 0.45, 1.0);
 
-      // DAMPING MAGIC — smoothV chases rawV by 10% each frame
-      smoothV.current = lerp(smoothV.current, rawV, 0.1);
+      // DAMPING MAGIC — faster response lerp rate (0.18)
+      smoothV.current = lerp(smoothV.current, rawV, 0.18);
 
       const vNorm = smoothV.current;
 
-      // Interpolation for Word 1
+      // Interpolation for Word 1 (Expanded width stretch: 100 -> 180)
       const w1Weight = lerp(w1WeightRange[0], w1WeightRange[1], vNorm);
-      const w1Stretch = lerp(100, 150, vNorm);
+      const w1Stretch = lerp(100, 180, vNorm);
 
-      // Interpolation for Word 2
+      // Interpolation for Word 2 (Expanded width contract: 100 -> 35)
       const w2Weight = lerp(w2WeightRange[0], w2WeightRange[1], vNorm);
-      const w2Stretch = lerp(100, 50, vNorm);
+      const w2Stretch = lerp(100, 35, vNorm);
 
       // Inject directly into DOM bypassing React render overhead
       word1Ref.current.style.fontVariationSettings = `"wght" ${w1Weight}, "wdth" ${w1Stretch}`;
