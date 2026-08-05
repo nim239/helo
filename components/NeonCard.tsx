@@ -82,13 +82,9 @@ export function NeonCard({
         />
       ) : null}
 
-      {/* SVG Noise Overlay */}
-      <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none">
-        <filter id={`noise-${index}`}>
-          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter={`url(#noise-${index})`} />
+      {/* SVG Noise Overlay — references global #noise-global defined once in layout.tsx */}
+      <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none" aria-hidden>
+        <rect width="100%" height="100%" filter="url(#noise-global)" />
       </svg>
 
       {/* Chromatic Aberration Lines */}

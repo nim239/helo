@@ -6,11 +6,8 @@ import lottie, { AnimationItem } from 'lottie-web';
 import { useScrollStore } from '../lib/store/useScrollStore';
 
 export function ParallaxSides() {
-  // Sparkles: Góc trên-trái và Góc trên-phải (Scale 20%)
   const leftSparkleRef = useRef<HTMLDivElement>(null);
   const rightSparkleRef = useRef<HTMLDivElement>(null);
-
-  // Gradient Glow: Dính sát 2 bên mép viền
   const leftGlowRef = useRef<HTMLDivElement>(null);
   const rightGlowRef = useRef<HTMLDivElement>(null);
 
@@ -20,11 +17,10 @@ export function ParallaxSides() {
       !rightSparkleRef.current ||
       !leftGlowRef.current ||
       !rightGlowRef.current
-    ) {
-      return;
-    }
+    ) return;
 
-    const dpr = Math.max(1, typeof window !== 'undefined' ? window.devicePixelRatio : 1);
+    // Cap DPR at 1.5 — retina 2x/3x screen không cần full res cho FX canvas
+    const dpr = Math.min(1.5, typeof window !== 'undefined' ? window.devicePixelRatio : 1);
 
     const commonConfig = {
       renderer: 'canvas' as const,
@@ -32,13 +28,12 @@ export function ParallaxSides() {
       autoplay: true,
       rendererSettings: {
         clearCanvas: true,
-        progressiveLoad: false,
+        progressiveLoad: true,   // Load frames on demand, không load hết 1 lần
         hideOnTransparent: true,
         dpr,
       },
     };
 
-    // Khởi tạo Lottie Sparkles ở 2 góc
     const leftSparkle: AnimationItem = lottie.loadAnimation({
       ...commonConfig,
       container: leftSparkleRef.current,
@@ -51,7 +46,6 @@ export function ParallaxSides() {
       path: '/lotie/Sparkles.json',
     });
 
-    // Khởi tạo Lottie Gradient Glow 2 bên
     const leftGlow: AnimationItem = lottie.loadAnimation({
       ...commonConfig,
       container: leftGlowRef.current,
@@ -66,16 +60,29 @@ export function ParallaxSides() {
 
     const instances = [leftSparkle, rightSparkle, leftGlow, rightGlow];
 
+    // ─── THROTTLED SPEED UPDATER ────────────────────────────────────────────
+    // Only write setSpeed() when velocity delta > threshold.
+    // Avoids calling setSpeed() 165× per second when idle (velocity ≈ 0).
+    let lastSpeed = 1.0;
+    let frameCount = 0;
+    const THROTTLE_FRAMES = 4; // update every 4 frames (~41ms at 165fps) 
+    const SPEED_THRESHOLD = 0.05;
+
     const renderLoop = () => {
+      // Throttle: skip 3 out of 4 frames
+      frameCount = (frameCount + 1) % THROTTLE_FRAMES;
+      if (frameCount !== 0) return;
+
       const velocity = useScrollStore.getState().velocity || 0;
       const absVelocity = Math.abs(velocity);
       const targetSpeed = Math.min(3.0, Math.max(1.0, 1.0 + absVelocity * 0.02));
 
+      // Only write to Lottie if speed actually changed meaningfully
+      if (Math.abs(targetSpeed - lastSpeed) < SPEED_THRESHOLD) return;
+      lastSpeed = targetSpeed;
+
       for (let i = 0; i < instances.length; i++) {
-        const item = instances[i];
-        if (item) {
-          item.setSpeed(targetSpeed);
-        }
+        instances[i]?.setSpeed(targetSpeed);
       }
     };
 
@@ -84,10 +91,7 @@ export function ParallaxSides() {
     return () => {
       gsap.ticker.remove(renderLoop);
       for (let i = 0; i < instances.length; i++) {
-        const item = instances[i];
-        if (item) {
-          item.destroy();
-        }
+        instances[i]?.destroy();
       }
     };
   }, []);
@@ -103,14 +107,11 @@ export function ParallaxSides() {
         <div ref={rightSparkleRef} className="w-full h-full opacity-80" />
       </div>
 
-      {/* 2. Gradient Glow Lottie ép sát mép ngoài (Đẩy mạnh offset ra 2 mép) */}
-
-      {/* Mép TRÁI: Đẩy lùi sang trái -48vh để tơ glow áp sát dải dây */}
+      {/* 2. Gradient Glow Lottie ép sát mép ngoài */}
       <div className="fixed top-1/2 left-0 h-[100vw] w-[100vh] z-[40] pointer-events-none mix-blend-screen -rotate-90 -translate-y-1/2 -translate-x-[48vh] origin-center">
         <div ref={leftGlowRef} className="w-full h-full opacity-100 scale-x-150 scale-y-110" />
       </div>
 
-      {/* Mép PHẢI: Đẩy lùi sang phải 48vh để tơ glow áp sát dải dây */}
       <div className="fixed top-1/2 right-0 h-[100vw] w-[100vh] z-[40] pointer-events-none mix-blend-screen rotate-90 -translate-y-1/2 translate-x-[48vh] origin-center">
         <div ref={rightGlowRef} className="w-full h-full opacity-100 scale-x-150 scale-y-110" />
       </div>

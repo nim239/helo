@@ -21,13 +21,9 @@ export function NDAPlaceholder({
     <div
       className={`relative w-full h-full min-h-[260px] flex flex-col items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/80 backdrop-blur-md p-6 select-none ${className}`}
     >
-      {/* Static SVG Noise (zero CPU / zero rAF — just a CSS filter) */}
+      {/* Static SVG Noise — references global #noise-nda defined once in layout.tsx (zero CPU / zero rAF) */}
       <svg className="absolute inset-0 w-full h-full opacity-25 pointer-events-none" aria-hidden>
-        <filter id={`ndaNoise-${id}`}>
-          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter={`url(#ndaNoise-${id})`} />
+        <rect width="100%" height="100%" filter="url(#noise-nda)" />
       </svg>
 
       {/* Cyberpunk Grid Overlay */}

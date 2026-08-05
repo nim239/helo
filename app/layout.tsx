@@ -36,6 +36,19 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Global SVG Defs — noise filter shared by all NeonCards (1 definition instead of ~90 duplicates) */}
+        <svg className="absolute w-0 h-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <defs>
+            <filter id="noise-global">
+              <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+              <feColorMatrix type="saturate" values="0" />
+            </filter>
+            <filter id="noise-nda">
+              <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch" />
+              <feColorMatrix type="saturate" values="0" />
+            </filter>
+          </defs>
+        </svg>
         <KineticStringsCanvas />
         {children}
       </body>

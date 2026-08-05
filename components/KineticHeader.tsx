@@ -15,6 +15,57 @@ interface KineticHeaderProps {
   w2WeightRange?: [number, number];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GLOBAL TICKER REGISTRY
+// Instead of each KineticHeader instance registering its own GSAP ticker,
+// all instances share a single global ticker — cutting 5 tickers → 1.
+// ─────────────────────────────────────────────────────────────────────────────
+type HeaderEntry = {
+  word1: HTMLHeadingElement;
+  word2: HTMLHeadingElement;
+  smoothV: { current: number };
+  w1WeightRange: [number, number];
+  w2WeightRange: [number, number];
+};
+
+const _registry = new Set<HeaderEntry>();
+let _tickerActive = false;
+
+function _globalTicker() {
+  const state = useScrollStore.getState();
+  const rawV = Math.min(Math.abs(state.velocity) * 0.45, 1.0);
+
+  for (const entry of _registry) {
+    // Independent damped smoothV per header
+    entry.smoothV.current = lerp(entry.smoothV.current, rawV, 0.18);
+    const v = entry.smoothV.current;
+
+    const w1Weight = lerp(entry.w1WeightRange[0], entry.w1WeightRange[1], v);
+    const w1Stretch = lerp(100, 180, v);
+    const w2Weight = lerp(entry.w2WeightRange[0], entry.w2WeightRange[1], v);
+    const w2Stretch = lerp(100, 35, v);
+
+    entry.word1.style.fontVariationSettings = `"wght" ${w1Weight}, "wdth" ${w1Stretch}`;
+    entry.word2.style.fontVariationSettings = `"wght" ${w2Weight}, "wdth" ${w2Stretch}`;
+  }
+}
+
+function registerHeader(entry: HeaderEntry) {
+  _registry.add(entry);
+  if (!_tickerActive) {
+    gsap.ticker.add(_globalTicker);
+    _tickerActive = true;
+  }
+}
+
+function unregisterHeader(entry: HeaderEntry) {
+  _registry.delete(entry);
+  if (_registry.size === 0 && _tickerActive) {
+    gsap.ticker.remove(_globalTicker);
+    _tickerActive = false;
+  }
+}
+
 export function KineticHeader({ 
   text1 = "CGI", 
   text2 = "SHOWCASE", 
@@ -24,43 +75,25 @@ export function KineticHeader({
 }: KineticHeaderProps) {
   const word1Ref = useRef<HTMLHeadingElement>(null);
   const word2Ref = useRef<HTMLHeadingElement>(null);
-
-  // SMOOTH VELOCITY STORAGE (Damping physics)
   const smoothV = useRef(0);
+  const entryRef = useRef<HeaderEntry | null>(null);
 
   useEffect(() => {
-    // Use GSAP ticker instead of raw rAF
-    // This runs in the SAME ticker as Lenis, so it never conflicts with snap
-    const ticker = () => {
-      if (!word1Ref.current || !word2Ref.current) return;
+    if (!word1Ref.current || !word2Ref.current) return;
 
-      const state = useScrollStore.getState();
-
-      // Raw velocity - boosted multiplier for higher scroll sensitivity
-      const rawV = Math.min(Math.abs(state.velocity) * 0.45, 1.0);
-
-      // DAMPING MAGIC — faster response lerp rate (0.18)
-      smoothV.current = lerp(smoothV.current, rawV, 0.18);
-
-      const vNorm = smoothV.current;
-
-      // Interpolation for Word 1 (Expanded width stretch: 100 -> 180)
-      const w1Weight = lerp(w1WeightRange[0], w1WeightRange[1], vNorm);
-      const w1Stretch = lerp(100, 180, vNorm);
-
-      // Interpolation for Word 2 (Expanded width contract: 100 -> 35)
-      const w2Weight = lerp(w2WeightRange[0], w2WeightRange[1], vNorm);
-      const w2Stretch = lerp(100, 35, vNorm);
-
-      // Inject directly into DOM bypassing React render overhead
-      word1Ref.current.style.fontVariationSettings = `"wght" ${w1Weight}, "wdth" ${w1Stretch}`;
-      word2Ref.current.style.fontVariationSettings = `"wght" ${w2Weight}, "wdth" ${w2Stretch}`;
+    const entry: HeaderEntry = {
+      word1: word1Ref.current,
+      word2: word2Ref.current,
+      smoothV,
+      w1WeightRange,
+      w2WeightRange,
     };
 
-    gsap.ticker.add(ticker);
+    entryRef.current = entry;
+    registerHeader(entry);
 
     return () => {
-      gsap.ticker.remove(ticker);
+      unregisterHeader(entry);
     };
   }, [w1WeightRange, w2WeightRange]);
 
