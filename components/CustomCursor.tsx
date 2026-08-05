@@ -147,6 +147,10 @@ export function CustomCursor() {
         } else {
           fpsCircleRef.current.style.stroke = "url(#cursorFpsGradient)"; // Brand gradient
         }
+        // Update FPS HUD Text DOM directly
+        if (fpsTextRef.current) {
+          fpsTextRef.current.textContent = `${Math.round(smoothedFps)}`;
+        }
       }
 
       // ── Pointer Inertia & Magnet Physics ──
@@ -270,6 +274,12 @@ export function CustomCursor() {
             strokeLinecap="round"
           />
         </svg>
+
+        {/* FPS Counter Numeric HUD Tag */}
+        <div className="absolute left-7 top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
+          <span ref={fpsTextRef}>60</span>
+          <span className="text-[7px] text-white/50">FPS</span>
+        </div>
       </div>
 
       {/* Inner Dot Wrapper */}
