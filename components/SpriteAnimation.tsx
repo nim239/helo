@@ -91,7 +91,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       const currentW = wrapperEl.offsetWidth || 400;
       const currentH = wrapperEl.offsetHeight || 400;
       const cX = window.innerWidth / 2 - currentW / 2;
-      const cY = window.innerHeight / 2 - currentH / 2;
+      const cY = window.innerHeight * 0.25 - currentH / 2;
 
       const cycleLength = window.innerHeight * 6;
       const progressCycle = scrollY / cycleLength;
@@ -110,7 +110,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       const currentH = wrapperEl.offsetHeight || 400;
       return {
         x: window.innerWidth / 2 - currentW / 2,
-        y: window.innerHeight / 2 - currentH / 2,
+        y: window.innerHeight * 0.25 - currentH / 2,
       };
     };
 
