@@ -13,6 +13,7 @@ import { AudioController } from '../components/AudioController';
 import { CustomCursor } from '../components/CustomCursor';
 import { CurtainsTransition } from '../components/CurtainsTransition';
 import { NeonCard } from '../components/NeonCard';
+import { KineticHeader } from '../components/KineticHeader';
 import { MagneticButton } from '../components/contact/MagneticButton';
 import { ParticleField } from '../components/contact/ParticleField';
 import { useKineticTypography } from '../lib/hooks/useKineticTypography';
@@ -71,11 +72,9 @@ function SectionContent({ section }: { section: any }) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center relative px-8 z-10">
         {/* Top center counter & title */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center z-10 w-full pointer-events-none">
-          <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-2 uppercase">{section.counter || "02 / 06"}</div>
-          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white text-center whitespace-nowrap">
-            Director&apos;s Reel
-          </h2>
+        <div className="absolute top-10 left-0 flex flex-col items-center z-10 w-full pointer-events-none px-10 md:px-14">
+          <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-4 uppercase">{section.counter || "02 / 06"}</div>
+          <KineticHeader text1="DIRECTOR'S" text2="REEL" />
         </div>
 
         {/* 16:9 Cinematic Frame */}
@@ -117,11 +116,9 @@ function SectionContent({ section }: { section: any }) {
 
     return (
       <div className="w-full h-full flex flex-col justify-center px-10 md:px-14 relative z-10">
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center z-10 w-full pointer-events-none">
-          <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-2 uppercase">{section.counter || "03 / 06"}</div>
-          <h2 ref={kineticTypography.ref} style={kineticTypography.style} className="text-4xl md:text-7xl font-black tracking-tight leading-none text-white text-center whitespace-nowrap">
-            <span className="bg-gradient-to-r from-[#00F2FF] via-[#FF007F] to-[#0066FF] bg-clip-text text-transparent">CGI</span> Showcase
-          </h2>
+        <div className="absolute top-10 left-0 flex flex-col items-center z-10 w-full pointer-events-none px-10 md:px-14">
+          <div className="font-mono text-[11px] text-white/30 tracking-[0.4em] mb-4 uppercase">{section.counter || "03 / 06"}</div>
+          <KineticHeader text1="CGI" text2="SHOWCASE" />
         </div>
 
         {/* Bento Grid */}
