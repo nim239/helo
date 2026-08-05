@@ -12,9 +12,14 @@ interface MarqueeItem {
   id: string;
   label?: string;
   accent?: string;
-  mediaType: string;
-  src: string;
-  poster: string;
+  mediaType?: string;
+  src?: string;
+  poster?: string;
+  youtubeId?: string;
+  isNDA?: boolean;
+  frameId?: number;
+  artist?: string;
+  techTag?: string;
 }
 
 interface HorizontalMarqueeProps {
@@ -91,6 +96,11 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
               height="100%"
               src={item.src}
               poster={item.poster}
+              youtubeId={item.youtubeId}
+              isNDA={item.isNDA}
+              frameId={item.frameId}
+              artist={item.artist}
+              techTag={item.techTag}
             />
           </div>
         ))}

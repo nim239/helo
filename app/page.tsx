@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import sectionsData from '../data/sections.json';
+import catalogData from '../data/catalog.json';
 import { Section } from '../components/Section';
 import { SpriteAnimation } from '../components/SpriteAnimation';
 import { HorizontalMarquee } from '../components/HorizontalMarquee';
@@ -73,18 +74,17 @@ function SectionContent({ section }: { section: any }) {
           <KineticHeader text1="DIRECTOR'S" text2="REEL" />
         </div>
 
-        {/* 16:9 Cinematic Frame */}
+        {/* 16:9 Cinematic Frame with YouTube Background Stream */}
         <div className="w-[85vw] max-w-4xl aspectRatio-[16/9] relative z-10 my-auto">
           <NeonCard 
             width="100%" 
             height="100%" 
             accent="#00F2FF" 
-            label="REEL — 2026 — 4K" 
-            src={section.src} 
-            poster={section.poster} 
+            label="FRAME 01 — TUNG CÁNH — HOÀNG ROB" 
+            youtubeId="k4LPUgM94U8"
           />
           {/* Play Overlay */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-[#00F2FF]/60 flex items-center justify-center cursor-pointer bg-black/60 backdrop-blur-sm shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-transform duration-300 hover:scale-110">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full border border-[#00F2FF]/60 flex items-center justify-center cursor-pointer bg-black/60 backdrop-blur-sm shadow-[0_0_30px_rgba(0,242,255,0.2)] transition-transform duration-300 hover:scale-110 pointer-events-auto z-20">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M6 4L16 10L6 16V4Z" fill="#00F2FF" />
             </svg>
@@ -117,22 +117,60 @@ function SectionContent({ section }: { section: any }) {
           <KineticHeader text1="CGI" text2="SHOWCASE" />
         </div>
 
-        {/* Bento Grid */}
+        {/* Bento Grid with YouTube Embeds and NDA Placeholders */}
         <div className="grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-4 h-[55dvh] max-w-6xl w-full mx-auto mt-24">
           <div className="md:row-span-2">
-            <NeonCard label={bentoItems[0]?.label} accent={bentoItems[0]?.accent} rotation={bentoItems[0]?.rotation} src={section.src} poster={section.poster} index={0} />
+            <NeonCard 
+              label="FRAME 01 — TUNG CÁNH" 
+              accent="#00F2FF" 
+              rotation={-0.5} 
+              youtubeId="k4LPUgM94U8" 
+              index={0} 
+            />
           </div>
           <div>
-            <NeonCard label={bentoItems[1]?.label} accent={bentoItems[1]?.accent} rotation={bentoItems[1]?.rotation} index={1} />
+            <NeonCard 
+              isNDA={true}
+              frameId={2}
+              label="LỄ RA MẮT SẢN PHẨM CÔNG NGHỆ"
+              artist="NDA Protected"
+              techTag="Real-Time Notch FX Engine"
+              accent="#FF007F" 
+              rotation={0.3} 
+              index={1} 
+            />
           </div>
           <div>
-            <NeonCard label={bentoItems[2]?.label} accent={bentoItems[2]?.accent} rotation={bentoItems[2]?.rotation} index={2} />
+            <NeonCard 
+              label="FRAME 03 — TVC DƯỢC HOA LINH" 
+              techTag="TVC AI Material Generative Render"
+              accent="#00FF88" 
+              rotation={-0.4} 
+              youtubeId="ZkR-JyxodD0"
+              index={2} 
+            />
           </div>
           <div>
-            <NeonCard label={bentoItems[3]?.label} accent={bentoItems[3]?.accent} rotation={bentoItems[3]?.rotation} index={3} />
+            <NeonCard 
+              label="FRAME 04 — TỰ NGUYỆN" 
+              techTag="Volumetric Laser Mapping"
+              accent="#0066FF" 
+              rotation={0.2} 
+              youtubeId="iFN6DvXk04Y"
+              index={3} 
+            />
           </div>
           <div>
-            <NeonCard label={bentoItems[4]?.label} accent={bentoItems[4]?.accent} rotation={bentoItems[4]?.rotation} index={4} />
+            <NeonCard 
+              isNDA={true}
+              frameId={16}
+              label="CORPORATE YEAR END PARTY 2025"
+              artist="NDA Confidential"
+              techTag="Unreal Engine 5 Stage Craft"
+              accent="#FF007F" 
+              rotation={-0.3} 
+              index={4} 
+            />
           </div>
         </div>
       </div>

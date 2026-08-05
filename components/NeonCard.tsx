@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import { VideoBackground } from "./VideoBackground";
+import { NDAPlaceholder } from "./NDAPlaceholder";
 
 export interface NeonCardProps {
   label?: string;
@@ -11,6 +12,11 @@ export interface NeonCardProps {
   rotation?: number;
   src?: string;
   poster?: string;
+  youtubeId?: string;
+  isNDA?: boolean;
+  frameId?: number;
+  artist?: string;
+  techTag?: string;
 }
 
 export function NeonCard({
@@ -22,7 +28,26 @@ export function NeonCard({
   rotation = 0,
   src,
   poster,
+  youtubeId,
+  isNDA = false,
+  frameId,
+  artist,
+  techTag,
 }: NeonCardProps) {
+  // If frame is NDA Protected, render Cyberpunk NDAPlaceholder
+  if (isNDA) {
+    return (
+      <div style={{ width, height, transform: rotation ? `rotate(${rotation}deg)` : undefined }}>
+        <NDAPlaceholder
+          id={frameId}
+          title={label}
+          artist={artist}
+          techTag={techTag || label}
+        />
+      </div>
+    );
+  }
+
   const gradients = [
     `radial-gradient(ellipse at 30% 40%, ${accent}22 0%, transparent 60%), radial-gradient(ellipse at 70% 60%, #FF007F18 0%, transparent 60%)`,
     `radial-gradient(ellipse at 60% 30%, #FF007F22 0%, transparent 60%), radial-gradient(ellipse at 40% 70%, #00FF8818 0%, transparent 60%)`,
@@ -40,8 +65,10 @@ export function NeonCard({
         boxShadow: `0 0 20px ${accent}15`,
       }}
     >
-      {/* Media Video / Image fallback */}
-      {src ? (
+      {/* YouTube Background Stream */}
+      {youtubeId ? (
+        <VideoBackground youtubeId={youtubeId} />
+      ) : src ? (
         <video
           src={src}
           poster={poster}

@@ -81,28 +81,46 @@
     },
     "items": [
       {
-        "id": "b-shot01",
-        "label": "BRAND IDENT — NIKE × NimVFX",
+        "id": "frame-05",
+        "frameId": 5,
+        "label": "FRAME 05 — I WILL CALL IT LOVE — HÀ LÊ",
         "accent": "#00F2FF",
-        "mediaType": "video",
-        "src": "https://cdn.namdeptrai.com/videos/work-b/01.webm",
-        "poster": "/videos/work-b/01.webp"
+        "youtubeId": "HBBrgEnOBUc",
+        "techTag": "Spatial Surround DMX Sync"
       },
       {
-        "id": "b-shot02",
-        "label": "TITLE SEQUENCE — NETFLIX",
+        "id": "frame-06",
+        "frameId": 6,
+        "label": "FRAME 06 — WALK WALK — HỒ NGỌC HÀ",
         "accent": "#FF007F",
-        "mediaType": "video",
-        "src": "https://cdn.namdeptrai.com/videos/work-b/02.webm",
-        "poster": "/videos/work-b/02.webp"
+        "youtubeId": "I-oFwhqgHCI",
+        "techTag": "60FPS Render Master Core"
       },
       {
-        "id": "b-shot03",
-        "label": "LIVE EVENT — COACHELLA",
-        "accent": "#00FF88",
-        "mediaType": "video",
-        "src": "https://cdn.namdeptrai.com/videos/work-b/03.webm",
-        "poster": "/videos/work-b/03.webp"
+        "id": "frame-17",
+        "frameId": 17,
+        "isNDA": true,
+        "label": "VIETNAM BRAND ACTIVATION",
+        "artist": "NDA Confidential",
+        "techTag": "HDR10+ Black Precision OLED",
+        "accent": "#00FF88"
+      },
+      {
+        "id": "frame-07",
+        "frameId": 7,
+        "label": "FRAME 07 — CÔ ĐƠN TRÊN SOFA — HỒ NGỌC HÀ",
+        "accent": "#0066FF",
+        "youtubeId": "TRdQ4xATCRs",
+        "techTag": "Kinetic DMX Motor Array"
+      },
+      {
+        "id": "frame-18",
+        "frameId": 18,
+        "isNDA": true,
+        "label": "LOCAL EDM FESTIVAL",
+        "artist": "NDA Confidential",
+        "techTag": "Volumetric Fog & Light Rig",
+        "accent": "#FF007F"
       }
     ]
   },
@@ -119,28 +137,46 @@
     },
     "items": [
       {
-        "id": "c-shot01",
-        "label": "APPLE — SHOT ON IPHONE",
+        "id": "frame-08",
+        "frameId": 8,
+        "label": "FRAME 08 — NẤU ĂN CHO EM — ĐEN VÂU",
         "accent": "#00FF88",
-        "mediaType": "video",
-        "src": "https://cdn.namdeptrai.com/videos/work-c/01.webm",
-        "poster": "/videos/work-c/01.webp"
+        "youtubeId": "Usx6j7Ap1kE",
+        "techTag": "Realtime Particle Shader"
       },
       {
-        "id": "c-shot02",
-        "label": "SAMSUNG — GALAXY AI",
+        "id": "frame-09",
+        "frameId": 9,
+        "label": "FRAME 09 — 1 2 STEPS — AI MOTION LAB",
         "accent": "#0066FF",
-        "mediaType": "video",
-        "src": "https://cdn.namdeptrai.com/videos/work-c/02.webm",
-        "poster": "/videos/work-c/02.webp"
+        "youtubeId": "Qev2pw4tL_U",
+        "techTag": "Sử dụng AI Material Shader"
       },
       {
-        "id": "c-shot03",
-        "label": "ADIDAS — IMPOSSIBLE IS NOTHING",
-        "accent": "#FF007F",
-        "mediaType": "video",
-        "src": "https://cdn.namdeptrai.com/videos/work-c/03.webm",
-        "poster": "/videos/work-c/03.webp"
+        "id": "frame-19",
+        "frameId": 19,
+        "isNDA": true,
+        "label": "HỘI NGHỊ BẤT ĐỘNG SẢN",
+        "artist": "NDA Confidential",
+        "techTag": "Ultra-Wide LED Canvas 16K",
+        "accent": "#FF007F"
+      },
+      {
+        "id": "frame-10",
+        "frameId": 10,
+        "label": "FRAME 10 — MOON CHASER — AI MOTION LAB",
+        "accent": "#00F2FF",
+        "youtubeId": "fbc2FHHZqIc",
+        "techTag": "60FPS AI Material Render"
+      },
+      {
+        "id": "frame-20",
+        "frameId": 20,
+        "isNDA": true,
+        "label": "LỄ TRAO GIẢI DOANH NHÂN",
+        "artist": "NDA Confidential",
+        "techTag": "3D Kinetic Rigging Core",
+        "accent": "#00FF88"
       }
     ]
   },
