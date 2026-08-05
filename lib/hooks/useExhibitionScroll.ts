@@ -101,33 +101,24 @@ export function useExhibitionScroll() {
       }
 
       // ============================================================
-      // SNAP: GSAP tween proxy → lenis.scrollTo(immediate) mỗi frame
-      // An toàn vì syncTouch=true → lenis.scrollTo(immediate) đi qua
-      // virtual scroll, KHÔNG gọi window.scrollTo trực tiếp
+      // SNAP: trigger when velocity settles near zero
       // ============================================================
-      if (Math.abs(velocity) < 0.3 && !lenis.isStopped) {
+      if (Math.abs(velocity) < 1.0 && !lenis.isStopped) {
         clearTimeout(snapTimeout);
         snapTimeout = setTimeout(() => {
           if (!isDocumentVisible) return;
           const s = useScrollStore.getState();
           if (!s.isIntroComplete) return;
-          if (Math.abs(lenis.velocity) > 0.05) return;
-          if (Math.abs(lenis.scroll - startScrollY) < 5) return;
+          if (Math.abs(lenis.velocity) > 0.5) return; // still moving
 
           const scrollRatio = lenis.scroll / currentH;
-          const safeRatio = Math.abs(scrollRatio - Math.round(scrollRatio)) < 0.02
-            ? Math.round(scrollRatio)
-            : scrollRatio;
-          const targetSection = Math.ceil(safeRatio) * currentH;
+          const targetSection = Math.round(scrollRatio) * currentH;
 
-          if (Math.abs(lenis.scroll - targetSection) > 5) {
+          if (Math.abs(lenis.scroll - targetSection) > 10) {
             dbg(`SNAP ${Math.round(lenis.scroll)} → ${Math.round(targetSection)}`);
-
-            // Use native lenis.scrollTo instead of GSAP proxy to prevent infinite teleport conflicts
             lenis.scrollTo(targetSection, {
-              duration: 5, // Tăng duration để snap trôi mượt và đầm hơn
-              // easeInOutCubic: Chậm vào → Tăng đà → Chậm ra
-              easing: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+              duration: 2.5,
+              easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
               lock: false,
               onComplete: () => {
                 dbg(`SNAP DONE ${Math.round(targetSection)}`);
@@ -135,7 +126,7 @@ export function useExhibitionScroll() {
               }
             });
           }
-        }, 350);
+        }, 200);
       }
     });
 

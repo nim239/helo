@@ -63,17 +63,17 @@ export function KineticHeader({ text1 = "CGI", text2 = "SHOWCASE", gradientOn = 
   };
 
   return (
-    <div className="flex w-full justify-between items-center overflow-hidden">
+    <div className="w-full flex items-baseline gap-[0.25em] overflow-hidden">
       <h2
         ref={word1Ref}
-        className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu origin-left ${getGradientClass(1)}`}
+        className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu ${getGradientClass(1)}`}
         style={{ fontVariationSettings: '"wght" 400, "wdth" 100' }}
       >
         {text1}
       </h2>
       <h2
         ref={word2Ref}
-        className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu origin-right text-right ${getGradientClass(2)}`}
+        className={`text-[6vw] leading-none uppercase font-black tracking-tighter whitespace-nowrap backface-hidden transform-gpu ${getGradientClass(2)}`}
         style={{ fontVariationSettings: '"wght" 400, "wdth" 100' }}
       >
         {text2}
