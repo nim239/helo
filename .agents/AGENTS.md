@@ -90,3 +90,8 @@ Mỗi khi thực hiện bất kỳ thao tác chỉnh sửa mã nguồn, sửa l�
 * **## Hiệu năng đồ hoạ (Performance Constitution)**
 - khi FPS dưới 30 hãy kích hoạt chế độ audit toàn diện tìm kiếm tác nhân gây drop fps dưới mọi hình thức trước khi tiếp tục làm bất cứ thứ gì khác. 
 - khi FPS dưới 40 hãy kích hoạt chế độ audit toàn diện tìm kiếm tác nhân gây drop fps.
+
+---
+
+### 6. QUY TRÌNH KIỂM SOÁT MÃ NGUỒN (CODE QUALITY CONTROL)
+* **Luật Bất Di Bất Dịch:** Code phải sạch không tì vết (No ESLint Errors) thì mới cho phép Commit/Push. Bắt buộc phải đảm bảo không còn lỗi linter trước khi thực hiện lưu trữ lên kho chứa.

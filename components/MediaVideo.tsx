@@ -66,7 +66,7 @@ export function MediaVideo({ id, src, poster, className = "" }: MediaVideoProps)
       video.removeAttribute('src');
       video.load();
       // Reset error state on flush so it can try again next time it enters viewport
-      setHasError(false);
+      setTimeout(() => setHasError(false), 0);
     }
   }, [isVisible, src, id]);
 

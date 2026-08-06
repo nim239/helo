@@ -24,7 +24,7 @@ import { useAppStore } from '../lib/store/useAppStore';
 import { useScrollStore } from '../lib/store/useScrollStore';
 import { WarpOverlay } from '../components/WarpOverlay';
 
-function SectionContent({ section }: { section: any }) {
+function SectionContent({ section }: { section: unknown }) {
   const kineticTypography = useKineticTypography();
   const [liveTime, setLiveTime] = useState("");
 
@@ -256,7 +256,7 @@ export default function Exhibition() {
   const lenisRef = useExhibitionScroll();
 
   useEffect(() => {
-    setMounted(true);
+    setTimeout(() => setMounted(true), 0);
     if (typeof window !== 'undefined' && window.location.hash) {
       setDeepLinkTarget(window.location.hash);
     }

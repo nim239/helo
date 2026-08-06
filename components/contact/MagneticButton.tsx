@@ -19,11 +19,11 @@ export function MagneticButton({
   const target = useRef({ x: 0, y: 0 });
   const current = useRef({ x: 0, y: 0 });
 
-  const animate = useCallback(() => {
+  const animate = useCallback(function loop() {
     current.current.x += (target.current.x - current.current.x) * 0.12;
     current.current.y += (target.current.y - current.current.y) * 0.12;
     setPos({ x: current.current.x, y: current.current.y });
-    raf.current = requestAnimationFrame(animate);
+    raf.current = requestAnimationFrame(loop);
   }, []);
 
   useEffect(() => {

@@ -32,7 +32,7 @@ export function EnterOverlay() {
       });
     }
 
-    let simulatedProgress = { val: 0 };
+    const simulatedProgress = { val: 0 };
 
     // Trim path animation
     const updatePath = () => {
@@ -134,7 +134,7 @@ export function EnterOverlay() {
       }
       if (batchIndex < totalAssets) {
         if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-          (window as any).requestIdleCallback(loadNextBatch);
+          (window as unknown).requestIdleCallback(loadNextBatch);
         } else {
           setTimeout(loadNextBatch, 16);
         }
@@ -161,7 +161,7 @@ export function EnterOverlay() {
 
     // 1. Audio setup
     try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContext = window.AudioContext || (window as unknown).webkitAudioContext;
       if (AudioContext) {
         const audioCtx = new AudioContext();
         if (audioCtx.state === 'suspended') {
@@ -174,9 +174,9 @@ export function EnterOverlay() {
     }
 
     // 2. Gyroscope setup
-    if (typeof (DeviceMotionEvent as any) !== 'undefined' && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+    if (typeof (DeviceMotionEvent as unknown) !== 'undefined' && typeof (DeviceMotionEvent as unknown).requestPermission === 'function') {
       try {
-        const permission = await (DeviceMotionEvent as any).requestPermission();
+        const permission = await (DeviceMotionEvent as unknown).requestPermission();
         if (permission === 'granted') {
           setGyroEnabled(true);
         } else {

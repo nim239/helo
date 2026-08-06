@@ -34,11 +34,11 @@ export function CustomCursor() {
     // 1. MOBILE EXTERMINATION (Pointer Fine Check)
     const finePointerQuery = window.matchMedia("(pointer: fine)");
     if (!finePointerQuery.matches) {
-      setIsFinePointer(false);
+      setTimeout(() => setIsFinePointer(false), 0);
       return;
     }
 
-    setIsFinePointer(true);
+    setTimeout(() => setIsFinePointer(true), 0);
     document.body.style.cursor = 'none';
 
     // GSAP quickSetters
@@ -116,7 +116,7 @@ export function CustomCursor() {
     const CIRCUMFERENCE = 2 * Math.PI * R;       // ~201.06
     const HALF_CIRC = CIRCUMFERENCE / 2;          // ~100.53 — half arc for each gauge
 
-    let idleAngle = 0;
+    const idleAngle = 0;
     let lastFrameTime = performance.now();
     let smoothedFps = 60;
     let lastWarpBurst = false;
@@ -289,6 +289,7 @@ export function CustomCursor() {
 
           {/* FPS gauge — left half arc (bottom to top) */}
           <path
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             ref={fpsCircleRef as any}
             d="M 40,72 A 32,32 0 0,1 40,8"
             fill="none"
@@ -301,6 +302,7 @@ export function CustomCursor() {
 
           {/* T019: Warp gauge — right half arc (bottom to top) */}
           <path
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             ref={warpCircleRef as any}
             d="M 40,72 A 32,32 0 0,0 40,8"
             fill="none"

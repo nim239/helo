@@ -53,7 +53,7 @@ export function useKineticTypography() {
   }, []);
 
   return {
-    ref: elementRef as React.RefObject<any>,
+    ref: elementRef as React.RefObject<unknown>,
     style: {
       transformOrigin: 'center center',
       display: 'inline-block',

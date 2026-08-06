@@ -225,6 +225,7 @@ export function WarpOverlay() {
         cullTargetRef.current.style.display = '';
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

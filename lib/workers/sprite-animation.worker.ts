@@ -79,7 +79,7 @@ const loop = () => {
   if (typeof self.requestAnimationFrame !== "undefined") {
     state.rafId = self.requestAnimationFrame(loop);
   } else {
-    state.rafId = setTimeout(loop, 1000 / 60) as any;
+    state.rafId = setTimeout(loop, 1000 / 60) as unknown;
   }
 };
 

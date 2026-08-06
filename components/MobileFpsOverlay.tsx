@@ -20,12 +20,13 @@ export function MobileFpsOverlay() {
   const [tapCount, setTapCount] = useState(0);
 
   const rafRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(performance.now());
+  const lastTimeRef = useRef<number>(0);
   const frameCountRef = useRef<number>(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tapCountRef = useRef<number>(0);
   // T023: Track if overlay was auto-shown by warp
   const autoShownByWarpRef = useRef<boolean>(false);
+  const [isAutoShown, setIsAutoShown] = useState(false);
   const warpHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // FPS Measurement Loop
@@ -38,6 +39,7 @@ export function MobileFpsOverlay() {
       return;
     }
 
+    lastTimeRef.current = lastTimeRef.current || performance.now();
     const measure = (now: number) => {
       frameCountRef.current++;
       const elapsed = now - lastTimeRef.current;
@@ -72,6 +74,7 @@ export function MobileFpsOverlay() {
     if (tapCountRef.current >= TAP_COUNT_REQUIRED) {
       // Toggle: if auto-shown by warp, manual tap overrides to explicit toggle
       autoShownByWarpRef.current = false;
+      setIsAutoShown(false);
       if (warpHideTimerRef.current) {
         clearTimeout(warpHideTimerRef.current);
         warpHideTimerRef.current = null;
@@ -98,6 +101,7 @@ export function MobileFpsOverlay() {
       if (isWarping && !isVisible) {
         // Auto-show on warp
         autoShownByWarpRef.current = true;
+        setIsAutoShown(true);
         if (warpHideTimerRef.current) {
           clearTimeout(warpHideTimerRef.current);
           warpHideTimerRef.current = null;
@@ -109,6 +113,7 @@ export function MobileFpsOverlay() {
         warpHideTimerRef.current = setTimeout(() => {
           if (autoShownByWarpRef.current) {
             autoShownByWarpRef.current = false;
+            setIsAutoShown(false);
             setIsVisible(false);
           }
         }, 3000);
@@ -233,7 +238,7 @@ export function MobileFpsOverlay() {
             </div>
 
             {/* T023: Show WARP indicator when auto-shown */}
-            {autoShownByWarpRef.current && (
+            {isAutoShown && (
               <div
                 className="font-mono text-[8px] tracking-[0.3em] uppercase mt-1 mb-0.5"
                 style={{ color: '#FF003C' }}
