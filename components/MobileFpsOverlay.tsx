@@ -94,37 +94,36 @@ export function MobileFpsOverlay() {
   }, []);
 
   // T023: Auto-show/hide based on WARPING state
+  const currentPhase = useScrollStore((state) => state.currentPhase);
+
   useEffect(() => {
-    const unsubscribe = useScrollStore.subscribe((state) => {
-      const isWarping = state.currentPhase === 'WARPING';
+    const isWarping = currentPhase === 'WARPING';
 
-      if (isWarping && !isVisible) {
-        // Auto-show on warp
-        autoShownByWarpRef.current = true;
-        setIsAutoShown(true);
-        if (warpHideTimerRef.current) {
-          clearTimeout(warpHideTimerRef.current);
-          warpHideTimerRef.current = null;
-        }
-        setIsVisible(true);
-      } else if (!isWarping && autoShownByWarpRef.current) {
-        // Auto-hide 3s after warp exits
-        if (warpHideTimerRef.current) clearTimeout(warpHideTimerRef.current);
-        warpHideTimerRef.current = setTimeout(() => {
-          if (autoShownByWarpRef.current) {
-            autoShownByWarpRef.current = false;
-            setIsAutoShown(false);
-            setIsVisible(false);
-          }
-        }, 3000);
+    if (isWarping && !isVisible) {
+      // Auto-show on warp
+      autoShownByWarpRef.current = true;
+      setIsAutoShown(true);
+      if (warpHideTimerRef.current) {
+        clearTimeout(warpHideTimerRef.current);
+        warpHideTimerRef.current = null;
       }
-    });
-
+      setIsVisible(true);
+    } else if (!isWarping && autoShownByWarpRef.current) {
+      // Auto-hide 3s after warp exits
+      if (warpHideTimerRef.current) clearTimeout(warpHideTimerRef.current);
+      warpHideTimerRef.current = setTimeout(() => {
+        if (autoShownByWarpRef.current) {
+          autoShownByWarpRef.current = false;
+          setIsAutoShown(false);
+          setIsVisible(false);
+        }
+      }, 3000);
+    }
+    
     return () => {
-      unsubscribe();
       if (warpHideTimerRef.current) clearTimeout(warpHideTimerRef.current);
     };
-  }, [isVisible]);
+  }, [currentPhase, isVisible]);
 
   useEffect(() => {
     return () => {

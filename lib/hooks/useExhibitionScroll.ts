@@ -101,14 +101,14 @@ export function useExhibitionScroll() {
           const isMobile = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
           
           // Cắt bỏ phần vận tốc trễ, mobile cần threshold thấp hơn vì velocity từ Lenis thấp hơn PC
-          const velocityThreshold = isMobile ? 5 : 15;
+          const velocityThreshold = isMobile ? 8 : 15;
           const effectiveVelocity = Math.max(0, Math.abs(velocity) - velocityThreshold);
           
           // Cap vận tốc tối đa mỗi frame để tránh spike
           const cappedVelocity = Math.min(120, effectiveVelocity);
           
           // Tăng mạnh độ nhạy trên mobile
-          const sensitivityMult = isMobile ? 4.0 : 1.0;
+          const sensitivityMult = isMobile ? 2.2 : 1.0;
   
           newPool += cappedVelocity * WARP_GAIN * sensitivityMult;
         }
