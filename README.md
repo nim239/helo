@@ -72,6 +72,7 @@ graph TD
 
 > **Quy tắc Agent**: Mọi cập nhật code, bugfix hoặc tính năng mới bắt buộc phải được ghi lại tại đây sau khi hoàn tất.
 
+*   **[2026-08-06] Convergence Bugfix: DOM Culling Method**: Sửa lỗi implement thiếu logic cờ `WARP_CULL_METHOD` trong `WarpOverlay.tsx`. Giờ đây hệ thống đã có thể benchmark FPS chính xác giữa 2 phương án `opacity` và `display` theo đúng thiết kế của Hyperspace Warp Engine (Task T028).
 *   **[2026-08-06] KineticHeader Centering & Size Adjustment (+20%)**: Khắc phục triệt để lỗi tiêu đề section không căn giữa. Thêm `justify-center` vào container và tăng font-size từ `6vw` lên `7.2vw` (+20%) chuẩn theo chỉ thị của Công tử.
 *   **[2026-08-06] Repository Code & Asset Clean Up**: Tiến hành quét và dọn dẹp toàn bộ mã nguồn cùng tài nguyên dư thừa.
     *   *Result*: Đã xóa bỏ file debug tạm `components/MobileDebug.tsx`. Khôi phục hiệu ứng side sparkles trong `components/ParallaxSides.tsx` bằng cách dọn dẹp dead code. Thanh trừng 4 file Lottie dư thừa trong `public/lotie/` giúp nhẹ dung lượng repository. Build sản phẩm thành công rực rỡ.

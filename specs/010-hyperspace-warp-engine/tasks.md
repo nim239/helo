@@ -1,4 +1,4 @@
-﻿# Tasks: Hyperspace Warp Engine
+# Tasks: Hyperspace Warp Engine
 
 **Feature**: `010-hyperspace-warp-engine`
 **Generated**: 2026-08-06
@@ -73,4 +73,6 @@ US3 + US4 can run in parallel after US1 foundation
 
 **Polish**: T024-T027
 
+## Phase 7: Convergence
 
+- [x] T028 Implement `WARP_CULL_METHOD` toggle correctly to actually apply `display: none` when the flag is set to 'display', rather than hardcoding `opacity` per FR-005 (partial)

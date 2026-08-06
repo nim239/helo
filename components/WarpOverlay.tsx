@@ -107,28 +107,36 @@ export function WarpOverlay() {
       const targetAlpha = isWarping ? 1 : 0;
       overlayAlphaRef.current += (targetAlpha - overlayAlphaRef.current) * 0.06;
 
-      // DOM Culling - Pure Opacity Method (No Layout Jumps)
+      // DOM Culling
       if (isWarping && !isWarpingRef.current) {
         isWarpingRef.current = true;
         if (cullTargetRef.current) {
-          cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-          void cullTargetRef.current.offsetWidth; // Force reflow
-          cullTargetRef.current.style.opacity = '0';
-          cullTargetRef.current.style.pointerEvents = 'none';
+          if (WARP_CULL_METHOD === 'opacity') {
+            cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            void cullTargetRef.current.offsetWidth; // Force reflow
+            cullTargetRef.current.style.opacity = '0';
+            cullTargetRef.current.style.pointerEvents = 'none';
+          } else {
+            cullTargetRef.current.style.display = 'none';
+          }
         }
       } else if (!isWarping && isWarpingRef.current) {
         isWarpingRef.current = false;
         if (cullTargetRef.current) {
-          cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-          void cullTargetRef.current.offsetWidth; // Force reflow
-          cullTargetRef.current.style.opacity = '1';
-          cullTargetRef.current.style.pointerEvents = '';
-          
-          setTimeout(() => {
-            if (cullTargetRef.current && !isWarpingRef.current) {
-              cullTargetRef.current.style.transition = '';
-            }
-          }, 800);
+          if (WARP_CULL_METHOD === 'opacity') {
+            cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+            void cullTargetRef.current.offsetWidth; // Force reflow
+            cullTargetRef.current.style.opacity = '1';
+            cullTargetRef.current.style.pointerEvents = '';
+            
+            setTimeout(() => {
+              if (cullTargetRef.current && !isWarpingRef.current) {
+                cullTargetRef.current.style.transition = '';
+              }
+            }, 800);
+          } else {
+            cullTargetRef.current.style.display = '';
+          }
         }
       }
 
@@ -214,6 +222,7 @@ export function WarpOverlay() {
         cullTargetRef.current.style.opacity = '1';
         cullTargetRef.current.style.pointerEvents = '';
         cullTargetRef.current.style.transition = '';
+        cullTargetRef.current.style.display = '';
       }
     };
   }, []);
