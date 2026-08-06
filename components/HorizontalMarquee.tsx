@@ -94,16 +94,16 @@ export function HorizontalMarquee({ items, direction = 'left', speed = 0.1 }: Ho
   }, [direction, speed]);
 
   return (
-    <div ref={containerRef} className="relative z-10 w-full h-full overflow-hidden flex items-center pointer-events-none">
+    <div ref={containerRef} className="relative z-10 w-full h-full overflow-hidden flex items-center portrait:items-end portrait:pb-[10vh] pointer-events-none">
       <div 
         ref={trackRef} 
-        className="flex flex-row flex-nowrap items-center h-[80vw] md:h-[280px] gap-4 md:gap-6 px-4"
+        className="flex flex-row flex-nowrap items-center h-[280px] portrait:h-[128vw] gap-4 md:gap-6 px-4"
         style={{ width: 'max-content', willChange: 'transform' }}
       >
         {repeatedItems.map((item, idx) => (
           <div 
             key={`${item.id}-${idx}`}
-            className="w-[80vw] h-[80vw] md:w-[420px] md:h-[280px] shrink-0 pointer-events-auto"
+            className="w-[420px] h-[280px] portrait:w-[72vw] portrait:h-[128vw] shrink-0 pointer-events-auto"
           >
             <NeonCard
               label={item.label || item.id}

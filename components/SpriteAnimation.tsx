@@ -8,6 +8,10 @@ import { useScrollStore } from '../lib/store/useScrollStore';
 gsap.registerPlugin(ScrollTrigger);
 
 const FRAME_COUNT = 120;
+// T015: Warp amplitude constants
+const WARP_AMP_MIN = 0.12;    // Minimum amplitude multiplier during full warp (12% of original)
+const WARP_AMP_LERP = 0.05;   // Lerp speed for amplitude transition
+const WARP_DRIFT_MULT = 80;   // Y-axis drift multiplier (pixels per velocity unit, opposite direction)
 
 interface SpriteAnimationProps {
   startIntro?: boolean;
@@ -21,9 +25,29 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
   const glowImagesRef = useRef<HTMLImageElement[]>([]);
   const stateRef = useRef({ frame: 0 });
   const scrollTriggerInstRef = useRef<ScrollTrigger | null>(null);
+  // T015: Warp amplitude refs
+  const warpAmpMultRef = useRef<number>(1.0);  // 1.0 = normal, ~0.12 = warp min
+  const warpDriftYRef = useRef<number>(0);     // Y drift opposite to scroll
 
   const completeIntro = useScrollStore((state) => state.completeIntro);
   const isIntroComplete = useScrollStore((state) => state.isIntroComplete);
+
+  // T017: Subscribe to warpPool for amplitude lerp (in GSAP ticker, no re-render)
+  useEffect(() => {
+    const ticker = () => {
+      const { warpPool, currentPhase, velocity } = useScrollStore.getState();
+      const isWarping = currentPhase === 'WARPING';
+      // Target amplitude: lerp between 1.0 (normal) and WARP_AMP_MIN (warp)
+      const targetAmp = isWarping
+        ? Math.max(WARP_AMP_MIN, 1.0 - warpPool * (1.0 - WARP_AMP_MIN))
+        : 1.0;
+      warpAmpMultRef.current += (targetAmp - warpAmpMultRef.current) * WARP_AMP_LERP;
+      // Drift Y opposite scroll direction
+      warpDriftYRef.current = isWarping ? -velocity * WARP_DRIFT_MULT : 0;
+    };
+    gsap.ticker.add(ticker);
+    return () => gsap.ticker.remove(ticker);
+  }, []);
 
   // ============================================================================
   // HOOK 1: KHỞI TẠO CANVAS & WORKER (CHỈ CHẠY 1 LẦN KHI MOUNT ĐỂ PRELOAD ẢNH)
@@ -173,15 +197,22 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
       const cycleLength = window.innerHeight * 6;
       const progressCycle = scrollY / cycleLength;
 
-      const moveX = Math.sin(progressCycle * Math.PI * 2 * 3) * (window.innerWidth * 0.35);
-      const moveY = Math.sin(progressCycle * Math.PI * 2 * 4 - Math.PI / 2) * (window.innerHeight * 0.25);
+      const ampMult = warpAmpMultRef.current;
+      const moveX = Math.sin(progressCycle * Math.PI * 2 * 3) * (window.innerWidth * 0.35) * ampMult;
+      // T016: When warping, clamp to upper half of screen + drift Y opposite scroll
+      const isWarping = useScrollStore.getState().currentPhase === 'WARPING';
+      const moveY = Math.sin(progressCycle * Math.PI * 2 * 4 - Math.PI / 2) * (window.innerHeight * 0.25) * ampMult
+        + (isWarping ? warpDriftYRef.current : 0);
 
+      // Sprite frame speed stays natural (linked to scrollY as before)
       const spriteP = (progressCycle * 36) % 1;
       const frame = spriteP * (FRAME_COUNT - 1);
 
       const margin = 20;
+      // When warping: constrain y to upper 50% of screen
+      const yMax = isWarping ? window.innerHeight * 0.5 - currentH - margin : window.innerHeight - currentH - margin;
       const clampedX = Math.max(margin, Math.min(window.innerWidth - currentW - margin, cX + moveX));
-      const clampedY = Math.max(margin, Math.min(window.innerHeight - currentH - margin, cY + moveY));
+      const clampedY = Math.max(margin, Math.min(yMax, cY + moveY));
 
       return { x: clampedX, y: clampedY, frame };
     };

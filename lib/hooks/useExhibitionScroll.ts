@@ -5,31 +5,48 @@ import Lenis from 'lenis';
 import gsap from 'gsap';
 import { useScrollStore } from '../store/useScrollStore';
 
+// ============================================================
+// WARP ENGINE CONSTANTS (T005)
+// ============================================================
+const WARP_GAIN = 0.04;        // Energy pumped per frame per unit velocity
+const WARP_FRICTION = 0.96;    // Decay multiplier per frame
+const WARP_THRESHOLD = 0.85;   // Pool level to trigger WARPING
+const WARP_EXIT_THRESHOLD = 0.01; // Pool level to exit WARPING (natural drain)
+const WARP_ZUSTAND_SYNC_INTERVAL = 10; // Sync warpPool to Zustand every N frames (~6fps at 60fps)
+
+// T026: Respect prefers-reduced-motion — skip warp accumulation entirely
+const REDUCED_MOTION = typeof window !== 'undefined'
+  ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  : false;
+
 export function useExhibitionScroll() {
   const lenisRef = useRef<Lenis | null>(null);
   const setPhase = useScrollStore((state) => state.setPhase);
   const setScrollProgress = useScrollStore((state) => state.setScrollProgress);
   const setVelocity = useScrollStore((state) => state.setVelocity);
+  const setWarpPool = useScrollStore((state) => state.setWarpPool);
+
+  // T005: warpPool lives as a ref — updated every frame (too fast for Zustand)
+  const warpPoolRef = useRef<number>(0);
+  const warpSyncFrameRef = useRef<number>(0);
 
   useEffect(() => {
     const sectionHeight = window.innerHeight;
-    const initialOffset = sectionHeight * 3;
 
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
 
     const lenis = new Lenis({
-      duration: 4.5, // Smooth slow motion (3~6s range)
-      // easeInOutCubic: Easy-in Easy-out mượt mà chuẩn triển lãm
-      easing: (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       gestureOrientation: 'vertical',
       smoothWheel: true,
       syncTouch: true,
-      touchMultiplier: 0.6, // Giảm tốc độ vuốt màn hình mobile (nặng & đầm)
-      wheelMultiplier: 0.8, // Giảm tốc độ cuộn chuột desktop
-      infinite: true, // NATIVE INFINITE SCROLL
+      touchMultiplier: 1.2,
+      wheelMultiplier: 1.0,
+      infinite: true,
     });
 
     lenisRef.current = lenis;
@@ -37,7 +54,6 @@ export function useExhibitionScroll() {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         lenis.resize();
-
         if (!useScrollStore.getState().isIntroComplete) {
           lenis.stop();
         }
@@ -71,54 +87,89 @@ export function useExhibitionScroll() {
       clearTimeout(snapTimeout);
     };
 
-    // Visibility handler (Fix Lỗi 3: switch app)
+    // T008: Visibility handler — reset warp on hidden + kill snap
     const handleVisibility = () => {
       isDocumentVisible = !document.hidden;
-      if (!isDocumentVisible) { killSnap(); }
+      if (!isDocumentVisible) {
+        killSnap();
+        warpPoolRef.current = 0;
+        setWarpPool(0);
+        const currentState = useScrollStore.getState();
+        if (currentState.currentPhase === 'WARPING') {
+          setPhase('IDLE');
+        }
+      }
     };
     document.addEventListener('visibilitychange', handleVisibility);
 
     // ============================================================
-    // SCROLL EVENT: Progress + Snap
+    // SCROLL EVENT: Progress + Snap + Warp Accumulator
     // ============================================================
-    lenis.on('scroll', ({ scroll, velocity, direction }: { scroll: number, velocity: number, direction: number }) => {
+    lenis.on('scroll', ({ scroll, velocity }: { scroll: number, velocity: number, direction: number }) => {
       const state = useScrollStore.getState();
       const currentH = window.innerHeight;
 
-      // Progress (0 to 1 based on 6 real sections)
       setScrollProgress(scroll / (currentH * 6));
       setVelocity(velocity);
 
-      // Phase transitions
-      if (Math.abs(velocity) > 0.1) {
-        if (state.currentPhase !== 'SCROLLING') {
-          setPhase('SCROLLING');
-          startScrollY = scroll;
-        }
-        killSnap(); // Nếu user đang cuộn thì hủy mọi snap
-      } else if (Math.abs(velocity) <= 0.1 && state.currentPhase === 'SCROLLING') {
-        setPhase('IDLE');
+      // T006: WARP POOL FRICTION ACCUMULATOR (skip if reduced motion)
+      let newPool = warpPoolRef.current;
+      if (!REDUCED_MOTION) {
+        newPool += Math.abs(velocity) * WARP_GAIN;
+        newPool *= WARP_FRICTION;
+        newPool = Math.max(0, Math.min(1, newPool));
+      }
+      warpPoolRef.current = newPool;
+
+      // T009: Throttled Zustand sync (~6fps at 60fps)
+      warpSyncFrameRef.current++;
+      if (warpSyncFrameRef.current >= WARP_ZUSTAND_SYNC_INTERVAL) {
+        warpSyncFrameRef.current = 0;
+        setWarpPool(newPool);
       }
 
-      // ============================================================
-      // SNAP: trigger when velocity settles near zero
-      // ============================================================
-      if (Math.abs(velocity) < 1.0 && !lenis.isStopped) {
+      // T007: WARPING phase transitions
+      if (newPool >= WARP_THRESHOLD && state.currentPhase !== 'WARPING') {
+        dbg(`WARP TRIGGER pool=${newPool.toFixed(2)}`);
+        killSnap();
+        setPhase('WARPING');
+      } else if (newPool < WARP_EXIT_THRESHOLD && state.currentPhase === 'WARPING') {
+        dbg(`WARP EXIT pool=${newPool.toFixed(2)}`);
+        setPhase('IDLE');
+        setWarpPool(0);
+      }
+
+      // Normal phase transitions (skip while WARPING)
+      if (state.currentPhase !== 'WARPING') {
+        if (Math.abs(velocity) > 0.1) {
+          if (state.currentPhase !== 'SCROLLING') {
+            setPhase('SCROLLING');
+            startScrollY = scroll;
+          }
+          killSnap();
+        } else if (Math.abs(velocity) <= 0.1 && state.currentPhase === 'SCROLLING') {
+          setPhase('IDLE');
+        }
+      }
+
+      // SNAP: skip if WARPING
+      if (Math.abs(velocity) < 1.0 && !lenis.isStopped && state.currentPhase !== 'WARPING') {
         clearTimeout(snapTimeout);
         snapTimeout = setTimeout(() => {
           if (!isDocumentVisible) return;
           const s = useScrollStore.getState();
           if (!s.isIntroComplete) return;
-          if (Math.abs(lenis.velocity) > 0.5) return; // still moving
+          if (s.currentPhase === 'WARPING') return;
+          if (Math.abs(lenis.velocity) > 0.5) return;
 
           const scrollRatio = lenis.scroll / currentH;
           const targetSection = Math.round(scrollRatio) * currentH;
 
           if (Math.abs(lenis.scroll - targetSection) > 10) {
-            dbg(`SNAP ${Math.round(lenis.scroll)} → ${Math.round(targetSection)}`);
+            dbg(`SNAP ${Math.round(lenis.scroll)} -> ${Math.round(targetSection)}`);
             lenis.scrollTo(targetSection, {
-              duration: 2.5,
-              easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+              duration: 3,
+              easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
               lock: false,
               onComplete: () => {
                 dbg(`SNAP DONE ${Math.round(targetSection)}`);
@@ -126,19 +177,19 @@ export function useExhibitionScroll() {
               }
             });
           }
-        }, 200);
+        }, 1000);
       }
     });
 
-    // ============================================================
-    // TOUCH: Kill snap + đảm bảo Lenis đang chạy
-    // ============================================================
+    // TOUCH: Kill snap + ensure Lenis running
     const handleTouch = () => {
       dbg(`TOUCH! stopped=${lenis.isStopped}`);
       killSnap();
-      setPhase('SCROLLING');
+      const currentState = useScrollStore.getState();
+      if (currentState.currentPhase !== 'WARPING') {
+        setPhase('SCROLLING');
+      }
       startScrollY = lenis.scroll;
-      // Đảm bảo Lenis luôn chạy khi user chạm (chỉ khi đã qua intro)
       if (lenis.isStopped && useScrollStore.getState().isIntroComplete) {
         lenis.start();
         dbg('FORCE lenis.start()');
@@ -156,7 +207,7 @@ export function useExhibitionScroll() {
       lenis.destroy();
       gsap.ticker.remove(rafCallback);
     };
-  }, [setPhase, setScrollProgress, setVelocity]);
+  }, [setPhase, setScrollProgress, setVelocity, setWarpPool]);
 
   return lenisRef;
 }

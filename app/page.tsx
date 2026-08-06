@@ -22,6 +22,7 @@ import { useExhibitionScroll } from '../lib/hooks/useExhibitionScroll';
 import { useViewportSync } from '../lib/hooks/useViewportSync';
 import { useAppStore } from '../lib/store/useAppStore';
 import { useScrollStore } from '../lib/store/useScrollStore';
+import { WarpOverlay } from '../components/WarpOverlay';
 
 function SectionContent({ section }: { section: any }) {
   const kineticTypography = useKineticTypography();
@@ -289,15 +290,18 @@ export default function Exhibition() {
       <MobileFpsOverlay />
       <CurtainsTransition />
       <AudioController />
+      <WarpOverlay />
 
       <EnterOverlay />
       <SpriteAnimation startIntro={hasEntered} />
-      
-      {exhibitionBuffer.map((section) => (
-        <Section key={section.key} id={section.key} isClone={section.isClone}>
-          <SectionContent section={section} />
-        </Section>
-      ))}
+
+      <div id="sections-wrapper">
+        {exhibitionBuffer.map((section) => (
+          <Section key={section.key} id={section.key} isClone={section.isClone}>
+            <SectionContent section={section} />
+          </Section>
+        ))}
+      </div>
     </main>
   );
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useScrollStore } from "../lib/store/useScrollStore";
 
 /**
  * MobileFpsOverlay
- * Kích hoạt: Tap 5 lần liên tiếp (trong 2.5s) vào vùng logo "N" (top-center).
- * Hiển thị: FPS counter real-time với màu gradient ngay dưới chữ N trên header.
+ * T022 (Fix): Raised z-index to 210, added explicit touch-action, verified no overlap
+ * T023: Auto-show when WARPING, auto-hide 3s after warp exits
+ * Kích hoạt thủ công: Tap 5 lần liên tiếp (trong 2.5s) vào vùng logo "N" (top-center).
  */
 
 const GRADIENT = "linear-gradient(135deg, #00F2FF 0%, #FF007F 50%, #0066FF 100%)";
@@ -22,6 +24,9 @@ export function MobileFpsOverlay() {
   const frameCountRef = useRef<number>(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tapCountRef = useRef<number>(0);
+  // T023: Track if overlay was auto-shown by warp
+  const autoShownByWarpRef = useRef<boolean>(false);
+  const warpHideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // FPS Measurement Loop
   useEffect(() => {
@@ -59,12 +64,18 @@ export function MobileFpsOverlay() {
     };
   }, [isVisible]);
 
-  // Tap Handler
+  // T022: Fixed Tap Handler — ensure state updates correctly
   const handleTap = useCallback(() => {
     tapCountRef.current += 1;
     setTapCount(tapCountRef.current);
 
     if (tapCountRef.current >= TAP_COUNT_REQUIRED) {
+      // Toggle: if auto-shown by warp, manual tap overrides to explicit toggle
+      autoShownByWarpRef.current = false;
+      if (warpHideTimerRef.current) {
+        clearTimeout(warpHideTimerRef.current);
+        warpHideTimerRef.current = null;
+      }
       setIsVisible(prev => !prev);
       tapCountRef.current = 0;
       setTapCount(0);
@@ -79,9 +90,41 @@ export function MobileFpsOverlay() {
     }, TAP_WINDOW_MS);
   }, []);
 
+  // T023: Auto-show/hide based on WARPING state
+  useEffect(() => {
+    const unsubscribe = useScrollStore.subscribe((state) => {
+      const isWarping = state.currentPhase === 'WARPING';
+
+      if (isWarping && !isVisible) {
+        // Auto-show on warp
+        autoShownByWarpRef.current = true;
+        if (warpHideTimerRef.current) {
+          clearTimeout(warpHideTimerRef.current);
+          warpHideTimerRef.current = null;
+        }
+        setIsVisible(true);
+      } else if (!isWarping && autoShownByWarpRef.current) {
+        // Auto-hide 3s after warp exits
+        if (warpHideTimerRef.current) clearTimeout(warpHideTimerRef.current);
+        warpHideTimerRef.current = setTimeout(() => {
+          if (autoShownByWarpRef.current) {
+            autoShownByWarpRef.current = false;
+            setIsVisible(false);
+          }
+        }, 3000);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+      if (warpHideTimerRef.current) clearTimeout(warpHideTimerRef.current);
+    };
+  }, [isVisible]);
+
   useEffect(() => {
     return () => {
       if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      if (warpHideTimerRef.current) clearTimeout(warpHideTimerRef.current);
     };
   }, []);
 
@@ -91,12 +134,12 @@ export function MobileFpsOverlay() {
 
   return (
     <>
-      {/* Invisible Tap Zone - covers "N" area at top center */}
+      {/* T022: Invisible Tap Zone — z-index 210 (above all fixed elements on mobile) */}
       <div
         id="fps-tap-zone"
         aria-label="Tap 5 times to toggle FPS overlay"
         onPointerUp={handleTap}
-        className="fixed top-0 left-1/2 -translate-x-1/2 z-[200] md:hidden"
+        className="fixed top-0 left-1/2 -translate-x-1/2 z-[210] md:hidden"
         style={{
           width: "88px",
           height: "88px",
@@ -105,14 +148,16 @@ export function MobileFpsOverlay() {
             ? `radial-gradient(circle, rgba(0,242,255,${(tapCount * 0.06).toFixed(2)}) 0%, transparent 70%)`
             : "transparent",
           transition: "background 0.15s ease",
-          touchAction: "manipulation",
+          touchAction: "manipulation",   // T022: Explicit touch-action
           userSelect: "none",
+          pointerEvents: "auto",         // T022: Explicitly ensure pointer events active
+          WebkitTapHighlightColor: "transparent",
         }}
       />
 
       {/* Tap Progress Dots */}
       {tapCount > 0 && (
-        <div className="fixed top-[92px] left-1/2 -translate-x-1/2 z-[201] flex gap-1.5 md:hidden pointer-events-none">
+        <div className="fixed top-[92px] left-1/2 -translate-x-1/2 z-[211] flex gap-1.5 md:hidden pointer-events-none">
           {Array.from({ length: TAP_COUNT_REQUIRED }).map((_, i) => (
             <div
               key={i}
@@ -154,7 +199,7 @@ export function MobileFpsOverlay() {
               style={{ background: GRADIENT }}
             />
 
-            {/* FPS Number */}
+            {/* FPS Number + Visual Indicator */}
             <div className="flex items-baseline gap-1.5 mt-1.5">
               <span
                 className="font-mono font-black text-3xl leading-none tabular-nums"
@@ -171,7 +216,7 @@ export function MobileFpsOverlay() {
               </span>
             </div>
 
-            {/* Progress Bar */}
+            {/* Progress Bar — visual indicator */}
             <div
               className="mt-2 w-full h-[3px] rounded-full overflow-hidden"
               style={{ background: "rgba(255,255,255,0.08)" }}
@@ -187,8 +232,18 @@ export function MobileFpsOverlay() {
               />
             </div>
 
+            {/* T023: Show WARP indicator when auto-shown */}
+            {autoShownByWarpRef.current && (
+              <div
+                className="font-mono text-[8px] tracking-[0.3em] uppercase mt-1 mb-0.5"
+                style={{ color: '#FF003C' }}
+              >
+                ⚡ WARP
+              </div>
+            )}
+
             {/* Label */}
-            <div className="font-mono text-[8px] tracking-[0.3em] text-white/25 uppercase mt-1 mb-0.5">
+            <div className="font-mono text-[8px] tracking-[0.3em] text-white/25 uppercase mt-0.5 mb-0.5">
               REAL-TIME
             </div>
           </div>
