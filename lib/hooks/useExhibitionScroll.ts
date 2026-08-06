@@ -96,7 +96,8 @@ export function useExhibitionScroll() {
         const effectiveVelocity = Math.max(0, Math.abs(velocity) - 15);
         newPool += effectiveVelocity * WARP_GAIN;
         newPool *= WARP_FRICTION;
-        newPool = Math.max(0, Math.min(1, newPool));
+        // Cho phép WP dồn lên tới 300% (3.0) để tạo cảm giác "chìm sâu vào warp", nhưng hiển thị vòng vẫn max ở 100%
+        newPool = Math.max(0, Math.min(3, newPool));
       }
       warpPoolRef.current = newPool;
 

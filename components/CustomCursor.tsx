@@ -133,8 +133,8 @@ export function CustomCursor() {
       }
 
       // T018: FPS ring — top half (using path)
-      const clampedFps = Math.min(100, Math.max(0, smoothedFps));
-      const fpsRatio = clampedFps / 100;
+      // Không clamp số hiển thị, cho arc scale theo 165Hz (màn hình gaming)
+      const fpsRatio = Math.min(1, Math.max(0, smoothedFps / 165));
       const fpsOffset = HALF_CIRC * (1 - fpsRatio); // Fills left to right
 
       if (fpsCircleRef.current) {
@@ -154,6 +154,7 @@ export function CustomCursor() {
       // T019 + T020: Warp gauge — bottom half
       const warpPool = useScrollStore.getState().warpPool;
       const isWarping = useScrollStore.getState().currentPhase === 'WARPING';
+      // Giới hạn vòng ring ở mức 100% (1.0), nhưng số WP có thể vượt (ví dụ 300%)
       const warpRatio = Math.min(1, Math.max(0, warpPool));
       const warpOffset = HALF_CIRC * (1 - warpRatio); // Fills left to right
 
@@ -251,15 +252,14 @@ export function CustomCursor() {
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] overflow-hidden hidden md:block">
       {/* T018: Enlarged outer cursor wrapper — w-20 h-20 (up from w-16 h-16) */}
-      <div ref={cursorRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
+      <div ref={cursorRef} className="absolute top-0 left-0 w-0 h-0">
         {/* T018+T019: Split ring — FPS top half + Warp bottom half */}
         <svg
-          className={`absolute w-20 h-20 pointer-events-none transition-transform duration-300 ease-out
+          className={`absolute w-20 h-20 -left-10 -top-10 pointer-events-none transition-transform duration-300 ease-out
             ${isHovering ? 'scale-150' : 'scale-100'}
             ${isClicking ? 'scale-90' : ''}
             ${isIdle ? 'scale-125' : ''}
           `}
-          style={{ transform: 'translate(-50%, -50%)' }}
           viewBox="0 0 80 80"
         >
           <defs>
@@ -314,22 +314,22 @@ export function CustomCursor() {
         </svg>
 
         {/* FPS Counter HUD — RIGHT of ring */}
-        <div className="absolute left-[44px] top-1/2 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
+        <div className="absolute left-[44px] top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
           <span ref={fpsTextRef}>60</span>
           <span className="text-[7px] text-white/50">FPS</span>
         </div>
 
         {/* T021: Warp gauge HUD — LEFT of ring */}
-        <div className="absolute right-[44px] top-1/2 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
+        <div className="absolute right-[44px] top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
           <span ref={warpTextRef}>0</span>
           <span className="text-[7px] text-[#00F2FF]/70">WP</span>
         </div>
       </div>
 
       {/* Inner Dot Wrapper */}
-      <div ref={dotRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
+      <div ref={dotRef} className="absolute top-0 left-0 w-0 h-0">
         <div
-          className={`absolute w-3 h-3 bg-white rounded-full transition-all duration-200
+          className={`absolute w-3 h-3 -left-[6px] -top-[6px] bg-white rounded-full transition-all duration-200
             ${isHovering ? 'scale-[0.5]' : 'scale-100'}
             ${isIdle ? 'scale-150 bg-cyan-300 shadow-[0_0_8px_#06b6d4]' : ''}
           `}
