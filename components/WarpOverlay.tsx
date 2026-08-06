@@ -6,15 +6,14 @@ const WARP_PARTICLE_COUNT = 300;
 const WARP_CULL_METHOD: 'opacity' | 'display' = 'opacity'; // Dùng opacity để có transition mượt
 
 interface Particle {
+  type: 'line' | 'square' | 'circle';
   x: number;
   y: number;
-  z: number;
   speed: number;
   size: number;
+  length: number; // for lines
   color: string;
-  life: number;
-  maxLife: number;
-  angle: number;
+  alpha: number;
 }
 
 export function WarpOverlay() {
@@ -38,33 +37,37 @@ export function WarpOverlay() {
   };
 
   const createParticle = (width: number, height: number): Particle => {
-    const angle = Math.random() * Math.PI * 2;
-    const distance = Math.random() * (width / 2);
-    
-    const isPrimary = Math.random() > 0.6; // 40% blue, 60% cyan/pink
+    const isPrimary = Math.random() > 0.6;
     const color = isPrimary 
       ? `hsl(${200 + Math.random() * 40}, 100%, ${60 + Math.random() * 40}%)`
       : `hsl(${320 + Math.random() * 40}, 100%, ${60 + Math.random() * 40}%)`;
 
+    const rand = Math.random();
+    let type: 'line' | 'square' | 'circle' = 'line';
+    if (rand > 0.85) type = 'square';
+    else if (rand > 0.7) type = 'circle';
+
     return {
-      x: Math.cos(angle) * distance,
-      y: Math.sin(angle) * distance,
-      z: Math.random() * 1000,
-      speed: 15 + Math.random() * 35,
-      size: 0.5 + Math.random() * 2,
+      type,
+      x: Math.random() * width,
+      y: Math.random() * height,
+      speed: 10 + Math.random() * 30, // Base vertical speed
+      size: type === 'line' ? 1 + Math.random() * 3 : 3 + Math.random() * 15,
+      length: 50 + Math.random() * 200, // Trail length for lines
       color,
-      life: 1.0,
-      maxLife: 0.5 + Math.random() * 1.5,
-      angle
+      alpha: 0.3 + Math.random() * 0.7,
     };
   };
 
-  const spawnParticle = (p: Particle, width: number, height: number, velocitySign: number) => {
-    const distance = Math.random() * (width * 0.1); // Spawn near center
-    p.x = Math.cos(p.angle) * distance;
-    p.y = Math.sin(p.angle) * distance;
-    p.z = 1000;
-    p.life = p.maxLife;
+  const wrapParticle = (p: Particle, width: number, height: number, velocitySign: number) => {
+    // If moving UP (velocitySign > 0), wrap to bottom
+    if (velocitySign > 0) {
+      p.y = height + p.length + Math.random() * 100;
+    } else {
+      // If moving DOWN, wrap to top
+      p.y = -p.length - Math.random() * 100;
+    }
+    p.x = Math.random() * width;
   };
 
   useEffect(() => {
@@ -139,57 +142,51 @@ export function WarpOverlay() {
       }
 
       // Trailing effect for warp speed
-      const trailAlpha = isWarping ? 0.2 : 0.6;
+      const trailAlpha = isWarping ? 0.3 : 0.6;
       ctx.fillStyle = `rgba(0, 0, 8, ${trailAlpha})`;
       ctx.fillRect(0, 0, width, height);
 
-      const cx = width / 2;
-      const cy = height / 2;
-
       // Speed multiplier based on warp pool (T005)
-      const speedMult = 1.0 + warpPool * 3.0;
-
+      // When velocity is positive (scroll down), particles fly UP (negative Y)
+      const speedMult = (isWarping ? 2.0 : 0.5) + warpPool * 3.0;
       const currentCount = Math.min(particlesRef.current.length, lodCount);
+      
       for (let i = 0; i < currentCount; i++) {
         const p = particlesRef.current[i];
         
-        p.z -= p.speed * speedMult * velocitySign * (dt / 16);
-        p.life -= 0.01 * (dt / 16);
+        // Di chuyển dọc theo trục Y ngược hướng scroll
+        // velocitySign > 0 (cuộn xuống) -> bay LÊN (-Y)
+        p.y -= p.speed * speedMult * velocitySign * (dt / 16);
 
-        // Respawn dead particles (T011)
-        if (p.life <= 0 && isWarping) {
-          spawnParticle(p, width, height, velocitySign);
-        }
-        if (p.life <= 0) continue;
-
-        // 3D to 2D projection
-        const fov = 300;
-        const scale = fov / Math.max(1, p.z);
-        
-        const px = cx + p.x * scale;
-        const py = cy + p.y * scale;
-
-        // Don't draw if behind camera or out of bounds
-        if (p.z < 1 || px < 0 || px > width || py < 0 || py > height) {
-          if (isWarping) spawnParticle(p, width, height, velocitySign);
-          continue;
+        // Wrap around màn hình
+        if (velocitySign > 0 && p.y < -p.length - 50) {
+          wrapParticle(p, width, height, velocitySign);
+        } else if (velocitySign < 0 && p.y > height + p.length + 50) {
+          wrapParticle(p, width, height, velocitySign);
         }
 
-        // Draw particle trail (line)
-        const prevScale = fov / Math.max(1, p.z + p.speed * speedMult * velocitySign);
-        const prevPx = cx + p.x * prevScale;
-        const prevPy = cy + p.y * prevScale;
-
-        const size = p.size * scale;
-        const opacity = Math.min(1, p.life / p.maxLife) * alpha;
-
-        ctx.beginPath();
-        ctx.moveTo(prevPx, prevPy);
-        ctx.lineTo(px, py);
+        const opacity = p.alpha * alpha;
+        ctx.fillStyle = p.color.replace(')', `, ${opacity})`);
         ctx.strokeStyle = p.color.replace(')', `, ${opacity})`);
-        ctx.lineWidth = size;
-        ctx.lineCap = 'round';
-        ctx.stroke();
+
+        if (p.type === 'line') {
+          ctx.beginPath();
+          // Đầu đường line
+          ctx.moveTo(p.x, p.y);
+          // Đuôi đường line kéo dài theo hướng ngược lại
+          ctx.lineTo(p.x, p.y + p.length * velocitySign);
+          ctx.lineWidth = p.size;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        } else if (p.type === 'square') {
+          // Block 2D
+          ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+        } else if (p.type === 'circle') {
+          // Circle 2D
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       animationFrameId = requestAnimationFrame(renderLoop);
