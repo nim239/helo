@@ -143,12 +143,11 @@ export function MobileFpsOverlay() {
       <div
         id="fps-tap-zone"
         aria-label="Tap 5 times to toggle FPS overlay"
-        onClick={handleTap}
-        onTouchStart={handleTap}
-        className="fixed top-0 left-1/2 -translate-x-1/2 z-[210] md:hidden"
+        onPointerDown={handleTap}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-[210] md:hidden"
         style={{
-          width: "88px",
-          height: "88px",
+          width: "100px",
+          height: "100px",
           borderRadius: "50%",
           background: tapCount > 0
             ? `radial-gradient(circle, rgba(0,242,255,${(tapCount * 0.06).toFixed(2)}) 0%, transparent 70%)`

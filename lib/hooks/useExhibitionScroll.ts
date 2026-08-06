@@ -97,15 +97,18 @@ export function useExhibitionScroll() {
           // Lấy vận tốc hiện tại của Lenis
           const velocity = lenis.velocity || 0;
           
-          // Cắt bỏ phần vận tốc trễ, chỉ tính khi vuốt mạnh
-          const effectiveVelocity = Math.max(0, Math.abs(velocity) - 15);
+          // Giảm độ nhạy trên mobile (coarse pointer)
+          const isMobile = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+          
+          // Cắt bỏ phần vận tốc trễ, mobile cần threshold thấp hơn vì velocity từ Lenis thấp hơn PC
+          const velocityThreshold = isMobile ? 5 : 15;
+          const effectiveVelocity = Math.max(0, Math.abs(velocity) - velocityThreshold);
           
           // Cap vận tốc tối đa mỗi frame để tránh spike
           const cappedVelocity = Math.min(120, effectiveVelocity);
           
-          // Tăng mạnh độ nhạy trên mobile (vì vận tốc vuốt thực tế thấp hơn lăn chuột nhiều)
-          const isMobile = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
-          const sensitivityMult = isMobile ? 3.0 : 1.0;
+          // Tăng mạnh độ nhạy trên mobile
+          const sensitivityMult = isMobile ? 4.0 : 1.0;
   
           newPool += cappedVelocity * WARP_GAIN * sensitivityMult;
         }
