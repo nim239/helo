@@ -263,34 +263,34 @@ export function CustomCursor() {
           viewBox="0 0 80 80"
         >
           <defs>
-            <linearGradient id="cursorFpsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#00F2FF" />
-              <stop offset="50%" stopColor="#FF007F" />
-              <stop offset="100%" stopColor="#0066FF" />
+            <linearGradient id="cursorFpsGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop offset="0%" stopColor="#0066FF" />
+              <stop offset="50%" stopColor="#00F2FF" />
+              <stop offset="100%" stopColor="#86EFAC" />
             </linearGradient>
           </defs>
 
-          {/* Background track — top half */}
+          {/* Background track — left half (bottom to top) */}
           <path
-            d="M 8,40 A 32,32 0 0,1 72,40"
+            d="M 40,72 A 32,32 0 0,1 40,8"
             fill="none"
             stroke="rgba(255, 255, 255, 0.10)"
             strokeWidth="1.5"
             strokeDasharray="3 3"
           />
-          {/* Background track — bottom half */}
+          {/* Background track — right half (bottom to top) */}
           <path
-            d="M 8,40 A 32,32 0 0,0 72,40"
+            d="M 40,72 A 32,32 0 0,0 40,8"
             fill="none"
             stroke="rgba(255, 255, 255, 0.10)"
             strokeWidth="1.5"
             strokeDasharray="3 3"
           />
 
-          {/* FPS gauge — top half arc, Left to Right (100.53 is PI * 32) */}
+          {/* FPS gauge — left half arc (bottom to top) */}
           <path
             ref={fpsCircleRef as any}
-            d="M 8,40 A 32,32 0 0,1 72,40"
+            d="M 40,72 A 32,32 0 0,1 40,8"
             fill="none"
             stroke="url(#cursorFpsGradient)"
             strokeWidth="3"
@@ -299,10 +299,10 @@ export function CustomCursor() {
             strokeLinecap="round"
           />
 
-          {/* T019: Warp gauge — bottom half arc, Left to Right */}
+          {/* T019: Warp gauge — right half arc (bottom to top) */}
           <path
             ref={warpCircleRef as any}
-            d="M 8,40 A 32,32 0 0,0 72,40"
+            d="M 40,72 A 32,32 0 0,0 40,8"
             fill="none"
             stroke="#00F2FF"
             strokeWidth="3"
@@ -313,14 +313,14 @@ export function CustomCursor() {
           />
         </svg>
 
-        {/* FPS Counter HUD — RIGHT of ring */}
-        <div className="absolute left-[44px] top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
+        {/* FPS Counter HUD — LEFT of ring (gắn với cung FPS bên trái) */}
+        <div className="absolute right-[44px] top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
           <span ref={fpsTextRef}>60</span>
           <span className="text-[7px] text-white/50">FPS</span>
         </div>
 
-        {/* T021: Warp gauge HUD — LEFT of ring */}
-        <div className="absolute right-[44px] top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
+        {/* T021: Warp gauge HUD — RIGHT of ring (gắn với cung WP bên phải) */}
+        <div className="absolute left-[44px] top-0 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
           <span ref={warpTextRef}>0</span>
           <span className="text-[7px] text-[#00F2FF]/70">WP</span>
         </div>

@@ -114,12 +114,14 @@ export function WarpOverlay() {
           if (!originalDisplayRef.current) {
             originalDisplayRef.current = cullTargetRef.current.style.visibility || 'visible';
           }
-          // 1. Fade opacity xuống 0 trong 3s
-          cullTargetRef.current.style.transition = 'opacity 3s cubic-bezier(0.4, 0, 0.2, 1)';
+          // 1. Fade opacity xuống 0 trong 0.8s
+          cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+          // Ép reflow để đảm bảo browser nhận transition trước khi đổi opacity
+          void cullTargetRef.current.offsetWidth;
           cullTargetRef.current.style.opacity = '0';
           cullTargetRef.current.style.pointerEvents = 'none';
 
-          // 2. Chờ 0.8s rồi giáng đòn visibility: hidden (để giữ chiều cao trang cho Lenis scroll tiếp, nhưng vẫn cắt render)
+          // 2. Chờ đúng 0.8s rồi giáng đòn visibility: hidden
           setTimeout(() => {
             if (cullTargetRef.current && isWarpingRef.current) {
               cullTargetRef.current.style.visibility = 'hidden';
@@ -136,7 +138,8 @@ export function WarpOverlay() {
           // 2. Ép frame để browser nhận display trước khi đổi opacity
           requestAnimationFrame(() => {
             if (cullTargetRef.current && !isWarpingRef.current) {
-              cullTargetRef.current.style.transition = 'opacity 3s cubic-bezier(0.4, 0, 0.2, 1)';
+              cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+              void cullTargetRef.current.offsetWidth;
               cullTargetRef.current.style.opacity = '1';
               cullTargetRef.current.style.pointerEvents = '';
               
@@ -145,7 +148,7 @@ export function WarpOverlay() {
                 if (cullTargetRef.current && !isWarpingRef.current) {
                   cullTargetRef.current.style.transition = '';
                 }
-              }, 3000);
+              }, 800);
             }
           });
         }
