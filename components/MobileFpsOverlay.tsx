@@ -143,7 +143,7 @@ export function MobileFpsOverlay() {
       <div
         id="fps-tap-zone"
         aria-label="Tap 5 times to toggle FPS overlay"
-        onPointerUp={handleTap}
+        onClick={handleTap}
         className="fixed top-0 left-1/2 -translate-x-1/2 z-[210] md:hidden"
         style={{
           width: "88px",

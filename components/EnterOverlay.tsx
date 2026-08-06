@@ -160,22 +160,7 @@ export function EnterOverlay() {
     // Stop pulsing if any
     gsap.killTweensOf(circleRef.current);
 
-    // 1. Audio setup
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      if (AudioContext) {
-        const audioCtx = new AudioContext();
-        if (audioCtx.state === 'suspended') {
-          await audioCtx.resume();
-        }
-        setAudioEnabled(true);
-      }
-    } catch (e) {
-      console.warn("Audio Context failed to start", e);
-    }
-
-    // 2. Gyroscope setup
+    // 1. Gyroscope setup (MUST BE SYNCHRONOUS WITH CLICK ON SAFARI)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (typeof (DeviceMotionEvent as any) !== 'undefined' && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
       try {
@@ -191,6 +176,21 @@ export function EnterOverlay() {
       }
     } else {
       setGyroEnabled(true);
+    }
+
+    // 2. Audio setup (Can be asynchronous)
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContext) {
+        const audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+        setAudioEnabled(true);
+      }
+    } catch (e) {
+      console.warn("Audio Context failed to start", e);
     }
 
     // Play Jump segment (frames 0 to 118) for 2 seconds

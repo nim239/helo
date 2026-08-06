@@ -101,11 +101,11 @@ export function useExhibitionScroll() {
           const effectiveVelocity = Math.max(0, Math.abs(velocity) - 15);
           
           // Cap vận tốc tối đa mỗi frame để tránh spike
-          const cappedVelocity = Math.min(80, effectiveVelocity);
+          const cappedVelocity = Math.min(120, effectiveVelocity);
           
           // Giảm độ nhạy trên mobile (coarse pointer)
           const isMobile = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
-          const sensitivityMult = isMobile ? 0.35 : 1.0;
+          const sensitivityMult = isMobile ? 0.6 : 1.0;
   
           newPool += cappedVelocity * WARP_GAIN * sensitivityMult;
         }
