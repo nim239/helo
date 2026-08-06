@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useScrollStore } from '../store/useScrollStore';
+import { useScrollStore } from '../lib/store/useScrollStore';
 import { SpriteAnimation } from './SpriteAnimation';
 
 const WARP_PARTICLE_COUNT = 300;
