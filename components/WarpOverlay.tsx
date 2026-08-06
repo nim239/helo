@@ -73,7 +73,7 @@ export function WarpOverlay() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: false }); // T011: alpha=false for speed
+    const ctx = canvas.getContext('2d'); // Remove alpha: false so it can be transparent
     if (!ctx) return;
 
     let width = window.innerWidth;
