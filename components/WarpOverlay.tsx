@@ -97,9 +97,10 @@ export function WarpOverlay() {
       const velocitySign = state.velocity >= 0 ? 1 : -1;
       
       // Dynamic LOD update
+      const currentFps = dt > 0 ? 1000 / dt : 60;
       setLodCount(prev => {
-        if (state.fps < 40 && prev > 100) return prev - 50;
-        if (state.fps > 55 && prev < WARP_PARTICLE_COUNT) return prev + 10;
+        if (currentFps < 40 && prev > 100) return prev - 50;
+        if (currentFps > 55 && prev < WARP_PARTICLE_COUNT) return prev + 10;
         return prev;
       });
 

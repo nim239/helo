@@ -24,7 +24,8 @@ import { useAppStore } from '../lib/store/useAppStore';
 import { useScrollStore } from '../lib/store/useScrollStore';
 import { WarpOverlay } from '../components/WarpOverlay';
 
-function SectionContent({ section }: { section: unknown }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SectionContent({ section }: { section: any }) {
   const kineticTypography = useKineticTypography();
   const [liveTime, setLiveTime] = useState("");
 

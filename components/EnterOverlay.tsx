@@ -134,7 +134,8 @@ export function EnterOverlay() {
       }
       if (batchIndex < totalAssets) {
         if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-          (window as unknown).requestIdleCallback(loadNextBatch);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (window as any).requestIdleCallback(loadNextBatch);
         } else {
           setTimeout(loadNextBatch, 16);
         }
@@ -161,7 +162,8 @@ export function EnterOverlay() {
 
     // 1. Audio setup
     try {
-      const AudioContext = window.AudioContext || (window as unknown).webkitAudioContext;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContext) {
         const audioCtx = new AudioContext();
         if (audioCtx.state === 'suspended') {
@@ -174,9 +176,11 @@ export function EnterOverlay() {
     }
 
     // 2. Gyroscope setup
-    if (typeof (DeviceMotionEvent as unknown) !== 'undefined' && typeof (DeviceMotionEvent as unknown).requestPermission === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof (DeviceMotionEvent as any) !== 'undefined' && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
       try {
-        const permission = await (DeviceMotionEvent as unknown).requestPermission();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const permission = await (DeviceMotionEvent as any).requestPermission();
         if (permission === 'granted') {
           setGyroEnabled(true);
         } else {

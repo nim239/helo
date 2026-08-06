@@ -280,7 +280,7 @@ const loop = () => {
     state.rafId = self.requestAnimationFrame(loop);
   } else {
     // Fallback if requestAnimationFrame is not available in worker
-    state.rafId = setTimeout(loop, 1000 / 60) as unknown;
+    state.rafId = setTimeout(loop, 1000 / 60) as any;
   }
 };
 
