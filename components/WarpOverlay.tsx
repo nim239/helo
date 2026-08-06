@@ -132,10 +132,15 @@ export function WarpOverlay() {
         }
       }
 
+      // Update Canvas CSS Opacity for perfectly smooth fade in/out
+      if (canvasRef.current) {
+        canvasRef.current.style.opacity = overlayAlphaRef.current.toString();
+      }
+
       // Draw background
       const alpha = overlayAlphaRef.current;
       if (alpha <= 0.01) {
-        ctx.clearRect(0, 0, width, height);
+        // Optimize: Don't draw if fully invisible
         animationFrameId = requestAnimationFrame(renderLoop);
         return;
       }
