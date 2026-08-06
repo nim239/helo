@@ -8,8 +8,8 @@ import { useScrollStore } from '../store/useScrollStore';
 // ============================================================
 // WARP ENGINE CONSTANTS (T005)
 // ============================================================
-const WARP_GAIN = 0.04;        // Energy pumped per frame per unit velocity
-const WARP_FRICTION = 0.96;    // Decay multiplier per frame
+const WARP_GAIN = 0.001;       // Giảm mạnh độ nhạy (trước là 0.04 quá cao)
+const WARP_FRICTION = 0.97;    // Phanh nhanh hơn một chút để dễ thoát warp (trước là 0.96)
 const WARP_THRESHOLD = 0.85;   // Pool level to trigger WARPING
 const WARP_EXIT_THRESHOLD = 0.01; // Pool level to exit WARPING (natural drain)
 const WARP_ZUSTAND_SYNC_INTERVAL = 10; // Sync warpPool to Zustand every N frames (~6fps at 60fps)
@@ -115,7 +115,10 @@ export function useExhibitionScroll() {
       // T006: WARP POOL FRICTION ACCUMULATOR (skip if reduced motion)
       let newPool = warpPoolRef.current;
       if (!REDUCED_MOTION) {
-        newPool += Math.abs(velocity) * WARP_GAIN;
+        // Cắt bỏ phần vận tốc trễ của Lenis (khi thả tay nó vẫn trôi nhẹ 1 lúc lâu)
+        // Chỉ tính lực khi user vuốt mạnh (velocity > 15)
+        const effectiveVelocity = Math.max(0, Math.abs(velocity) - 15);
+        newPool += effectiveVelocity * WARP_GAIN;
         newPool *= WARP_FRICTION;
         newPool = Math.max(0, Math.min(1, newPool));
       }
