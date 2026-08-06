@@ -16,6 +16,7 @@ const TAP_WINDOW_MS = 2500;
 
 export function MobileFpsOverlay() {
   const [isVisible, setIsVisible] = useState(false);
+  const [isRendered, setIsRendered] = useState(false);
   const [fps, setFps] = useState(0);
   const [tapCount, setTapCount] = useState(0);
 
@@ -96,6 +97,16 @@ export function MobileFpsOverlay() {
   // T023: Auto-show/hide based on WARPING state
   const currentPhase = useScrollStore((state) => state.currentPhase);
 
+  // Transition mount/unmount sync
+  useEffect(() => {
+    if (isVisible) {
+      setIsRendered(true);
+    } else {
+      const timer = setTimeout(() => setIsRendered(false), 400); // 400ms matching CSS transition
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible]);
+
   useEffect(() => {
     const isWarping = currentPhase === 'WARPING';
 
@@ -109,15 +120,11 @@ export function MobileFpsOverlay() {
       }
       setIsVisible(true);
     } else if (!isWarping && autoShownByWarpRef.current) {
-      // Auto-hide 3s after warp exits
+      // Auto-hide immediately when warp exits
       if (warpHideTimerRef.current) clearTimeout(warpHideTimerRef.current);
-      warpHideTimerRef.current = setTimeout(() => {
-        if (autoShownByWarpRef.current) {
-          autoShownByWarpRef.current = false;
-          setIsAutoShown(false);
-          setIsVisible(false);
-        }
-      }, 3000);
+      autoShownByWarpRef.current = false;
+      setIsAutoShown(false);
+      setIsVisible(false);
     }
     
     return () => {
@@ -177,14 +184,16 @@ export function MobileFpsOverlay() {
       )}
 
       {/* FPS Panel */}
-      {isVisible && (
+      {isRendered && (
         <div
           id="mobile-fps-overlay"
           className="fixed z-[199] md:hidden pointer-events-none"
           style={{
             top: "108px",
             left: "50%",
-            transform: "translateX(-50%)",
+            transform: isVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-20px)",
+            opacity: isVisible ? 1 : 0,
+            transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
           <div
