@@ -135,8 +135,7 @@ export function WarpOverlay() {
       // Draw background
       const alpha = overlayAlphaRef.current;
       if (alpha <= 0.01) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 1)';
-        ctx.fillRect(0, 0, width, height);
+        ctx.clearRect(0, 0, width, height);
         animationFrameId = requestAnimationFrame(renderLoop);
         return;
       }
