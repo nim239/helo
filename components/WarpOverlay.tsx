@@ -1,178 +1,160 @@
-"use client";
+import React, { useEffect, useRef, useState } from 'react';
+import { useScrollStore } from '../store/useScrollStore';
+import { SpriteAnimation } from './SpriteAnimation';
 
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
-import { useScrollStore } from '../lib/store/useScrollStore';
-
-// ============================================================
-// DOM CULLING METHOD (T013) — toggle to benchmark FPS
-// 'display' = display:none (unrender completely, best FPS)
-// 'opacity' = opacity:0 (visual only, still paints)
-// ============================================================
+const WARP_PARTICLE_COUNT = 300;
 const WARP_CULL_METHOD: 'opacity' | 'display' = 'opacity'; // Dùng opacity để có transition mượt
 
-// ============================================================
-// WARP PARTICLE SYSTEM
-// ============================================================
-const MAX_PARTICLES = 120;
-const MIN_STREAK_LENGTH = 20;
-const MAX_STREAK_LENGTH = 140;
-
-interface WarpParticle {
+interface Particle {
   x: number;
   y: number;
-  vx: number;
-  vy: number;
-  length: number;
-  alpha: number;
-  hue: number;  // 180-280 (cyan→indigo)
-  life: number; // 0-1
+  z: number;
   speed: number;
-}
-
-function spawnParticle(p: WarpParticle, width: number, height: number, velocitySign: number): void {
-  p.x = Math.random() * width;
-  // Spawn at bottom edge when scrolling down (particles fly up), top edge when scrolling up
-  p.y = velocitySign > 0 ? height + 20 : -20;
-  p.vx = (Math.random() - 0.5) * 2;
-  p.vy = velocitySign > 0 ? -(8 + Math.random() * 16) : (8 + Math.random() * 16);
-  p.length = MIN_STREAK_LENGTH + Math.random() * (MAX_STREAK_LENGTH - MIN_STREAK_LENGTH);
-  p.alpha = 0.4 + Math.random() * 0.6;
-  p.hue = 180 + Math.random() * 100; // cyan to violet
-  p.life = 1.0;
-  p.speed = 0.008 + Math.random() * 0.012;
-}
-
-function createParticlePool(): WarpParticle[] {
-  return Array.from({ length: MAX_PARTICLES }, () => ({
-    x: 0, y: 0, vx: 0, vy: 0,
-    length: 60, alpha: 0, hue: 200,
-    life: 0, speed: 0.01,
-  }));
+  size: number;
+  color: string;
+  life: number;
+  maxLife: number;
+  angle: number;
 }
 
 export function WarpOverlay() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const overlayAlphaRef = useRef<number>(0);
-  const particlesRef = useRef<WarpParticle[]>(createParticlePool());
+  const particlesRef = useRef<Particle[]>([]);
+  const isWarpingRef = useRef(false);
   const cullTargetRef = useRef<HTMLElement | null>(null);
   const originalDisplayRef = useRef<string>('');
-  const isWarpingRef = useRef<boolean>(false);
-  const smoothedFpsRef = useRef<number>(60);
-  const lastFrameTimeRef = useRef<number>(performance.now());
+  const overlayAlphaRef = useRef(0);
+  
+  // T014: Dynamic LOD based on FPS
+  const [lodCount, setLodCount] = useState(WARP_PARTICLE_COUNT);
+
+  const initParticles = (width: number, height: number) => {
+    const particles: Particle[] = [];
+    const count = Math.min(WARP_PARTICLE_COUNT, lodCount);
+    for (let i = 0; i < count; i++) {
+      particles.push(createParticle(width, height));
+    }
+    particlesRef.current = particles;
+  };
+
+  const createParticle = (width: number, height: number): Particle => {
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * (width / 2);
+    
+    const isPrimary = Math.random() > 0.6; // 40% blue, 60% cyan/pink
+    const color = isPrimary 
+      ? `hsl(${200 + Math.random() * 40}, 100%, ${60 + Math.random() * 40}%)`
+      : `hsl(${320 + Math.random() * 40}, 100%, ${60 + Math.random() * 40}%)`;
+
+    return {
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance,
+      z: Math.random() * 1000,
+      speed: 15 + Math.random() * 35,
+      size: 0.5 + Math.random() * 2,
+      color,
+      life: 1.0,
+      maxLife: 0.5 + Math.random() * 1.5,
+      angle
+    };
+  };
+
+  const spawnParticle = (p: Particle, width: number, height: number, velocitySign: number) => {
+    const distance = Math.random() * (width * 0.1); // Spawn near center
+    p.x = Math.cos(p.angle) * distance;
+    p.y = Math.sin(p.angle) * distance;
+    p.z = 1000;
+    p.life = p.maxLife;
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false }); // T011: alpha=false for speed
     if (!ctx) return;
 
-    // Find sections culling target (T013)
-    const sectionsWrapper = document.getElementById('sections-wrapper') ||
-      document.querySelector('main') as HTMLElement ||
-      document.querySelector('[data-sections]') as HTMLElement;
-    cullTargetRef.current = sectionsWrapper;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
 
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
+    cullTargetRef.current = document.getElementById('sections-wrapper');
+    initParticles(width, height);
 
-    const handleResize = () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize, { passive: true });
+    let animationFrameId: number;
+    let lastTime = performance.now();
 
-    // Initialize all particles as dead (life=0)
-    particlesRef.current.forEach(p => { p.life = 0; p.alpha = 0; });
-
-    const renderLoop = () => {
-      const now = performance.now();
-      const delta = now - lastFrameTimeRef.current;
-      lastFrameTimeRef.current = now;
-
-      // FPS smoothing for LOD
-      if (delta > 0) {
-        const instantFps = 1000 / delta;
-        smoothedFpsRef.current += (instantFps - smoothedFpsRef.current) * 0.05;
-      }
+    const renderLoop = (time: number) => {
+      const dt = Math.min(time - lastTime, 32); // Clamp dt to avoid huge jumps
+      lastTime = time;
 
       const state = useScrollStore.getState();
       const isWarping = state.currentPhase === 'WARPING';
-      const velocity = state.velocity;
       const warpPool = state.warpPool;
+      const velocitySign = state.velocity >= 0 ? 1 : -1;
+      
+      // Dynamic LOD update
+      setLodCount(prev => {
+        if (state.fps < 40 && prev > 100) return prev - 50;
+        if (state.fps > 55 && prev < WARP_PARTICLE_COUNT) return prev + 10;
+        return prev;
+      });
 
-      // Overlay fade in/out (T025: 300ms transition)
+      // LERPS
       const targetAlpha = isWarping ? 1 : 0;
       overlayAlphaRef.current += (targetAlpha - overlayAlphaRef.current) * 0.06;
 
-      // DOM culling Hybrid (A + B)
+      // DOM Culling - Pure Opacity Method (No Layout Jumps)
       if (isWarping && !isWarpingRef.current) {
-        // Entering warp
         isWarpingRef.current = true;
         if (cullTargetRef.current) {
-          // Lưu trạng thái visibility cũ
-          if (!originalDisplayRef.current) {
-            originalDisplayRef.current = cullTargetRef.current.style.visibility || 'visible';
-          }
-          // 1. Fade opacity xuống 0 trong 0.8s
           cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-          // Ép reflow để đảm bảo browser nhận transition trước khi đổi opacity
-          void cullTargetRef.current.offsetWidth;
+          void cullTargetRef.current.offsetWidth; // Force reflow
           cullTargetRef.current.style.opacity = '0';
           cullTargetRef.current.style.pointerEvents = 'none';
-
-          // 2. Chờ đúng 0.8s rồi giáng đòn visibility: hidden
+        }
+      } else if (!isWarping && isWarpingRef.current) {
+        isWarpingRef.current = false;
+        if (cullTargetRef.current) {
+          cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+          void cullTargetRef.current.offsetWidth; // Force reflow
+          cullTargetRef.current.style.opacity = '1';
+          cullTargetRef.current.style.pointerEvents = '';
+          
           setTimeout(() => {
-            if (cullTargetRef.current && isWarpingRef.current) {
-              cullTargetRef.current.style.visibility = 'hidden';
+            if (cullTargetRef.current && !isWarpingRef.current) {
+              cullTargetRef.current.style.transition = '';
             }
           }, 800);
         }
-      } else if (!isWarping && isWarpingRef.current) {
-        // Exiting warp
-        isWarpingRef.current = false;
-        if (cullTargetRef.current) {
-          // 1. Phục hồi visibility trước để có thể paint
-          cullTargetRef.current.style.visibility = originalDisplayRef.current;
-          
-          // 2. Ép frame để browser nhận display trước khi đổi opacity
-          requestAnimationFrame(() => {
-            if (cullTargetRef.current && !isWarpingRef.current) {
-              cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-              void cullTargetRef.current.offsetWidth;
-              cullTargetRef.current.style.opacity = '1';
-              cullTargetRef.current.style.pointerEvents = '';
-              
-              // Xóa transition sau khi fade xong
-              setTimeout(() => {
-                if (cullTargetRef.current && !isWarpingRef.current) {
-                  cullTargetRef.current.style.transition = '';
-                }
-              }, 800);
-            }
-          });
-        }
       }
 
+      // Draw background
       const alpha = overlayAlphaRef.current;
-      if (alpha < 0.01) {
-        ctx.clearRect(0, 0, width, height);
+      if (alpha <= 0.01) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+        ctx.fillRect(0, 0, width, height);
+        animationFrameId = requestAnimationFrame(renderLoop);
         return;
       }
 
-      // Background — deep space (fade in/out)
-      ctx.fillStyle = `rgba(0, 0, 8, ${alpha * 0.95})`;
+      // Trailing effect for warp speed
+      const trailAlpha = isWarping ? 0.2 : 0.6;
+      ctx.fillStyle = `rgba(0, 0, 8, ${trailAlpha})`;
       ctx.fillRect(0, 0, width, height);
 
-      // LOD: scale particle count by FPS health
-      const fps = smoothedFpsRef.current;
-      const lodCount = Math.min(MAX_PARTICLES, Math.max(20, Math.floor((fps / 60) * MAX_PARTICLES)));
-      const velocitySign = velocity >= 0 ? 1 : -1;
+      const cx = width / 2;
+      const cy = height / 2;
 
-      // Update & draw particles
-      const particles = particlesRef.current;
-      for (let i = 0; i < lodCount; i++) {
-        const p = particles[i];
+      // Speed multiplier based on warp pool (T005)
+      const speedMult = 1.0 + warpPool * 3.0;
+
+      const currentCount = Math.min(particlesRef.current.length, lodCount);
+      for (let i = 0; i < currentCount; i++) {
+        const p = particlesRef.current[i];
+        
+        p.z -= p.speed * speedMult * velocitySign * (dt / 16);
+        p.life -= 0.01 * (dt / 16);
 
         // Respawn dead particles (T011)
         if (p.life <= 0 && isWarping) {
@@ -180,50 +162,54 @@ export function WarpOverlay() {
         }
         if (p.life <= 0) continue;
 
-        // Update
-        p.life -= p.speed;
-        p.x += p.vx;
-        p.y += p.vy;
+        // 3D to 2D projection
+        const fov = 300;
+        const scale = fov / Math.max(1, p.z);
+        
+        const px = cx + p.x * scale;
+        const py = cy + p.y * scale;
 
-        const drawAlpha = p.alpha * p.life * alpha;
-        if (drawAlpha < 0.01) continue;
+        // Don't draw if behind camera or out of bounds
+        if (p.z < 1 || px < 0 || px > width || py < 0 || py > height) {
+          if (isWarping) spawnParticle(p, width, height, velocitySign);
+          continue;
+        }
 
-        // Draw speed line streak (T012)
-        const tailX = p.x - p.vx * (p.length / Math.abs(p.vy));
-        const tailY = p.y - p.vy * (p.length / Math.abs(p.vy));
+        // Draw particle trail (line)
+        const prevScale = fov / Math.max(1, p.z + p.speed * speedMult * velocitySign);
+        const prevPx = cx + p.x * prevScale;
+        const prevPy = cy + p.y * prevScale;
 
-        const grad = ctx.createLinearGradient(tailX, tailY, p.x, p.y);
-        grad.addColorStop(0, `hsla(${p.hue}, 100%, 70%, 0)`);
-        grad.addColorStop(0.5, `hsla(${p.hue}, 100%, 80%, ${drawAlpha * 0.6})`);
-        grad.addColorStop(1, `hsla(${p.hue}, 100%, 95%, ${drawAlpha})`);
+        const size = p.size * scale;
+        const opacity = Math.min(1, p.life / p.maxLife) * alpha;
 
         ctx.beginPath();
-        ctx.moveTo(tailX, tailY);
-        ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 1.5;
+        ctx.moveTo(prevPx, prevPy);
+        ctx.lineTo(px, py);
+        ctx.strokeStyle = p.color.replace(')', `, ${opacity})`);
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
         ctx.stroke();
       }
 
-      // Warp intensity vignette at high warp pool
-      if (warpPool > 0.7 && alpha > 0.5) {
-        const vigAlpha = ((warpPool - 0.7) / 0.3) * 0.3 * alpha;
-        const vig = ctx.createRadialGradient(width / 2, height / 2, height * 0.3, width / 2, height / 2, height * 0.9);
-        vig.addColorStop(0, 'transparent');
-        vig.addColorStop(1, `rgba(0, 200, 255, ${vigAlpha})`);
-        ctx.fillStyle = vig;
-        ctx.fillRect(0, 0, width, height);
-      }
+      animationFrameId = requestAnimationFrame(renderLoop);
     };
 
-    gsap.ticker.add(renderLoop);
+    animationFrameId = requestAnimationFrame(renderLoop);
+
+    const handleResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      gsap.ticker.remove(renderLoop);
+      cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
       // Restore DOM on unmount
       if (cullTargetRef.current && isWarpingRef.current) {
-        cullTargetRef.current.style.visibility = originalDisplayRef.current;
         cullTargetRef.current.style.opacity = '1';
         cullTargetRef.current.style.pointerEvents = '';
         cullTargetRef.current.style.transition = '';
