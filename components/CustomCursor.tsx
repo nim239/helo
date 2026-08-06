@@ -132,11 +132,10 @@ export function CustomCursor() {
         smoothedFps += (instantFps - smoothedFps) * 0.08;
       }
 
-      // T018: FPS ring — top half only (max 100fps = half circle)
+      // T018: FPS ring — top half (using path)
       const clampedFps = Math.min(100, Math.max(0, smoothedFps));
       const fpsRatio = clampedFps / 100;
-      // Offset: full CIRC = hidden, HALF = empty top arc, 0 = full top arc
-      const fpsOffset = HALF_CIRC * (1 - fpsRatio) + HALF_CIRC; // starts at bottom (hidden half)
+      const fpsOffset = HALF_CIRC * (1 - fpsRatio); // Fills left to right
 
       if (fpsCircleRef.current) {
         fpsCircleRef.current.style.strokeDashoffset = `${fpsOffset}px`;
@@ -156,19 +155,18 @@ export function CustomCursor() {
       const warpPool = useScrollStore.getState().warpPool;
       const isWarping = useScrollStore.getState().currentPhase === 'WARPING';
       const warpRatio = Math.min(1, Math.max(0, warpPool));
-      // Warp arc fills from bottom going clockwise (opposite half from FPS)
-      const warpOffset = HALF_CIRC * (1 - warpRatio); // 0 = full bottom arc
+      const warpOffset = HALF_CIRC * (1 - warpRatio); // Fills left to right
 
       if (warpCircleRef.current) {
         warpCircleRef.current.style.strokeDashoffset = `${warpOffset}px`;
-        // T020: Dynamic color + pulse
+        // T020: Dynamic color
         let warpColor: string;
         if (warpPool < 0.3) {
-          warpColor = '#00F2FF';
+          warpColor = '#00F2FF'; // Cyan
         } else if (warpPool < 0.8) {
-          warpColor = '#FF8C00';
+          warpColor = '#FF8C00'; // Orange
         } else {
-          warpColor = '#FF003C';
+          warpColor = '#FF003C'; // Red
         }
         warpCircleRef.current.style.stroke = warpColor;
 
@@ -256,7 +254,7 @@ export function CustomCursor() {
       <div ref={cursorRef} className="absolute top-0 left-0 w-0 h-0 flex items-center justify-center">
         {/* T018+T019: Split ring — FPS top half + Warp bottom half */}
         <svg
-          className={`absolute w-20 h-20 pointer-events-none -rotate-90 transition-transform duration-300 ease-out
+          className={`absolute w-20 h-20 pointer-events-none transition-transform duration-300 ease-out
             ${isHovering ? 'scale-150' : 'scale-100'}
             ${isClicking ? 'scale-90' : ''}
             ${isIdle ? 'scale-125' : ''}
@@ -264,63 +262,64 @@ export function CustomCursor() {
           viewBox="0 0 80 80"
         >
           <defs>
-            <linearGradient id="cursorFpsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="cursorFpsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#00F2FF" />
               <stop offset="50%" stopColor="#FF007F" />
               <stop offset="100%" stopColor="#0066FF" />
             </linearGradient>
           </defs>
 
-          {/* Background track — full circle */}
-          <circle
-            cx="40"
-            cy="40"
-            r="32"
+          {/* Background track — top half */}
+          <path
+            d="M 8,40 A 32,32 0 0,1 72,40"
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.10)"
+            strokeWidth="1.5"
+            strokeDasharray="3 3"
+          />
+          {/* Background track — bottom half */}
+          <path
+            d="M 8,40 A 32,32 0 0,0 72,40"
             fill="none"
             stroke="rgba(255, 255, 255, 0.10)"
             strokeWidth="1.5"
             strokeDasharray="3 3"
           />
 
-          {/* FPS gauge — top half arc (r=32, CIRCUMFERENCE~201, halfCirc~100.5) */}
-          {/* dasharray=halfCirc totalCirc: only top half visible when rotated */}
-          <circle
-            ref={fpsCircleRef}
-            cx="40"
-            cy="40"
-            r="32"
+          {/* FPS gauge — top half arc, Left to Right (100.53 is PI * 32) */}
+          <path
+            ref={fpsCircleRef as any}
+            d="M 8,40 A 32,32 0 0,1 72,40"
             fill="none"
             stroke="url(#cursorFpsGradient)"
             strokeWidth="3"
-            strokeDasharray={`${Math.PI * 32} ${2 * Math.PI * 32}`}
-            strokeDashoffset="0"
+            strokeDasharray="101"
+            strokeDashoffset="101"
             strokeLinecap="round"
           />
 
-          {/* T019: Warp gauge — bottom half arc (rotate 180° to flip to bottom) */}
-          <circle
-            ref={warpCircleRef}
-            cx="40"
-            cy="40"
-            r="32"
+          {/* T019: Warp gauge — bottom half arc, Left to Right */}
+          <path
+            ref={warpCircleRef as any}
+            d="M 8,40 A 32,32 0 0,0 72,40"
             fill="none"
             stroke="#00F2FF"
             strokeWidth="3"
-            strokeDasharray={`${Math.PI * 32} ${2 * Math.PI * 32}`}
-            strokeDashoffset={`${Math.PI * 32}`}
+            strokeDasharray="101"
+            strokeDashoffset="101"
             strokeLinecap="round"
-            style={{ transform: 'rotate(180deg)', transformOrigin: '40px 40px' }}
+            style={{ transition: 'stroke 0.4s ease' }}
           />
         </svg>
 
         {/* FPS Counter HUD — top-right of ring */}
-        <div className="absolute right-0 top-0 transform translate-x-1/2 -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
+        <div className="absolute right-0 top-0 transform translate-x-[40%] -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
           <span ref={fpsTextRef}>60</span>
           <span className="text-[7px] text-white/50">FPS</span>
         </div>
 
         {/* T021: Warp gauge HUD — bottom-right of ring */}
-        <div className="absolute right-0 bottom-0 transform translate-x-1/2 translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
+        <div className="absolute right-0 bottom-0 transform translate-x-[40%] translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
           <span ref={warpTextRef}>0</span>
           <span className="text-[7px] text-[#00F2FF]/70">WP</span>
         </div>

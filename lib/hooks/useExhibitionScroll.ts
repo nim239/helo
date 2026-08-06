@@ -67,13 +67,6 @@ export function useExhibitionScroll() {
       }
     });
 
-    // GSAP Ticker Sync
-    const rafCallback = (time: number) => {
-      lenis.raf(time * 1000);
-    };
-    gsap.ticker.add(rafCallback);
-    gsap.ticker.lagSmoothing(0);
-
     // Debug helper
     const dbg = (msg: string) => {
       try { window.dispatchEvent(new CustomEvent('lenis-debug', { detail: msg })); } catch (e) { }
@@ -86,6 +79,48 @@ export function useExhibitionScroll() {
     const killSnap = () => {
       clearTimeout(snapTimeout);
     };
+
+    // ============================================================
+    // GSAP Ticker Sync & WARP ENGINE TICK
+    // MANG ACCUMULATOR VÀO ĐÂY ĐỂ CHẠY LIÊN TỤC NGAY CẢ KHI DỪNG CUỘN
+    // ============================================================
+    const rafCallback = (time: number) => {
+      lenis.raf(time * 1000);
+
+      // T006: WARP POOL FRICTION ACCUMULATOR
+      let newPool = warpPoolRef.current;
+      if (!REDUCED_MOTION) {
+        // Lấy vận tốc hiện tại của Lenis
+        const velocity = lenis.velocity || 0;
+        // Cắt bỏ phần vận tốc trễ của Lenis (chỉ tính lực khi user vuốt mạnh velocity > 15)
+        const effectiveVelocity = Math.max(0, Math.abs(velocity) - 15);
+        newPool += effectiveVelocity * WARP_GAIN;
+        newPool *= WARP_FRICTION;
+        newPool = Math.max(0, Math.min(1, newPool));
+      }
+      warpPoolRef.current = newPool;
+
+      // T009: Throttled Zustand sync (~6fps at 60fps)
+      warpSyncFrameRef.current++;
+      if (warpSyncFrameRef.current >= WARP_ZUSTAND_SYNC_INTERVAL) {
+        warpSyncFrameRef.current = 0;
+        setWarpPool(newPool);
+      }
+
+      // T007: WARPING phase transitions
+      const state = useScrollStore.getState();
+      if (newPool >= WARP_THRESHOLD && state.currentPhase !== 'WARPING') {
+        dbg(`WARP TRIGGER pool=${newPool.toFixed(2)}`);
+        killSnap();
+        setPhase('WARPING');
+      } else if (newPool < WARP_EXIT_THRESHOLD && state.currentPhase === 'WARPING') {
+        dbg(`WARP EXIT pool=${newPool.toFixed(2)}`);
+        setPhase('IDLE');
+        setWarpPool(0);
+      }
+    };
+    gsap.ticker.add(rafCallback);
+    gsap.ticker.lagSmoothing(0);
 
     // T008: Visibility handler — reset warp on hidden + kill snap
     const handleVisibility = () => {
@@ -103,7 +138,7 @@ export function useExhibitionScroll() {
     document.addEventListener('visibilitychange', handleVisibility);
 
     // ============================================================
-    // SCROLL EVENT: Progress + Snap + Warp Accumulator
+    // SCROLL EVENT: Progress + Snap (Chỉ xử lý phase scroll)
     // ============================================================
     lenis.on('scroll', ({ scroll, velocity }: { scroll: number, velocity: number, direction: number }) => {
       const state = useScrollStore.getState();
@@ -111,36 +146,6 @@ export function useExhibitionScroll() {
 
       setScrollProgress(scroll / (currentH * 6));
       setVelocity(velocity);
-
-      // T006: WARP POOL FRICTION ACCUMULATOR (skip if reduced motion)
-      let newPool = warpPoolRef.current;
-      if (!REDUCED_MOTION) {
-        // Cắt bỏ phần vận tốc trễ của Lenis (khi thả tay nó vẫn trôi nhẹ 1 lúc lâu)
-        // Chỉ tính lực khi user vuốt mạnh (velocity > 15)
-        const effectiveVelocity = Math.max(0, Math.abs(velocity) - 15);
-        newPool += effectiveVelocity * WARP_GAIN;
-        newPool *= WARP_FRICTION;
-        newPool = Math.max(0, Math.min(1, newPool));
-      }
-      warpPoolRef.current = newPool;
-
-      // T009: Throttled Zustand sync (~6fps at 60fps)
-      warpSyncFrameRef.current++;
-      if (warpSyncFrameRef.current >= WARP_ZUSTAND_SYNC_INTERVAL) {
-        warpSyncFrameRef.current = 0;
-        setWarpPool(newPool);
-      }
-
-      // T007: WARPING phase transitions
-      if (newPool >= WARP_THRESHOLD && state.currentPhase !== 'WARPING') {
-        dbg(`WARP TRIGGER pool=${newPool.toFixed(2)}`);
-        killSnap();
-        setPhase('WARPING');
-      } else if (newPool < WARP_EXIT_THRESHOLD && state.currentPhase === 'WARPING') {
-        dbg(`WARP EXIT pool=${newPool.toFixed(2)}`);
-        setPhase('IDLE');
-        setWarpPool(0);
-      }
 
       // Normal phase transitions (skip while WARPING)
       if (state.currentPhase !== 'WARPING') {

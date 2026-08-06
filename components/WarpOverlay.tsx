@@ -9,7 +9,7 @@ import { useScrollStore } from '../lib/store/useScrollStore';
 // 'display' = display:none (unrender completely, best FPS)
 // 'opacity' = opacity:0 (visual only, still paints)
 // ============================================================
-const WARP_CULL_METHOD: 'opacity' | 'display' = 'display';
+const WARP_CULL_METHOD: 'opacity' | 'display' = 'opacity'; // Dùng opacity để có transition mượt
 
 // ============================================================
 // WARP PARTICLE SYSTEM
@@ -105,11 +105,12 @@ export function WarpOverlay() {
       const targetAlpha = isWarping ? 1 : 0;
       overlayAlphaRef.current += (targetAlpha - overlayAlphaRef.current) * 0.06;
 
-      // DOM culling (T013)
+      // DOM culling (T013) + Mượt chuyển cảnh
       if (isWarping && !isWarpingRef.current) {
         // Entering warp
         isWarpingRef.current = true;
         if (cullTargetRef.current) {
+          cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
           if (WARP_CULL_METHOD === 'display') {
             originalDisplayRef.current = cullTargetRef.current.style.display;
             cullTargetRef.current.style.display = 'none';
@@ -125,8 +126,14 @@ export function WarpOverlay() {
           if (WARP_CULL_METHOD === 'display') {
             cullTargetRef.current.style.display = originalDisplayRef.current;
           } else {
-            cullTargetRef.current.style.opacity = '';
+            cullTargetRef.current.style.opacity = '1';
             cullTargetRef.current.style.pointerEvents = '';
+            // Remove transition after fade in
+            setTimeout(() => {
+              if (cullTargetRef.current && !isWarpingRef.current) {
+                cullTargetRef.current.style.transition = '';
+              }
+            }, 800);
           }
         }
       }
@@ -203,8 +210,9 @@ export function WarpOverlay() {
         if (WARP_CULL_METHOD === 'display') {
           cullTargetRef.current.style.display = originalDisplayRef.current;
         } else {
-          cullTargetRef.current.style.opacity = '';
+          cullTargetRef.current.style.opacity = '1';
           cullTargetRef.current.style.pointerEvents = '';
+          cullTargetRef.current.style.transition = '';
         }
       }
     };
@@ -215,7 +223,7 @@ export function WarpOverlay() {
       ref={canvasRef}
       className="fixed inset-0 w-full h-full pointer-events-none"
       style={{
-        zIndex: 90,
+        zIndex: 40, // Đặt dưới Cubi (z-50) để Cubi luôn nổi lên trên Warp scene
         // Canvas itself always mounted, alpha handled via JS ctx.fillStyle
       }}
     />
