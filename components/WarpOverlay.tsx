@@ -143,7 +143,7 @@ export function WarpOverlay() {
 
       // LOD: scale particle count by FPS health
       const fps = smoothedFpsRef.current;
-      const lodCount = Math.max(20, Math.floor((fps / 60) * MAX_PARTICLES));
+      const lodCount = Math.min(MAX_PARTICLES, Math.max(20, Math.floor((fps / 60) * MAX_PARTICLES)));
       const velocitySign = velocity >= 0 ? 1 : -1;
 
       // Update & draw particles
