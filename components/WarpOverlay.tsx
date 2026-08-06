@@ -110,19 +110,19 @@ export function WarpOverlay() {
         // Entering warp
         isWarpingRef.current = true;
         if (cullTargetRef.current) {
-          // Lưu trạng thái display cũ
+          // Lưu trạng thái visibility cũ
           if (!originalDisplayRef.current) {
-            originalDisplayRef.current = cullTargetRef.current.style.display || 'block';
+            originalDisplayRef.current = cullTargetRef.current.style.visibility || 'visible';
           }
           // 1. Fade opacity xuống 0 trong 3s
           cullTargetRef.current.style.transition = 'opacity 3s cubic-bezier(0.4, 0, 0.2, 1)';
           cullTargetRef.current.style.opacity = '0';
           cullTargetRef.current.style.pointerEvents = 'none';
 
-          // 2. Chờ 0.8s rồi giáng đòn display: none (như user yêu cầu)
+          // 2. Chờ 0.8s rồi giáng đòn visibility: hidden (để giữ chiều cao trang cho Lenis scroll tiếp, nhưng vẫn cắt render)
           setTimeout(() => {
             if (cullTargetRef.current && isWarpingRef.current) {
-              cullTargetRef.current.style.display = 'none';
+              cullTargetRef.current.style.visibility = 'hidden';
             }
           }, 800);
         }
@@ -130,8 +130,8 @@ export function WarpOverlay() {
         // Exiting warp
         isWarpingRef.current = false;
         if (cullTargetRef.current) {
-          // 1. Phục hồi display trước để có thể paint
-          cullTargetRef.current.style.display = originalDisplayRef.current;
+          // 1. Phục hồi visibility trước để có thể paint
+          cullTargetRef.current.style.visibility = originalDisplayRef.current;
           
           // 2. Ép frame để browser nhận display trước khi đổi opacity
           requestAnimationFrame(() => {
@@ -220,7 +220,7 @@ export function WarpOverlay() {
       window.removeEventListener('resize', handleResize);
       // Restore DOM on unmount
       if (cullTargetRef.current && isWarpingRef.current) {
-        cullTargetRef.current.style.display = originalDisplayRef.current;
+        cullTargetRef.current.style.visibility = originalDisplayRef.current;
         cullTargetRef.current.style.opacity = '1';
         cullTargetRef.current.style.pointerEvents = '';
         cullTargetRef.current.style.transition = '';

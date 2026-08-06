@@ -259,6 +259,7 @@ export function CustomCursor() {
             ${isClicking ? 'scale-90' : ''}
             ${isIdle ? 'scale-125' : ''}
           `}
+          style={{ transform: 'translate(-50%, -50%)' }}
           viewBox="0 0 80 80"
         >
           <defs>
@@ -313,13 +314,13 @@ export function CustomCursor() {
         </svg>
 
         {/* FPS Counter HUD — RIGHT of ring */}
-        <div className="absolute right-0 top-1/2 transform translate-x-[60%] -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
+        <div className="absolute left-[44px] top-1/2 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
           <span ref={fpsTextRef}>60</span>
           <span className="text-[7px] text-white/50">FPS</span>
         </div>
 
         {/* T021: Warp gauge HUD — LEFT of ring */}
-        <div className="absolute left-0 top-1/2 transform -translate-x-[60%] -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
+        <div className="absolute right-[44px] top-1/2 transform -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md whitespace-nowrap">
           <span ref={warpTextRef}>0</span>
           <span className="text-[7px] text-[#00F2FF]/70">WP</span>
         </div>
