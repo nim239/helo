@@ -90,11 +90,26 @@ export function useExhibitionScroll() {
       // T006: WARP POOL FRICTION ACCUMULATOR
       let newPool = warpPoolRef.current;
       if (!REDUCED_MOTION) {
-        // Lấy vận tốc hiện tại của Lenis
-        const velocity = lenis.velocity || 0;
-        // Cắt bỏ phần vận tốc trễ của Lenis (chỉ tính lực khi user vuốt mạnh velocity > 15)
-        const effectiveVelocity = Math.max(0, Math.abs(velocity) - 15);
-        newPool += effectiveVelocity * WARP_GAIN;
+        // Kiểm tra overscroll (Safari rubber-banding gây spike velocity cực lớn)
+        const isOverscrolling = lenis.scroll <= 0 || lenis.scroll >= lenis.limit;
+        
+        if (!isOverscrolling) {
+          // Lấy vận tốc hiện tại của Lenis
+          const velocity = lenis.velocity || 0;
+          
+          // Cắt bỏ phần vận tốc trễ, chỉ tính khi vuốt mạnh
+          const effectiveVelocity = Math.max(0, Math.abs(velocity) - 15);
+          
+          // Cap vận tốc tối đa mỗi frame để tránh spike
+          const cappedVelocity = Math.min(80, effectiveVelocity);
+          
+          // Giảm độ nhạy trên mobile (coarse pointer)
+          const isMobile = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+          const sensitivityMult = isMobile ? 0.35 : 1.0;
+  
+          newPool += cappedVelocity * WARP_GAIN * sensitivityMult;
+        }
+        
         newPool *= WARP_FRICTION;
         // Cho phép WP dồn lên tới 300% (3.0) để tạo cảm giác "chìm sâu vào warp", nhưng hiển thị vòng vẫn max ở 100%
         newPool = Math.max(0, Math.min(3, newPool));
