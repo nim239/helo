@@ -18,26 +18,29 @@ const state: SpriteWorkerState = {
 
 // --- IMAGE LOADING PIPELINE ---
 const loadImages = async () => {
-  for (let i = 0; i < FRAME_COUNT; i++) {
+  const loadFrame = async (i: number) => {
     const idx = i.toString().padStart(5, "0");
+    try {
+      const [resBase, resGlow] = await Promise.all([
+        fetch(`/sprite_cubi/cubi/cubi_${idx}.webp`),
+        fetch(`/sprite_cubi/cubi_glow/cubi_glow_${idx}.webp`)
+      ]);
+      const [blobBase, blobGlow] = await Promise.all([resBase.blob(), resGlow.blob()]);
+      const [bmpBase, bmpGlow] = await Promise.all([createImageBitmap(blobBase), createImageBitmap(blobGlow)]);
+      state.baseImages[i] = bmpBase;
+      state.glowImages[i] = bmpGlow;
+    } catch (err) {
+      console.warn(`Failed to load frame ${idx}`, err);
+    }
+  };
 
-    // Load Base Image
-    fetch(`/sprite_cubi/cubi/cubi_${idx}.webp`)
-      .then((res) => res.blob())
-      .then((blob) => createImageBitmap(blob))
-      .then((bmp) => {
-        state.baseImages[i] = bmp;
-      })
-      .catch((err) => console.warn(`Failed to load base frame ${idx}`, err));
-
-    // Load Glow Image
-    fetch(`/sprite_cubi/cubi_glow/cubi_glow_${idx}.webp`)
-      .then((res) => res.blob())
-      .then((blob) => createImageBitmap(blob))
-      .then((bmp) => {
-        state.glowImages[i] = bmp;
-      })
-      .catch((err) => console.warn(`Failed to load glow frame ${idx}`, err));
+  const CONCURRENCY = 4; // Prevent Safari RAM/Network crash
+  for (let i = 0; i < FRAME_COUNT; i += CONCURRENCY) {
+    const batch = [];
+    for (let j = 0; j < CONCURRENCY && i + j < FRAME_COUNT; j++) {
+      batch.push(loadFrame(i + j));
+    }
+    await Promise.all(batch);
   }
 };
 
