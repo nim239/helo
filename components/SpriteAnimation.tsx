@@ -27,7 +27,7 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
   const scrollTriggerInstRef = useRef<ScrollTrigger | null>(null);
   // T015: Warp amplitude refs
   const warpAmpMultRef = useRef<number>(1.0);  // 1.0 = normal, ~0.12 = warp min
-  const warpDriftYRef = useRef<number>(0);     // Y drift opposite to scroll
+  const warpDriftYRef = useRef<number>(0);     // Y drift when warping (lerped)
 
   const completeIntro = useScrollStore((state) => state.completeIntro);
   const isIntroComplete = useScrollStore((state) => state.isIntroComplete);
@@ -42,8 +42,11 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
         ? Math.max(WARP_AMP_MIN, 1.0 - warpPool * (1.0 - WARP_AMP_MIN))
         : 1.0;
       warpAmpMultRef.current += (targetAmp - warpAmpMultRef.current) * WARP_AMP_LERP;
-      // Drift Y opposite scroll direction
-      warpDriftYRef.current = isWarping ? -velocity * WARP_DRIFT_MULT : 0;
+      
+      // Mượt mà kéo Cubi về giữa (không giật cục)
+      // Khi warp, ta muốn drift = 0 để Cubi ở giữa màn hình (hoặc lệch tí ti theo velocity)
+      const targetDriftY = isWarping ? (velocity > 0 ? 50 : -50) : 0;
+      warpDriftYRef.current += (targetDriftY - warpDriftYRef.current) * 0.03;
     };
     gsap.ticker.add(ticker);
     return () => gsap.ticker.remove(ticker);
@@ -199,20 +202,16 @@ export function SpriteAnimation({ startIntro = false }: SpriteAnimationProps) {
 
       const ampMult = warpAmpMultRef.current;
       const moveX = Math.sin(progressCycle * Math.PI * 2 * 3) * (window.innerWidth * 0.35) * ampMult;
-      // T016: When warping, clamp to upper half of screen + drift Y opposite scroll
-      const isWarping = useScrollStore.getState().currentPhase === 'WARPING';
       const moveY = Math.sin(progressCycle * Math.PI * 2 * 4 - Math.PI / 2) * (window.innerHeight * 0.25) * ampMult
-        + (isWarping ? warpDriftYRef.current : 0);
+        + warpDriftYRef.current;
 
       // Sprite frame speed stays natural (linked to scrollY as before)
       const spriteP = (progressCycle * 36) % 1;
       const frame = spriteP * (FRAME_COUNT - 1);
 
       const margin = 20;
-      // When warping: constrain y to upper 50% of screen
-      const yMax = isWarping ? window.innerHeight * 0.5 - currentH - margin : window.innerHeight - currentH - margin;
       const clampedX = Math.max(margin, Math.min(window.innerWidth - currentW - margin, cX + moveX));
-      const clampedY = Math.max(margin, Math.min(yMax, cY + moveY));
+      const clampedY = Math.max(margin, Math.min(window.innerHeight - currentH - margin, cY + moveY));
 
       return { x: clampedX, y: clampedY, frame };
     };

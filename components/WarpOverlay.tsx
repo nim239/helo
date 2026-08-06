@@ -105,36 +105,49 @@ export function WarpOverlay() {
       const targetAlpha = isWarping ? 1 : 0;
       overlayAlphaRef.current += (targetAlpha - overlayAlphaRef.current) * 0.06;
 
-      // DOM culling (T013) + Mượt chuyển cảnh
+      // DOM culling Hybrid (A + B)
       if (isWarping && !isWarpingRef.current) {
         // Entering warp
         isWarpingRef.current = true;
         if (cullTargetRef.current) {
-          cullTargetRef.current.style.transition = 'opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
-          if (WARP_CULL_METHOD === 'display') {
-            originalDisplayRef.current = cullTargetRef.current.style.display;
-            cullTargetRef.current.style.display = 'none';
-          } else {
-            cullTargetRef.current.style.opacity = '0';
-            cullTargetRef.current.style.pointerEvents = 'none';
+          // Lưu trạng thái display cũ
+          if (!originalDisplayRef.current) {
+            originalDisplayRef.current = cullTargetRef.current.style.display || 'block';
           }
+          // 1. Fade opacity xuống 0 trong 3s
+          cullTargetRef.current.style.transition = 'opacity 3s cubic-bezier(0.4, 0, 0.2, 1)';
+          cullTargetRef.current.style.opacity = '0';
+          cullTargetRef.current.style.pointerEvents = 'none';
+
+          // 2. Chờ 0.8s rồi giáng đòn display: none (như user yêu cầu)
+          setTimeout(() => {
+            if (cullTargetRef.current && isWarpingRef.current) {
+              cullTargetRef.current.style.display = 'none';
+            }
+          }, 800);
         }
       } else if (!isWarping && isWarpingRef.current) {
         // Exiting warp
         isWarpingRef.current = false;
         if (cullTargetRef.current) {
-          if (WARP_CULL_METHOD === 'display') {
-            cullTargetRef.current.style.display = originalDisplayRef.current;
-          } else {
-            cullTargetRef.current.style.opacity = '1';
-            cullTargetRef.current.style.pointerEvents = '';
-            // Remove transition after fade in
-            setTimeout(() => {
-              if (cullTargetRef.current && !isWarpingRef.current) {
-                cullTargetRef.current.style.transition = '';
-              }
-            }, 800);
-          }
+          // 1. Phục hồi display trước để có thể paint
+          cullTargetRef.current.style.display = originalDisplayRef.current;
+          
+          // 2. Ép frame để browser nhận display trước khi đổi opacity
+          requestAnimationFrame(() => {
+            if (cullTargetRef.current && !isWarpingRef.current) {
+              cullTargetRef.current.style.transition = 'opacity 3s cubic-bezier(0.4, 0, 0.2, 1)';
+              cullTargetRef.current.style.opacity = '1';
+              cullTargetRef.current.style.pointerEvents = '';
+              
+              // Xóa transition sau khi fade xong
+              setTimeout(() => {
+                if (cullTargetRef.current && !isWarpingRef.current) {
+                  cullTargetRef.current.style.transition = '';
+                }
+              }, 3000);
+            }
+          });
         }
       }
 
@@ -207,13 +220,10 @@ export function WarpOverlay() {
       window.removeEventListener('resize', handleResize);
       // Restore DOM on unmount
       if (cullTargetRef.current && isWarpingRef.current) {
-        if (WARP_CULL_METHOD === 'display') {
-          cullTargetRef.current.style.display = originalDisplayRef.current;
-        } else {
-          cullTargetRef.current.style.opacity = '1';
-          cullTargetRef.current.style.pointerEvents = '';
-          cullTargetRef.current.style.transition = '';
-        }
+        cullTargetRef.current.style.display = originalDisplayRef.current;
+        cullTargetRef.current.style.opacity = '1';
+        cullTargetRef.current.style.pointerEvents = '';
+        cullTargetRef.current.style.transition = '';
       }
     };
   }, []);

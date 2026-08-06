@@ -312,14 +312,14 @@ export function CustomCursor() {
           />
         </svg>
 
-        {/* FPS Counter HUD — top-right of ring */}
-        <div className="absolute right-0 top-0 transform translate-x-[40%] -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
+        {/* FPS Counter HUD — RIGHT of ring */}
+        <div className="absolute right-0 top-1/2 transform translate-x-[60%] -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
           <span ref={fpsTextRef}>60</span>
           <span className="text-[7px] text-white/50">FPS</span>
         </div>
 
-        {/* T021: Warp gauge HUD — bottom-right of ring */}
-        <div className="absolute right-0 bottom-0 transform translate-x-[40%] translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
+        {/* T021: Warp gauge HUD — LEFT of ring */}
+        <div className="absolute left-0 top-1/2 transform -translate-x-[60%] -translate-y-1/2 flex items-center gap-1 font-mono text-[9px] tracking-wider text-white bg-black/70 px-1.5 py-0.5 rounded border border-white/20 pointer-events-none shadow-md">
           <span ref={warpTextRef}>0</span>
           <span className="text-[7px] text-[#00F2FF]/70">WP</span>
         </div>
